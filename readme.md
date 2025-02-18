@@ -1,0 +1,6 @@
+[Jest](https://jestjs.io/docs/getting-started)
+[Babel](https://babeljs.io/docs/usage)
+[Commander.js](https://github.com/tj/commander.js?tab=readme-ov-file#installation)
+[Inquirer](https://github.com/SBoudrias/Inquirer.js)
+[Ora](https://github.com/sindresorhus/ora)
+[Chalk](https://github.com/chalk/chalk)

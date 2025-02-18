@@ -1,0 +1,39 @@
+{
+  "name": "bbs-cli",
+  "version": "1.0.0",
+  "description": "A CLI for the Betty Blocks Platform",
+  "keywords": [
+    "bettyblocks",
+    "cli"
+  ],
+  "license": "MIT",
+  "author": "Sam de Groot",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc -p tsconfig.json && chmod +x dist/index.js"
+  },
+  "bin": {
+    "bbs": "./dist/index.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.9",
+    "@babel/preset-env": "^7.26.9",
+    "@babel/preset-typescript": "^7.26.0",
+    "@types/commander": "^2.12.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.13.4",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.3.2",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "ora": "^8.2.0"
+  }
+}
