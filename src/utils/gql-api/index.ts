@@ -1,8 +1,10 @@
-import { input } from "@inquirer/prompts";
+import { input, password } from "@inquirer/prompts";
 import { logger } from "../index.js";
 
 export default class GraphQLAPI {
   private apiURL = "";
+  private accessToken: string = "";
+  private refreshToken: string = "";
 
   async getApiURL(): Promise<string> {
     return await input({
@@ -13,13 +15,24 @@ export default class GraphQLAPI {
           /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/g,
         );
 
-        if (!urlMatch || urlMatch.length === 0) {
+        if (!urlMatch) {
           return "Please provide a valid URL";
         }
 
         return false;
       },
     });
+  }
+
+  async getUserName(): Promise<string> {
+    return await input({
+      message: "Please provide your username",
+      required: true,
+    });
+  }
+
+  async getPassword(): Promise<string> {
+    return await password({ message: "Please provide your password" });
   }
 
   async request() {
