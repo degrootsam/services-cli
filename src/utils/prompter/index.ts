@@ -1,18 +1,18 @@
 import { input, password } from "@inquirer/prompts";
 
 export default class Prompter {
-  static async getUsername(): Promise<string> {
+  async getUsername(): Promise<string> {
     return await input({
       message: "Please provide your username",
       required: true,
     });
   }
 
-  static async getPassword(): Promise<string> {
+  async getPassword(): Promise<string> {
     return await password({ message: "Please provide your password" });
   }
 
-  static async getURL(message: string): Promise<string> {
+  async getURL(message: string): Promise<string> {
     return await input({
       message: message,
       required: true,
