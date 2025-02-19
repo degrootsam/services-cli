@@ -63,8 +63,6 @@ export default class GraphQLAPI {
     currentAPIURL?: string,
     currentAuthProfileUuid?: string,
   ): Promise<void> {
-    await this.checkTokensInKeychain();
-
     if (this.validateAccessToken()) {
       logger.debug("Token is still valid, skipping login...");
       return;
@@ -142,6 +140,21 @@ export default class GraphQLAPI {
 
         break;
       case "action":
+        const mutation = await prompter.editor(
+          "Copy/Paste the login mutation from the action",
+        );
+        const input = await prompter.editor(
+          "Copy/Paste the input variables from the action",
+          (value) => {
+            try {
+              JSON.parse(value);
+              return true;
+            } catch (err) {
+              return "Please enter valid JSON";
+            }
+          },
+        );
+
         break;
     }
   }
