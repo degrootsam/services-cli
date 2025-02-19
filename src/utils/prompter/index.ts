@@ -16,6 +16,12 @@ export default class Prompter {
     return await password({
       mask: "*",
       message: "Please provide your password",
+      validate(value) {
+        if (!value) {
+          return "Password is required";
+        }
+        return true;
+      },
     });
   }
 
@@ -47,6 +53,8 @@ export default class Prompter {
       },
     });
 
+    logger.debug(`Answer ${answer}`);
+
     return answer;
   }
 
@@ -66,6 +74,8 @@ export default class Prompter {
       choices,
       loop: true,
     });
+
+    logger.debug(`Answer ${answer}`);
 
     return answer;
   }
