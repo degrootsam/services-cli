@@ -33,7 +33,7 @@ export type Scalars = {
   Time: { input: any; output: any };
 };
 
-export type AuthenticationSuccessPayload = {
+export type AuthenticationTokenPayload = {
   __typename?: "AuthenticationPayload";
   accessExpiresAt?: Maybe<Scalars["String"]["output"]>;
   accessExpiresIn?: Maybe<Scalars["Int"]["output"]>;
@@ -44,6 +44,13 @@ export type AuthenticationSuccessPayload = {
   refreshToken?: Maybe<Scalars["String"]["output"]>;
 };
 
+export type AuthenticationSuccessPayload = {
+  login: AuthenticationTokenPayload;
+};
+
 export type GraphQLErrorPayload = {
   message: string;
+  extensions?: {
+    statusCode: number;
+  };
 };

@@ -4,11 +4,30 @@ import {
   GraphQLErrorPayload,
   AuthenticationSuccessPayload,
 } from "./types/index.js";
+import { getToken, saveToken } from "../keychain/index.js";
 
 export default class GraphQLAPI {
   private apiURL = "";
   private accessToken: string = "";
   private refreshToken: string = "";
+  private accessTokenExpiresAt: number | null = null;
+
+  private async checkTokensInKeychain() {
+    logger.debug("Checking tokens in keychain");
+    this.accessToken = (await getToken("gqlAccessToken")) ?? "";
+    this.refreshToken = (await getToken("gqlRefreshToken")) ?? "";
+
+    const accessTokenExpiresAt = await getToken("gqlAccessTokenExpiresAt");
+    this.accessTokenExpiresAt = accessTokenExpiresAt
+      ? Number(accessTokenExpiresAt)
+      : null;
+
+    logger.debug({
+      accessToken: this.accessToken,
+      refreshToken: this.refreshToken,
+      accessTokenExpiresAt: this.accessTokenExpiresAt,
+    });
+  }
 
   private loginQuery(
     username: string,
@@ -31,9 +50,13 @@ export default class GraphQLAPI {
     `;
   }
 
-  async login() {
-    const username = await prompter.getUsername();
-    const password = await prompter.getPassword();
+  async login(
+    currentChoice?: string,
+    currentAPIURL?: string,
+    currentAuthProfileUuid?: string,
+  ) {
+    await this.checkTokensInKeychain();
+
     const options = [
       {
         name: "Login Query",
@@ -48,28 +71,49 @@ export default class GraphQLAPI {
           "Uses an action to login to access data from the GraphQL Client. Usefull if you are using custom authentication profiles",
       },
     ];
-    const choice = (await prompter.select(options)) as "query" | "action";
+    const choice =
+      currentChoice ?? ((await prompter.select(options)) as "query" | "action");
 
-    const apiURL = await prompter.getURL(
-      "Please enter the URL to the GraphqQL Playground",
-    );
+    const apiURL =
+      currentAPIURL ??
+      (await prompter.getURL(
+        "Please enter the URL to the GraphqQL Playground",
+      ));
 
     this.apiURL = apiURL;
 
     switch (choice) {
       case "query":
-        const authProfileUuid = await prompter.getAuthProfileUUID();
+        const authProfileUuid =
+          currentAuthProfileUuid ?? (await prompter.getAuthProfileUUID());
+        const username = await prompter.getUsername();
+        const password = await prompter.getPassword();
         const loginQuery = this.loginQuery(username, password, authProfileUuid);
-        const { data } = await this.request<AuthenticationSuccessPayload>(
-          { query: loginQuery },
-          apiURL,
-        );
+        const { data, error } =
+          await this.request<AuthenticationSuccessPayload>(
+            { query: loginQuery },
+            apiURL,
+          );
         if (!data) {
           return;
         }
 
-        this.accessToken = data.jwtToken!;
-        this.refreshToken = data.refreshToken!;
+        this.accessToken = data.login.jwtToken!;
+        this.refreshToken = data.login.refreshToken!;
+        const currentTime = new Date();
+        const accessTokenExpiresAt = currentTime.setTime(
+          currentTime.getTime() +
+            ((data.login.accessExpiresIn ?? 7200) - 600) * 1000,
+        );
+        this.accessTokenExpiresAt = accessTokenExpiresAt;
+
+        await saveToken("gqlAccessToken", data.login.jwtToken!);
+        await saveToken("gqlRefreshToken", data.login.refreshToken!);
+        await saveToken(
+          "gqlAccessTokenExpiresAt",
+          accessTokenExpiresAt.toString(),
+        );
+
         break;
       case "action":
         break;
@@ -95,11 +139,9 @@ export default class GraphQLAPI {
     logger.debug({ response });
 
     if (!response.ok) {
-      return {
-        error: {
-          message: `An error occurred when sending a POST request to: ${url}. Turn on debug logging for more information with --debug`,
-        },
-      };
+      throw new Error(
+        `An error occurred when sending a POST request to: ${url}. Turn on verbose logging for more information with -v or --verbose`,
+      );
     }
 
     try {
@@ -111,10 +153,18 @@ export default class GraphQLAPI {
       logger.debug("Parsed JSON response", { data, errors });
 
       if (errors && errors.length > 0) {
-        errors.forEach((err) => {
+        for (const err of errors) {
+          if (err.extensions?.statusCode === 401) {
+            return { error: { message: err.message } };
+          }
           logger.error(err.message);
-        });
-        return { error: { message: "Unable to finish command" } };
+        }
+
+        return {
+          error: {
+            message: `An error occurred when executing a POST request to: ${url}`,
+          },
+        };
       }
 
       return { data };
