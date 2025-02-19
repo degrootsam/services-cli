@@ -13,6 +13,13 @@ export default class Prompter {
     return await password({ message: "Please provide your password" });
   }
 
+  async getAuthProfileUUID(): Promise<string> {
+    return await input({
+      message: "Please enter the UUID of the authentication profile",
+      required: true,
+    });
+  }
+
   async getURL(message: string): Promise<string> {
     return await input({
       message: message,
