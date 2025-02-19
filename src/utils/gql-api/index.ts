@@ -24,17 +24,6 @@ export default class GraphQLAPI {
     });
   }
 
-  async getUserName(): Promise<string> {
-    return await input({
-      message: "Please provide your username",
-      required: true,
-    });
-  }
-
-  async getPassword(): Promise<string> {
-    return await password({ message: "Please provide your password" });
-  }
-
   async request() {
     logger.debug("This is a test!");
   }
