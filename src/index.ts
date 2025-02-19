@@ -6,6 +6,11 @@ import GraphQLAPI from "./utils/gql-api";
 
 const program = new Command();
 
+program
+  .name("Betty Blocks Services CLI (Proof of Concept)")
+  .version("0.0.1")
+  .option("-v, --verbose", "Enable verbose logging");
+
 export function runCLI(args: string[]) {
   program
     .command("greet <name>")
@@ -18,16 +23,19 @@ export function runCLI(args: string[]) {
   program
     .command("functions")
     .command("types")
-    .action(() => {
+    .action(async () => {
       const gqlAPI = new GraphQLAPI();
-      gqlAPI.getApiURL();
+      await gqlAPI.login();
     });
 
-  return program.parseAsync(args);
-}
+  program.parseAsync(process.argv);
 
-logger.debug("TEST DEBUG");
-logger.error("TEST ERROR");
+  const globalOpts = program.opts();
+
+  if (globalOpts.verbose) {
+    logger.toggleVerbose(true);
+  }
+}
 
 if (require.main === module) {
   runCLI(process.argv);

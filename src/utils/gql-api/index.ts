@@ -1,5 +1,9 @@
 import { input, password } from "@inquirer/prompts";
 import { logger, prompter } from "../index.js";
+import {
+  GraphQLErrorPayload,
+  AuthenticationSuccessPayload,
+} from "./types/index.js";
 
 export default class GraphQLAPI {
   private apiURL = "";
@@ -27,23 +31,6 @@ export default class GraphQLAPI {
     `;
   }
 
-  async getApiURL(): Promise<string> {
-    return await input({
-      message: "Please enter the URL of the GraphQL Runtime API",
-      required: true,
-      validate(value: string) {
-        const urlMatch = value.match(
-          /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/g,
-        );
-
-        if (!urlMatch) {
-          return "Please provide a valid URL";
-        }
-
-        return false;
-      },
-    });
-  }
   async login() {
     const username = await prompter.getUsername();
     const password = await prompter.getPassword();
@@ -67,20 +54,75 @@ export default class GraphQLAPI {
       "Please enter the URL to the GraphqQL Playground",
     );
 
-    let authProfileUuid = apiURL.match(
-      /([a-f0-9]{8})([a-f0-9]{4})([a-f0-9]{4})([a-f0-9]{4})([a-f0-9]{12})/g,
-    );
+    this.apiURL = apiURL;
 
     switch (choice) {
       case "query":
+        const authProfileUuid = await prompter.getAuthProfileUUID();
+        const loginQuery = this.loginQuery(username, password, authProfileUuid);
+        const { data } = await this.request<AuthenticationSuccessPayload>(
+          { query: loginQuery },
+          apiURL,
+        );
+        if (!data) {
+          return;
+        }
+
+        this.accessToken = data.jwtToken!;
+        this.refreshToken = data.refreshToken!;
         break;
       case "action":
         break;
     }
   }
 
-  async request() {
-    logger.debug("This is a test!");
+  async request<T = any>(
+    body: Record<string, any>,
+    url: string,
+    headers?: Record<string, string>,
+  ): Promise<{ data?: T; error?: { message: string } }> {
+    logger.debug(`Preparing POST request to ${url}`);
+    logger.debug({ body, headers });
+    const response = await fetch(this.apiURL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+      },
+      body: JSON.stringify(body),
+    });
+
+    logger.debug({ response });
+
+    if (!response.ok) {
+      return {
+        error: {
+          message: `An error occurred when sending a POST request to: ${url}. Turn on debug logging for more information with --debug`,
+        },
+      };
+    }
+
+    try {
+      const { data, errors } = (await response.json()) as {
+        data?: T;
+        errors: GraphQLErrorPayload[];
+      };
+
+      logger.debug("Parsed JSON response", { data, errors });
+
+      if (errors && errors.length > 0) {
+        errors.forEach((err) => {
+          logger.error(err.message);
+        });
+        return { error: { message: "Unable to finish command" } };
+      }
+
+      return { data };
+    } catch (err) {
+      logger.error(err);
+    }
+
+    return { error: undefined };
   }
 }
 
