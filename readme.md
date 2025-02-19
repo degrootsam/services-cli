@@ -8,3 +8,4 @@
 - [Chalk](https://github.com/chalk/chalk)
 - [FusionAuth](https://fusionauth.io/docs/sdks/typescript)
 - [CodeGen for GraphQL Schema](https://the-guild.dev/graphql/codegen/plugins/typescript/typescript)
+- [Keytar](https://github.com/atom/node-keytar)
