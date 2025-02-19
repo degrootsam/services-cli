@@ -50,12 +50,25 @@ export default class GraphQLAPI {
     `;
   }
 
+  validateAccessToken = (): boolean => {
+    if (!this.accessTokenExpiresAt) return false;
+
+    const now = new Date();
+    const accessTokenExpiresAt = new Date(this.accessTokenExpiresAt);
+    return accessTokenExpiresAt > now;
+  };
+
   async login(
     currentChoice?: string,
     currentAPIURL?: string,
     currentAuthProfileUuid?: string,
-  ) {
+  ): Promise<void> {
     await this.checkTokensInKeychain();
+
+    if (this.validateAccessToken()) {
+      logger.debug("Token is still valid, skipping login...");
+      return;
+    }
 
     const options = [
       {
@@ -94,6 +107,19 @@ export default class GraphQLAPI {
             { query: loginQuery },
             apiURL,
           );
+        if (error) {
+          logger.error(error.message);
+          if (
+            error.message === "A valid authentication profile must be provided"
+          ) {
+            return await this.login(choice, apiURL);
+          }
+          if (error.message === "Wrong credentials, please try again") {
+            return await this.login(choice, apiURL, authProfileUuid);
+          }
+          return;
+        }
+
         if (!data) {
           return;
         }
