@@ -35,6 +35,11 @@ export default class GraphQLAPI {
     return await password({ message: "Please provide your password" });
   }
 
+  async login() {
+    const username = this.getUserName();
+    const password = this.getPassword();
+  }
+
   async request() {
     logger.debug("This is a test!");
   }
