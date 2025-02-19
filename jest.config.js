@@ -1,6 +1,7 @@
 module.exports = {
-  transform: { "^.+\\.ts?$": "ts-jest" },
-  testEnvironment: "node",
-  testRegex: "/tests/.*\\.(test|spec)?\\.(ts|tsx)$",
-  moduleFileExtensions: ["ts", "js", "json", "node"],
+  transformIgnorePatterns: ["node_modules/(?!(chalk)/)"],
+  transform: {
+    "^.+\\.(js|jsx|ts|tsx|mjs)$": "babel-jest",
+  },
+  // ...the rest of your config
 };
