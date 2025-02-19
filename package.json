@@ -35,13 +35,14 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@graphql-codegen/introspection": "4.0.3",
+    "@graphql-codegen/typescript-document-nodes": "4.0.14",
     "@inquirer/prompts": "^7.3.2",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "graphql": "^16.10.0",
+    "keytar": "^7.9.0",
     "ora": "^8.2.0",
-    "winston": "^3.17.0",
-    "@graphql-codegen/typescript-document-nodes": "4.0.14",
-    "@graphql-codegen/introspection": "4.0.3"
+    "winston": "^3.17.0"
   }
 }
