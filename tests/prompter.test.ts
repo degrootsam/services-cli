@@ -41,6 +41,7 @@ describe("Prompter", () => {
 
   it("should return the selected answer", async () => {
     (select as jest.Mock).mockResolvedValue("a");
+
     const options = [
       { name: "A", value: "a" },
       { name: "B", value: "b" },
