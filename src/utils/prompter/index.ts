@@ -1,8 +1,33 @@
-import { input, password, select } from "@inquirer/prompts";
+import { editor, input, password, select } from "@inquirer/prompts";
 import { Separator } from "@inquirer/core";
 import { logger } from "..";
 
 export default class Prompter {
+  async input(
+    message: string,
+    validate?: (value: string) => boolean | string,
+    required?: boolean,
+  ): Promise<string> {
+    const answer = await input({
+      message,
+      required,
+      validate,
+    });
+    logger.debug(`Answer '${answer}'`);
+    return answer;
+  }
+  async editor(
+    message: string,
+    validate?: (value: string) => boolean | string,
+  ): Promise<string> {
+    const answer = editor({
+      message,
+      validate,
+    });
+    logger.debug("Answer", answer);
+
+    return answer;
+  }
   async getUsername(): Promise<string> {
     const answer = await input({
       message: "Please provide your username",
