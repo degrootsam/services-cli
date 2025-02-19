@@ -1,4 +1,7 @@
 import Logger from "./logger/index";
+import Prompter from "./prompter";
 
 const logger = new Logger();
-export { logger };
+const prompter = new Prompter();
+
+export { logger, prompter };
