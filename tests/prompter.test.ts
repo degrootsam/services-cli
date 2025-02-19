@@ -1,9 +1,10 @@
-import { input, password } from "@inquirer/prompts";
+import { input, password, select } from "@inquirer/prompts";
 import { prompter } from "../src/utils";
 
 jest.mock("@inquirer/prompts", () => ({
   input: jest.fn(),
   password: jest.fn(),
+  select: jest.fn(),
 }));
 
 describe("Prompter", () => {
@@ -36,5 +37,17 @@ describe("Prompter", () => {
 
     expect(url).toBe("https://example.com");
     expect(input).toHaveBeenCalledTimes(1);
+  });
+
+  it("should return the selected answer", async () => {
+    (select as jest.Mock).mockResolvedValue("a");
+    const options = [
+      { name: "A", value: "a" },
+      { name: "B", value: "b" },
+    ];
+    const answer = await prompter.select(options);
+
+    expect(answer).toBe("a");
+    expect(select).toHaveBeenCalledTimes(1);
   });
 });

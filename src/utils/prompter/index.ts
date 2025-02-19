@@ -1,4 +1,5 @@
-import { input, password } from "@inquirer/prompts";
+import { input, password, select } from "@inquirer/prompts";
+import { Separator } from "@inquirer/core";
 
 export default class Prompter {
   async getUsername(): Promise<string> {
@@ -26,6 +27,24 @@ export default class Prompter {
         }
         return false;
       },
+    });
+  }
+
+  async select(
+    choices: {
+      description?: string;
+      value: string;
+      name: string;
+      short?: string;
+      separator?: string;
+      disabled?: string;
+    }[],
+    message?: string,
+  ): Promise<string> {
+    return await select({
+      message: message ?? "Please make a choice",
+      choices,
+      loop: true,
     });
   }
 }
