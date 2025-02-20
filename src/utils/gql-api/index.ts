@@ -1,4 +1,3 @@
-import { input, password } from "@inquirer/prompts";
 import { logger, prompter } from "../index.js";
 import {
   GraphQLErrorPayload,
@@ -155,15 +154,17 @@ export default class GraphQLAPI {
           },
         );
 
+        const parsedInput = JSON.parse(input);
+
         break;
     }
   }
 
-  async request<T = any>(
+  async request<D = any>(
     body: Record<string, any>,
     url: string,
     headers?: Record<string, string>,
-  ): Promise<{ data?: T; error?: { message: string } }> {
+  ): Promise<{ data?: D; error?: { message: string } }> {
     logger.debug(`Preparing POST request to ${url}`);
     logger.debug({ body, headers });
     const response = await fetch(this.apiURL, {
@@ -185,7 +186,7 @@ export default class GraphQLAPI {
 
     try {
       const { data, errors } = (await response.json()) as {
-        data?: T;
+        data?: D;
         errors: GraphQLErrorPayload[];
       };
 
@@ -221,7 +222,6 @@ fetch(
     headers: {
       accept: "application/json, multipart/mixed",
       "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
-      authorization: "Bearer yourtokenhere",
       "cache-control": "no-cache",
       "content-type": "application/json",
       pragma: "no-cache",
@@ -237,7 +237,7 @@ fetch(
         "https://degrootsam-dev.betty.app/api/runtime/403f375931924b56bc7853a3016088c8",
       "Referrer-Policy": "strict-origin-when-cross-origin",
     },
-    body: '{"query":"mutation login {\\n  login(\\n    authProfileUuid: \\"59a728ee56814c6fae14417826d9e0b4\\"\\n    username: \\"sam.degroot@bettyblocks.com\\"\\n    password: \\"sam.degroot@bettyblocks.com\\"\\n  ) {\\n    jwtToken\\n    refreshToken\\n  }\\n}","operationName":"login"}',
+    body: '{"query":"mutation { \\n\\taction(id: \\"90a3c018f593426ba3936cacbfc9e425\\", input: $input)\\n}","variables":{"input":{"email_address":"Text","hidden":"Text","password":"Text"}}}',
     method: "POST",
   },
 );
