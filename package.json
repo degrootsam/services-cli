@@ -40,6 +40,7 @@
     "@inquirer/prompts": "^7.3.2",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
+    "degit": "^2.8.4",
     "graphql": "^16.10.0",
     "keytar": "^7.9.0",
     "ora": "^8.2.0",
