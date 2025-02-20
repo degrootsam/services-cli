@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { logger } from "./utils";
 import GraphQLAPI from "./utils/gql-api";
+import { Scaffolder } from "./utils";
 
 const program = new Command();
 
-program
-  .name("Betty Blocks Services CLI (Proof of Concept)")
-  .version("0.0.1")
-  .option("-v, --verbose", "Enable verbose logging");
+const runCLI = async () => {
+  program
+    .name("Betty Blocks Services CLI (Proof of Concept)")
+    .version("0.0.1")
+    .option("-v, --verbose", "Enable verbose logging");
 
-export function runCLI(args: string[]) {
   program
     .command("greet <name>")
     .option("-u, --uppercase", "Convert name to uppercase")
@@ -20,23 +20,41 @@ export function runCLI(args: string[]) {
       console.log(greeting);
     });
 
-  program
-    .command("functions")
+  const components = program.command("components");
+
+  components
+    .command("init <name>")
+    .option(
+      "-f, --force",
+      "Overwrites directory if already exists. Use with caution!",
+    )
+    .action(async (name, options) => {
+      const scaffolder = new Scaffolder();
+      await scaffolder.generateComponentsProject(name, options.force);
+    });
+
+  const functions = program.command("functions");
+
+  functions
+    .command("init <name>")
+    .option(
+      "-f, --force",
+      "Overwrites directory if already exists. Use with caution!",
+    )
+    .action(async (name, options) => {
+      // bbs functions init <name>
+      const scaffolder = new Scaffolder();
+      await scaffolder.generateActionsProject(name, options.force);
+    });
+
+  functions
+    .command("gen")
     .command("types")
     .action(async () => {
       const gqlAPI = new GraphQLAPI();
       await gqlAPI.login();
     });
+  program.parseAsync();
+};
 
-  program.parseAsync(process.argv);
-
-  const globalOpts = program.opts();
-
-  if (globalOpts.verbose) {
-    logger.toggleVerbose(true);
-  }
-}
-
-if (require.main === module) {
-  runCLI(process.argv);
-}
+runCLI();
