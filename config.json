@@ -1,0 +1,8 @@
+{
+  "scaffolder": {
+    "links": {
+      "actions": "https://github.com/Betty-Blocks-Services/generic-actions",
+      "components": "https://github.com/Betty-Blocks-Services/generic-components"
+    }
+  }
+}
