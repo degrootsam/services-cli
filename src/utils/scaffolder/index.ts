@@ -77,11 +77,14 @@ export default class Scaffolder {
     return;
   }
 
-  async generateCodeGenFile(
-    name: string,
-    graphqlURL: string,
-    accessToken: string,
-  ) {
+  async generateCodeGenFile(graphqlURL: string, accessToken: string) {
+    if (!graphqlURL || !accessToken) {
+      logger.error(
+        "Unable to generate codegen.ts! Graphql URL or accessToken are empty",
+      );
+      logger.debug({ graphqlURL, accessToken });
+      return;
+    }
     logger.info("Generating typescript file...");
 
     const outputDir = process.cwd();
@@ -101,12 +104,17 @@ export default class Scaffolder {
 
     let templateContent = fs.readFileSync(templateFile, "utf-8");
 
-    logger.debug(templateContent);
+    if (!templateContent) {
+      return;
+    }
+
     logger.debug("Replacing template content");
 
     templateContent = templateContent
       .replace("{{ graphqlURL }}", graphqlURL)
       .replace("{{ accessToken }}", accessToken);
+
+    logger.debug(templateContent);
 
     const outputPath = path.join(outputDir, "codegen.ts");
 
@@ -114,10 +122,14 @@ export default class Scaffolder {
 
     fs.writeFileSync(outputPath, templateContent);
 
-    logger.debug(`Cleaning temporary directory at ${tempDir}`);
+    logger.debug(`Cleaning temp files  at ${tempDir}`);
 
-    fs.rmdirSync(tempDir, { recursive: true });
+    fs.rm(tempDir, () => {
+      logger.debug("Succesfully cleared temp files");
+    });
 
     logger.info(`Generated codegen.ts in ${outputDir}`);
+
+    return;
   }
 }

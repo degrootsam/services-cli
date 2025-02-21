@@ -5,26 +5,29 @@ import fs from "fs";
 import Scaffolder from "./scaffolder";
 import GraphQLAPI from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
+import { Config } from "./types";
 
 const opts = process.argv.find((v) => v === "--v" || v === "--verbose");
 const logger = new Logger(opts && opts.length > 0);
 
 const prompter = new Prompter();
 
-const DEFAULT_CONFIG = {
+const DEFAULT_CONFIG: Config = {
   scaffolder: {
     links: {
       actions: "https://github.com/Betty-Blocks-Services/generic-actions",
       components: "https://github.com/Betty-Blocks-Services/generic-components",
-      gqlCodeGen:
-        "https://github.com/degrootsam/services-cli/blob/master/codegen.template.ts",
+      gqlCodeGen: "https://github.com/degrootsam/codegen-template",
     },
+  },
+  options: {
+    apiURL: "",
   },
 };
 
 const CONFIG_PATH = path.resolve(process.cwd(), "config.json");
 
-const resolveConfig = () => {
+const resolveConfig = (): Config => {
   const logger = new Logger();
   let userConfig = {};
 
@@ -42,7 +45,7 @@ const resolveConfig = () => {
   return { ...DEFAULT_CONFIG, ...userConfig };
 };
 
-const CONFIG = resolveConfig();
+const CONFIG: Config = resolveConfig();
 
 function isErrorWithMessage(error: unknown): error is { message: string } {
   return typeof error === "object" && error !== null && "message" in error;
