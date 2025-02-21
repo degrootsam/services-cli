@@ -3,10 +3,7 @@
 import { Command } from "commander";
 import GraphQLAPI from "./utils/gql-api";
 import { Scaffolder } from "./utils";
-<<<<<<< HEAD
 import { GraphQLAccessToken } from "./utils/gql-api/types";
-=======
->>>>>>> master
 
 const program = new Command();
 
