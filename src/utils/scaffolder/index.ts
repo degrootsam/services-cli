@@ -83,8 +83,10 @@ export default class Scaffolder {
     accessToken: string,
   ) {
     logger.info("Generating typescript file...");
-    const outputDir = path.resolve(process.cwd(), "generated");
+
+    const outputDir = process.cwd();
     const tempDir = path.resolve(process.cwd(), "temp/generated");
+
     logger.debug({ outputDir, tempDir });
 
     await this.downloadTemplate(
@@ -94,8 +96,11 @@ export default class Scaffolder {
     );
 
     const templateFile = path.join(tempDir, "codegen.template.ts");
+
     logger.debug(`Opening template file from ${templateFile}`);
+
     let templateContent = fs.readFileSync(templateFile, "utf-8");
+
     logger.debug(templateContent);
     logger.debug("Replacing template content");
 
@@ -103,9 +108,7 @@ export default class Scaffolder {
       .replace("{{ graphqlURL }}", graphqlURL)
       .replace("{{ accessToken }}", accessToken);
 
-    const fileName = `${name}.generated.ts`;
-
-    const outputPath = path.join(outputDir, fileName);
+    const outputPath = path.join(outputDir, "codegen.ts");
 
     logger.debug(`Writing template file to ${outputPath}`);
 
@@ -115,6 +118,6 @@ export default class Scaffolder {
 
     fs.rmdirSync(tempDir, { recursive: true });
 
-    logger.info(`Generated ${fileName} in ${outputDir}`);
+    logger.info(`Generated codegen.ts in ${outputDir}`);
   }
 }
