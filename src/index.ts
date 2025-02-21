@@ -2,7 +2,7 @@
 
 import { Command } from "commander";
 import GraphQLAPI from "./utils/gql-api";
-import { Scaffolder } from "./utils";
+import { logger, prompter, Scaffolder } from "./utils";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
 
 const program = new Command();
@@ -59,6 +59,7 @@ const runCLI = async () => {
         accessExpiresAt: Number(),
       };
       const tokensFromKeychain = await gqlAPI.getTokensFromKeychain();
+
       if (tokensFromKeychain.jwtToken) {
         tokens = {
           ...tokensFromKeychain,
@@ -73,7 +74,24 @@ const runCLI = async () => {
           ...tokensFromLogin,
         };
       }
+
+      if (!tokens.jwtToken) {
+        logger.error(
+          "Unable to generate types! Unable to get a jwt token. Turn on verbose logging with --verbose for more information",
+        );
+        return;
+      }
+
+      const apiURL =
+        gqlAPI.getApiURL() ||
+        (await prompter.getURL(
+          "Please enter the URL to the GraphqQL Playground",
+        ));
+
+      const scaffolder = new Scaffolder();
+      await scaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
     });
+
   program.parseAsync();
 };
 

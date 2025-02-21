@@ -3,7 +3,10 @@
     "links": {
       "actions": "https://github.com/Betty-Blocks-Services/generic-actions",
       "components": "https://github.com/Betty-Blocks-Services/generic-components",
-      "gqlCodeGen": "https://github.com/degrootsam/services-cli/blob/master/codegen.template.ts"
+      "gqlCodeGen": "https://github.com/degrootsam/codegen-template/tree/main"
     }
+  },
+  "options": {
+    "apiURL": "https://degrootsam-dev.betty.app/api/runtime/403f375931924b56bc7853a3016088c8"
   }
 }

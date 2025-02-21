@@ -1,19 +1,23 @@
-import { logger, prompter } from "../index.js";
+import { CONFIG, logger, prompter } from "../index";
 import {
   GraphQLErrorPayload,
   AuthenticationSuccessPayload,
   GraphQLAccessToken,
-} from "./types/index.js";
-import { getToken, saveToken } from "../keychain/index.js";
+} from "./types/index";
+import { getToken, saveToken } from "../keychain/index";
 
 export default class GraphQLAPI {
-  private apiURL = "";
+  private apiURL = CONFIG.options.apiURL || "";
   private jwtToken: string = "";
   private refreshToken: string = "";
   private accessTokenExpiresAt: number | null = null;
 
   async getAccessTokens() {
     return await this.getTokensFromKeychain();
+  }
+
+  getApiURL() {
+    return this.apiURL;
   }
 
   private loginQuery(
@@ -49,7 +53,7 @@ export default class GraphQLAPI {
       : null;
 
     const result = {
-      accessToken: this.jwtToken,
+      jwtToken: this.jwtToken,
       refreshToken: this.refreshToken,
       accessTokenExpiresAt: this.accessTokenExpiresAt,
     };
@@ -92,7 +96,11 @@ export default class GraphQLAPI {
       },
     ];
     const choice =
-      currentChoice ?? ((await prompter.select(options)) as "query" | "action");
+      currentChoice ??
+      (await prompter.select(
+        options,
+        "You need to login to the GraphQL API. Please choose your preferred method",
+      ));
 
     const apiURL =
       currentAPIURL ??
