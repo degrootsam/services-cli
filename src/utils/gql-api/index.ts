@@ -2,6 +2,7 @@ import { logger, prompter } from "../index.js";
 import {
   GraphQLErrorPayload,
   AuthenticationSuccessPayload,
+  GraphQLAccessToken,
 } from "./types/index.js";
 import { getToken, saveToken } from "../keychain/index.js";
 
@@ -11,8 +12,9 @@ export default class GraphQLAPI {
   private refreshToken: string = "";
   private accessTokenExpiresAt: number | null = null;
 
-  private async checkTokensInKeychain() {
+  private async getTokensFromKeychain(): Promise<GraphQLAccessToken> {
     logger.debug("Checking tokens in keychain");
+
     this.accessToken = (await getToken("gqlAccessToken")) ?? "";
     this.refreshToken = (await getToken("gqlRefreshToken")) ?? "";
 
@@ -21,11 +23,15 @@ export default class GraphQLAPI {
       ? Number(accessTokenExpiresAt)
       : null;
 
-    logger.debug({
+    const result = {
       accessToken: this.accessToken,
       refreshToken: this.refreshToken,
       accessTokenExpiresAt: this.accessTokenExpiresAt,
-    });
+    };
+
+    logger.debug(result);
+
+    return result;
   }
 
   private loginQuery(

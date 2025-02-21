@@ -54,3 +54,9 @@ export type GraphQLErrorPayload = {
     statusCode: number;
   };
 };
+
+export type GraphQLAccessToken = {
+  jwtToken?: AuthenticationTokenPayload["jwtToken"];
+  refreshToken?: AuthenticationTokenPayload["refreshToken"];
+  accessExpiresAt?: Date;
+};
