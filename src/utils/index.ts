@@ -16,6 +16,8 @@ const DEFAULT_CONFIG = {
     links: {
       actions: "https://github.com/Betty-Blocks-Services/generic-actions",
       components: "https://github.com/Betty-Blocks-Services/generic-components",
+      gqlCodeGen:
+        "https://github.com/degrootsam/services-cli/blob/master/codegen.template.ts",
     },
   },
 };
