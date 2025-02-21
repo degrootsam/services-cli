@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import {
   CONFIG,
   isErrorWithCode,
@@ -73,7 +74,50 @@ export default class Scaffolder {
   - npm run dev
     `,
     );
-
     return;
+  }
+
+  async generateCodeGenFile(
+    name: string,
+    graphqlURL: string,
+    accessToken: string,
+  ) {
+    logger.info("Generating typescript file...");
+
+    const outputDir = process.cwd();
+    const tempDir = path.resolve(process.cwd(), "temp/generated");
+
+    logger.debug({ outputDir, tempDir });
+
+    await this.downloadTemplate(
+      CONFIG.scaffolder.links.gqlCodeGen,
+      tempDir,
+      true,
+    );
+
+    const templateFile = path.join(tempDir, "codegen.template.ts");
+
+    logger.debug(`Opening template file from ${templateFile}`);
+
+    let templateContent = fs.readFileSync(templateFile, "utf-8");
+
+    logger.debug(templateContent);
+    logger.debug("Replacing template content");
+
+    templateContent = templateContent
+      .replace("{{ graphqlURL }}", graphqlURL)
+      .replace("{{ accessToken }}", accessToken);
+
+    const outputPath = path.join(outputDir, "codegen.ts");
+
+    logger.debug(`Writing template file to ${outputPath}`);
+
+    fs.writeFileSync(outputPath, templateContent);
+
+    logger.debug(`Cleaning temporary directory at ${tempDir}`);
+
+    fs.rmdirSync(tempDir, { recursive: true });
+
+    logger.info(`Generated codegen.ts in ${outputDir}`);
   }
 }
