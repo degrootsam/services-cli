@@ -8,30 +8,12 @@ import { getToken, saveToken } from "../keychain/index.js";
 
 export default class GraphQLAPI {
   private apiURL = "";
-  private accessToken: string = "";
+  private jwtToken: string = "";
   private refreshToken: string = "";
   private accessTokenExpiresAt: number | null = null;
 
-  private async getTokensFromKeychain(): Promise<GraphQLAccessToken> {
-    logger.debug("Checking tokens in keychain");
-
-    this.accessToken = (await getToken("gqlAccessToken")) ?? "";
-    this.refreshToken = (await getToken("gqlRefreshToken")) ?? "";
-
-    const accessTokenExpiresAt = await getToken("gqlAccessTokenExpiresAt");
-    this.accessTokenExpiresAt = accessTokenExpiresAt
-      ? Number(accessTokenExpiresAt)
-      : null;
-
-    const result = {
-      accessToken: this.accessToken,
-      refreshToken: this.refreshToken,
-      accessTokenExpiresAt: this.accessTokenExpiresAt,
-    };
-
-    logger.debug(result);
-
-    return result;
+  async getAccessTokens() {
+    return await this.getTokensFromKeychain();
   }
 
   private loginQuery(
@@ -55,6 +37,28 @@ export default class GraphQLAPI {
     `;
   }
 
+  async getTokensFromKeychain(): Promise<GraphQLAccessToken> {
+    logger.debug("Checking tokens in keychain");
+
+    this.jwtToken = (await getToken("gqlAccessToken")) ?? "";
+    this.refreshToken = (await getToken("gqlRefreshToken")) ?? "";
+
+    const accessTokenExpiresAt = await getToken("gqlAccessTokenExpiresAt");
+    this.accessTokenExpiresAt = accessTokenExpiresAt
+      ? Number(accessTokenExpiresAt)
+      : null;
+
+    const result = {
+      accessToken: this.jwtToken,
+      refreshToken: this.refreshToken,
+      accessTokenExpiresAt: this.accessTokenExpiresAt,
+    };
+
+    logger.debug(result);
+
+    return result;
+  }
+
   validateAccessToken = (): boolean => {
     if (!this.accessTokenExpiresAt) return false;
 
@@ -67,7 +71,7 @@ export default class GraphQLAPI {
     currentChoice?: string,
     currentAPIURL?: string,
     currentAuthProfileUuid?: string,
-  ): Promise<void> {
+  ): Promise<GraphQLAccessToken | void> {
     if (this.validateAccessToken()) {
       logger.debug("Token is still valid, skipping login...");
       return;
@@ -127,21 +131,26 @@ export default class GraphQLAPI {
           return;
         }
 
-        this.accessToken = data.login.jwtToken!;
-        this.refreshToken = data.login.refreshToken!;
-        const currentTime = new Date();
-        const accessTokenExpiresAt = currentTime.setTime(
-          currentTime.getTime() +
-            ((data.login.accessExpiresIn ?? 7200) - 600) * 1000,
-        );
-        this.accessTokenExpiresAt = accessTokenExpiresAt;
+        const { jwtToken, refreshToken, accessExpiresIn } = data.login;
 
-        await saveToken("gqlAccessToken", data.login.jwtToken!);
-        await saveToken("gqlRefreshToken", data.login.refreshToken!);
-        await saveToken(
-          "gqlAccessTokenExpiresAt",
-          accessTokenExpiresAt.toString(),
+        this.jwtToken = jwtToken!;
+        this.refreshToken = refreshToken!;
+
+        const currentTime = new Date();
+        const accessExpiresAt = currentTime.setTime(
+          currentTime.getTime() + ((accessExpiresIn ?? 7200) - 600) * 1000,
         );
+
+        this.accessTokenExpiresAt = accessExpiresAt;
+
+        await saveToken("gqlAccessToken", jwtToken!);
+        await saveToken("gqlRefreshToken", refreshToken!);
+        await saveToken("gqlAccessTokenExpiresAt", accessExpiresAt.toString());
+        return {
+          jwtToken,
+          refreshToken,
+          accessExpiresAt,
+        };
 
         break;
       case "action":

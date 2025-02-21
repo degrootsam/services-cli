@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import GraphQLAPI from "./utils/gql-api";
 import { Scaffolder } from "./utils";
+import { GraphQLAccessToken } from "./utils/gql-api/types";
 
 const program = new Command();
 
@@ -52,7 +53,26 @@ const runCLI = async () => {
     .command("types")
     .action(async () => {
       const gqlAPI = new GraphQLAPI();
-      await gqlAPI.login();
+      let tokens: GraphQLAccessToken = {
+        jwtToken: String(),
+        refreshToken: String(),
+        accessExpiresAt: Number(),
+      };
+      const tokensFromKeychain = await gqlAPI.getTokensFromKeychain();
+      if (tokensFromKeychain.jwtToken) {
+        tokens = {
+          ...tokensFromKeychain,
+        };
+      } else {
+        const tokensFromLogin = await gqlAPI.login();
+        if (!tokensFromLogin) {
+          // Login failed
+          return;
+        }
+        tokens = {
+          ...tokensFromLogin,
+        };
+      }
     });
   program.parseAsync();
 };

@@ -58,5 +58,5 @@ export type GraphQLErrorPayload = {
 export type GraphQLAccessToken = {
   jwtToken?: AuthenticationTokenPayload["jwtToken"];
   refreshToken?: AuthenticationTokenPayload["refreshToken"];
-  accessExpiresAt?: Date;
+  accessExpiresAt?: Maybe<Scalars["Int"]["output"]>;
 };
