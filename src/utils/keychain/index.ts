@@ -21,8 +21,8 @@ export async function getToken(
   account_name: keyof AccountNames,
 ): Promise<string | null> {
   logger.debug(`Fetching password from Keychain`);
-  const result = keytar.getPassword(SERVICE_NAME, account_name);
-  logger.debug(`Passwor fetched from Keychain`);
+  const result = await keytar.getPassword(SERVICE_NAME, account_name);
+  logger.debug(`Password fetched from Keychain ${result?.length}`);
   return result;
 }
 

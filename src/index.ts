@@ -1,11 +1,40 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { execa } from "execa";
+import ora from "ora";
+import {
+  director,
+  isErrorWithMessage,
+  logger,
+  prompter,
+  scaffolder,
+  spinner,
+} from "./utils";
 import GraphQLAPI from "./utils/gql-api";
-import { logger, prompter, Scaffolder } from "./utils";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
 
 const program = new Command();
+
+// Wrapper function to catch errors
+const withErrorHandling = (fn: (...args: any[]) => Promise<void>) => {
+  return async (...args: any[]) => {
+    try {
+      await fn(...args);
+    } catch (error) {
+      logger.debug(error);
+      if (isErrorWithMessage(error)) {
+        // Prevent logging when user cancels the action
+        if (error.message !== "User force closed the prompt with 0 null") {
+          logger.error(error.message);
+        }
+      } else {
+        logger.error(error);
+      }
+      process.exit(1);
+    }
+  };
+};
 
 const runCLI = async () => {
   program
@@ -30,7 +59,6 @@ const runCLI = async () => {
       "Overwrites directory if already exists. Use with caution!",
     )
     .action(async (name, options) => {
-      const scaffolder = new Scaffolder();
       await scaffolder.generateComponentsProject(name, options.force);
     });
 
@@ -44,53 +72,112 @@ const runCLI = async () => {
     )
     .action(async (name, options) => {
       // bbs functions init <name>
-      const scaffolder = new Scaffolder();
       await scaffolder.generateActionsProject(name, options.force);
     });
 
   functions
     .command("gen")
     .command("types")
-    .action(async () => {
-      const gqlAPI = new GraphQLAPI();
-      let tokens: GraphQLAccessToken = {
-        jwtToken: String(),
-        refreshToken: String(),
-        accessExpiresAt: Number(),
-      };
-      const tokensFromKeychain = await gqlAPI.getTokensFromKeychain();
+    .action(
+      withErrorHandling(async () => {
+        let packageJSONContent = director.getPackageJSON();
+        if (!packageJSONContent) {
+          const choice = (await prompter.select(
+            [
+              { name: "Initialize functions project", value: "functions" },
+              { name: "Initialize empty npm project (npm init)", value: "npm" },
+            ],
+            "The current working directory has no package.json (required). Please make a choice:",
+          )) as "functions" | "npm";
 
-      if (tokensFromKeychain.jwtToken) {
-        tokens = {
-          ...tokensFromKeychain,
+          switch (choice) {
+            case "functions":
+              const name = await prompter.input(
+                "Please provide a name for the project",
+                true,
+              );
+              await scaffolder.generateActionsProject(name, true);
+
+              director.changeDir(name);
+
+            case "npm":
+              execa`npm init`;
+          }
+
+          const dependencies =
+            "@graphql-codegen/typescript typescript @graphql-codegen/cli @graphql-codegen/typescript-document-nodes @graphql-codegen/introspection";
+          logger.debug(`Installing dependencies: ${dependencies}`);
+          spinner.text = "Installing dependencies";
+          spinner.start();
+          await execa`npm i -D ${dependencies}`;
+          await execa`npm i graphql`;
+          spinner.succeed("Dependencies installed");
+        }
+
+        if (!packageJSONContent) {
+          // Reload package.json
+          packageJSONContent = director.getPackageJSON();
+          if (!packageJSONContent) {
+            throw new Error(
+              "Unable to generate types. Cannot load package.json! Please make sure you are inside a functions project",
+            );
+          }
+          packageJSONContent = {
+            ...packageJSONContent,
+            scripts: {
+              ...packageJSONContent.scripts,
+              "generate-types": "graphql-codegen --config codegen.ts",
+            },
+          };
+          director.writeFile(
+            "package.json",
+            JSON.stringify(packageJSONContent),
+          );
+        }
+        const gqlAPI = new GraphQLAPI();
+        let tokens: GraphQLAccessToken = {
+          jwtToken: String(),
+          refreshToken: String(),
+          accessExpiresAt: Number(),
         };
-      } else {
-        const tokensFromLogin = await gqlAPI.login();
-        if (!tokensFromLogin) {
-          // Login failed
+
+        const tokensFromKeychain = await gqlAPI.getTokensFromKeychain();
+
+        if (tokensFromKeychain) {
+          tokens = {
+            ...tokensFromKeychain,
+          };
+        } else {
+          const tokensFromLogin = await gqlAPI.login();
+          if (!tokensFromLogin) {
+            // Login failed
+            return;
+          }
+          tokens = {
+            ...tokensFromLogin,
+          };
+        }
+
+        if (!tokens.jwtToken) {
+          logger.error(
+            "Unable to generate types! Unable to get a jwt token. Turn on verbose logging with --verbose for more information",
+          );
           return;
         }
-        tokens = {
-          ...tokensFromLogin,
-        };
-      }
 
-      if (!tokens.jwtToken) {
-        logger.error(
-          "Unable to generate types! Unable to get a jwt token. Turn on verbose logging with --verbose for more information",
-        );
-        return;
-      }
-
-      const apiURL =
-        gqlAPI.getApiURL() ||
-        (await prompter.getURL(
-          "Please enter the URL to the GraphqQL Playground",
-        ));
-
-      const scaffolder = new Scaffolder();
-      await scaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
-    });
+        const apiURL =
+          gqlAPI.getApiURL() ||
+          (await prompter.getURL(
+            "Please enter the URL to the GraphqQL Playground",
+          ));
+        spinner.text = "Generating types";
+        spinner.start();
+        await scaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
+        await execa`npm run generate-types`;
+        spinner.succeed("Types generated in generated/graphql.ts");
+        process.exit(0);
+      }),
+    );
 
   program.parseAsync();
 };

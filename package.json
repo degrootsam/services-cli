@@ -12,7 +12,7 @@
   "scripts": {
     "test": "jest",
     "build": "tsc -p tsconfig.json && chmod +x dist/index.js",
-    "codegen": "graphql-codegen --help"
+    "codegen": "graphql-codegen --config codegen.ts"
   },
   "bin": {
     "bbs": "./dist/index.js"
@@ -42,6 +42,7 @@
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "degit": "^2.8.4",
+    "execa": "^9.5.2",
     "graphql": "^16.10.0",
     "keytar": "^7.9.0",
     "ora": "^8.2.0",

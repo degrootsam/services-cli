@@ -1,41 +1,49 @@
-import path from "path";
-import fs from "fs";
-import {
-  CONFIG,
-  isErrorWithCode,
-  isErrorWithMessage,
-  logger,
-  prompter,
-} from "..";
+import { error } from "console";
 import degit from "degit";
+import fs from "fs";
+import path from "path";
+import { CONFIG, isErrorWithCode, logger, spinner } from "..";
 
 export default class Scaffolder {
   async downloadTemplate(
     url: string,
     location: string,
     force: boolean,
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     const cloneLocation = path.resolve(process.cwd(), location);
     const downloader = degit(url, { force });
+    spinner.text = "Downloading template";
+    spinner.start();
     try {
       await downloader.clone(cloneLocation);
       logger.debug(
         `Downloaded template using degit from ${url} and stored in ${cloneLocation}`,
       );
     } catch (err) {
+      spinner.stop();
       logger.error("Error downloading template!");
       if (isErrorWithCode(err)) {
         if (err.code === "DEST_NOT_EMPTY") {
-          logger.error(
+          throw new Error(
             "Destination directory is not empty! Provide a different name or use --force to overwrite",
           );
-          return;
+        }
+        if (err.code === "COULD_NOT_DOWNLOAD") {
+          logger.debug(err);
+          throw new Error(
+            "Unable to download codegen file! Use verbose logging with --verbose for more information",
+          );
         }
       }
-      logger.error(err);
+      throw new Error(JSON.stringify(err));
     }
 
-    return;
+    spinner.succeed("Template downloaded successfully");
+    return cloneLocation;
+  }
+
+  parseName(name: string) {
+    return name.replaceAll(/\s/g, "_").toLowerCase();
   }
 
   async generateActionsProject(
@@ -62,7 +70,7 @@ export default class Scaffolder {
     name: string = "",
     force: boolean,
   ): Promise<void> {
-    const componentsTemplateUrl = CONFIG.scaffolder.links.actions;
+    const componentsTemplateUrl = CONFIG.scaffolder.links.components;
     await this.downloadTemplate(componentsTemplateUrl, name, force);
 
     logger.info(
@@ -85,20 +93,23 @@ export default class Scaffolder {
       logger.debug({ graphqlURL, accessToken });
       return;
     }
-    logger.info("Generating typescript file...");
 
-    const outputDir = process.cwd();
-    const tempDir = path.resolve(process.cwd(), "temp/generated");
+    const targetDir = process.cwd();
+    const tempDir = path.resolve(process.cwd(), "temp");
 
-    logger.debug({ outputDir, tempDir });
+    logger.debug({ outputDir: targetDir, tempDir });
 
-    await this.downloadTemplate(
+    const tempOutputDir = await this.downloadTemplate(
       CONFIG.scaffolder.links.gqlCodeGen,
       tempDir,
       true,
     );
 
-    const templateFile = path.join(tempDir, "codegen.template.ts");
+    if (!tempOutputDir) {
+      return;
+    }
+
+    const templateFile = path.join(tempOutputDir, "codegen.template.ts");
 
     logger.debug(`Opening template file from ${templateFile}`);
 
@@ -116,20 +127,20 @@ export default class Scaffolder {
 
     logger.debug(templateContent);
 
-    const outputPath = path.join(outputDir, "codegen.ts");
+    const outputPath = path.join(targetDir, "codegen.ts");
 
     logger.debug(`Writing template file to ${outputPath}`);
 
     fs.writeFileSync(outputPath, templateContent);
 
-    logger.debug(`Cleaning temp files  at ${tempDir}`);
+    logger.debug(`Cleaning temp files  at ${tempOutputDir}`);
 
-    fs.rm(tempDir, () => {
-      logger.debug("Succesfully cleared temp files");
+    fs.rm(tempOutputDir, { recursive: true, force: true }, (err) => {
+      if (err) {
+        logger.error(err);
+      }
+
+      return true;
     });
-
-    logger.info(`Generated codegen.ts in ${outputDir}`);
-
-    return;
   }
 }

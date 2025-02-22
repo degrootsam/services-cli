@@ -5,8 +5,8 @@ import { logger } from "..";
 export default class Prompter {
   async input(
     message: string,
-    validate?: (value: string) => boolean | string,
     required?: boolean,
+    validate?: (value: string) => boolean | string,
   ): Promise<string> {
     const answer = await input({
       message,
@@ -67,7 +67,7 @@ export default class Prompter {
       required: true,
       validate(value: string) {
         const urlMatch = value.match(
-          /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/g,
+          /^[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?$/g,
         );
 
         if (urlMatch && urlMatch.length > 0) {

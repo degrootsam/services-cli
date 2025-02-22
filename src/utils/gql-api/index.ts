@@ -41,7 +41,7 @@ export default class GraphQLAPI {
     `;
   }
 
-  async getTokensFromKeychain(): Promise<GraphQLAccessToken> {
+  async getTokensFromKeychain(): Promise<GraphQLAccessToken | undefined> {
     logger.debug("Checking tokens in keychain");
 
     this.jwtToken = (await getToken("gqlAccessToken")) ?? "";
@@ -58,17 +58,30 @@ export default class GraphQLAPI {
       accessTokenExpiresAt: this.accessTokenExpiresAt,
     };
 
-    logger.debug(result);
+    if (this.validateAccessToken()) {
+      logger.debug(result);
 
-    return result;
+      return result;
+    }
+
+    return;
   }
 
   validateAccessToken = (): boolean => {
-    if (!this.accessTokenExpiresAt) return false;
+    logger.debug("Validating access tokens");
+
+    if (!this.accessTokenExpiresAt) {
+      logger.debug("accessTokenExpiresAt is undefined or null");
+      return false;
+    }
 
     const now = new Date();
     const accessTokenExpiresAt = new Date(this.accessTokenExpiresAt);
-    return accessTokenExpiresAt > now;
+    const result = accessTokenExpiresAt > now;
+
+    logger.debug(`Access tokens are ${result ? "valid" : "not valid"}`);
+
+    return result;
   };
 
   async login(

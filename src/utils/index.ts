@@ -6,11 +6,16 @@ import Scaffolder from "./scaffolder";
 import GraphQLAPI from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
 import { Config } from "./types";
+import Director from "./director";
+import ora from "ora";
 
 const opts = process.argv.find((v) => v === "--v" || v === "--verbose");
 const logger = new Logger(opts && opts.length > 0);
 
 const prompter = new Prompter();
+const director = new Director();
+const scaffolder = new Scaffolder();
+const spinner = ora();
 
 const DEFAULT_CONFIG: Config = {
   scaffolder: {
@@ -57,14 +62,17 @@ function isErrorWithCode(error: unknown): error is { code: string } {
 
 export {
   // Initialized Classes
+  director,
   logger,
   prompter,
+  scaffolder,
   // Functions
   clearToken,
   getToken,
   saveToken,
   isErrorWithMessage,
   isErrorWithCode,
+  spinner,
   // Constants
   CONFIG,
   // Classess

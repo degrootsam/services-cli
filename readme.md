@@ -10,3 +10,4 @@
 - [CodeGen for GraphQL Schema](https://the-guild.dev/graphql/codegen/plugins/typescript/typescript)
 - [Keytar](https://github.com/atom/node-keytar)
 - [Degit](https://github.com/Rich-Harris/degit)
+- [Execa](https://github.com/sindresorhus/execa)
