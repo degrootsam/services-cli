@@ -13,6 +13,7 @@ import {
 } from "./utils";
 import GraphQLAPI from "./utils/gql-api";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
+import { devNull } from "os";
 
 const program = new Command();
 
@@ -103,15 +104,6 @@ const runCLI = async () => {
             case "npm":
               execa`npm init`;
           }
-
-          const dependencies =
-            "@graphql-codegen/typescript typescript @graphql-codegen/cli @graphql-codegen/typescript-document-nodes @graphql-codegen/introspection";
-          logger.debug(`Installing dependencies: ${dependencies}`);
-          spinner.text = "Installing dependencies";
-          spinner.start();
-          await execa`npm i -D ${dependencies}`;
-          await execa`npm i graphql`;
-          spinner.succeed("Dependencies installed");
         }
 
         if (!packageJSONContent) {
@@ -122,18 +114,35 @@ const runCLI = async () => {
               "Unable to generate types. Cannot load package.json! Please make sure you are inside a functions project",
             );
           }
-          packageJSONContent = {
-            ...packageJSONContent,
-            scripts: {
-              ...packageJSONContent.scripts,
-              "generate-types": "graphql-codegen --config codegen.ts",
-            },
-          };
-          director.writeFile(
-            "package.json",
-            JSON.stringify(packageJSONContent),
-          );
         }
+
+        const dependencies = [
+          "-D @graphql-codegen/typescript",
+          "-D typescript",
+          "-D @graphql-codegen/cli",
+          "-D @graphql-codegen/typescript-document-nodes",
+          "-D @graphql-codegen/introspection",
+          "graphql",
+        ];
+        spinner.text = `Installing dependencies (0/${dependencies.length})`;
+        spinner.start();
+        for (let i = 0; i < dependencies.length; i++) {
+          spinner.text = `Installing dependencies (${i + 1}/${dependencies.length})`;
+          const dependency = dependencies[i];
+          const command = `npm i ${dependency}`;
+          await execa(command, { shell: true });
+        }
+        spinner.succeed("Dependencies installed");
+
+        packageJSONContent = {
+          ...packageJSONContent,
+          scripts: {
+            ...packageJSONContent.scripts,
+            "generate-types": "graphql-codegen --config codegen.ts",
+          },
+        };
+        director.writeFile("package.json", JSON.stringify(packageJSONContent));
+
         const gqlAPI = new GraphQLAPI();
         let tokens: GraphQLAccessToken = {
           jwtToken: String(),
