@@ -2,7 +2,6 @@
 
 import { Command } from "commander";
 import { execa } from "execa";
-import ora from "ora";
 import {
   director,
   isErrorWithMessage,
@@ -13,7 +12,6 @@ import {
 } from "./utils";
 import GraphQLAPI from "./utils/gql-api";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
-import { devNull } from "os";
 
 const program = new Command();
 
