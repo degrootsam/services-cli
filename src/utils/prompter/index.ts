@@ -1,4 +1,4 @@
-import { editor, input, password, select } from "@inquirer/prompts";
+import { confirm, editor, input, password, select } from "@inquirer/prompts";
 import { Separator } from "@inquirer/core";
 import { logger } from "..";
 
@@ -98,6 +98,17 @@ export default class Prompter {
       message: message ?? "Please make a choice",
       choices,
       loop: true,
+    });
+
+    logger.debug(`Answer ${answer}`);
+
+    return answer;
+  }
+
+  async confirm(message: string, def: boolean = true) {
+    const answer = await confirm({
+      message,
+      default: def,
     });
 
     logger.debug(`Answer ${answer}`);

@@ -57,9 +57,11 @@ const runCLI = async () => {
       "-f, --force",
       "Overwrites directory if already exists. Use with caution!",
     )
-    .action(async (name, options) => {
-      await scaffolder.generateComponentsProject(name, options.force);
-    });
+    .action(
+      withErrorHandling(async (name, options) => {
+        await scaffolder.generateComponentsProject(name, options.force);
+      }),
+    );
 
   const functions = program.command("functions");
 
@@ -69,10 +71,12 @@ const runCLI = async () => {
       "-f, --force",
       "Overwrites directory if already exists. Use with caution!",
     )
-    .action(async (name, options) => {
-      // bbs functions init <name>
-      await scaffolder.generateActionsProject(name, options.force);
-    });
+    .action(
+      withErrorHandling(async (name, options) => {
+        // bbs functions init <name>
+        await scaffolder.generateActionsProject(name, options.force);
+      }),
+    );
 
   functions
     .command("gen")
@@ -100,7 +104,18 @@ const runCLI = async () => {
               director.changeDir(name);
 
             case "npm":
-              execa`npm init`;
+              const createNewDirectory = await prompter.confirm(
+                "Do you want to create a new directory?",
+              );
+              if (createNewDirectory) {
+                const newDirectoryName = await prompter.input(
+                  "Please enter a name for the direcory",
+                  true,
+                );
+                director.createDir(newDirectoryName);
+                director.changeDir(newDirectoryName);
+              }
+              await execa("npm", ["init"], { stdio: "inherit" });
           }
         }
 
