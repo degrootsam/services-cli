@@ -27,7 +27,11 @@ lint:
     - yamllint@1.35.1
 actions:
   enabled:
+    - commitizen
     - trunk-announce
     - trunk-check-pre-push
     - trunk-fmt-pre-commit
     - trunk-upgrade-available
+tools:
+  enabled:
+    - commitizen@4.3.0
