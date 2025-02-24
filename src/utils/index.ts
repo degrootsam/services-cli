@@ -1,20 +1,19 @@
-import Logger from "./logger/index";
-import Prompter from "./prompter";
-import path from "path";
 import fs from "fs";
-import Scaffolder from "./scaffolder";
+import ora from "ora";
+import path from "path";
+import Director from "./director";
 import GraphQLAPI from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
+import Logger from "./logger/index";
+import Prompter from "./prompter";
+import ComponentsScaffolder from "./scaffolder/components";
+import FunctionsScaffolder from "./scaffolder/functions";
 import { Config } from "./types";
-import Director from "./director";
-import ora from "ora";
 
 const opts = process.argv.find((v) => v === "--v" || v === "--verbose");
 const logger = new Logger(opts && opts.length > 0);
-
 const prompter = new Prompter();
 const director = new Director();
-const scaffolder = new Scaffolder();
 const spinner = ora();
 
 const DEFAULT_CONFIG: Config = {
@@ -61,21 +60,21 @@ function isErrorWithCode(error: unknown): error is { code: string } {
 }
 
 export {
-  // Initialized Classes
-  director,
-  logger,
-  prompter,
-  scaffolder,
   // Functions
   clearToken,
-  getToken,
-  saveToken,
-  isErrorWithMessage,
-  isErrorWithCode,
-  spinner,
+  ComponentsScaffolder,
   // Constants
   CONFIG,
+  // Initialized Classes
+  director,
+  FunctionsScaffolder,
+  getToken,
   // Classess
-  Scaffolder,
   GraphQLAPI,
+  isErrorWithCode,
+  isErrorWithMessage,
+  logger,
+  prompter,
+  saveToken,
+  spinner,
 };

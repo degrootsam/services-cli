@@ -3,11 +3,12 @@
 import { Command } from "commander";
 import { execa } from "execa";
 import {
+  ComponentsScaffolder,
   director,
+  FunctionsScaffolder,
   isErrorWithMessage,
   logger,
   prompter,
-  scaffolder,
   spinner,
 } from "./utils";
 import GraphQLAPI from "./utils/gql-api";
@@ -41,25 +42,29 @@ const runCLI = async () => {
     .version("0.0.1")
     .option("-v, --verbose", "Enable verbose logging");
 
-  program
-    .command("greet <name>")
-    .option("-u, --uppercase", "Convert name to uppercase")
-    .action((name, options) => {
-      const greeting = `Hello, ${options.uppercase ? name.toUpperCase() : name}!`;
-      console.log(greeting);
-    });
-
   const components = program.command("components");
 
   components
     .command("init <name>")
+    .description("Initialize a new components project")
     .option(
       "-f, --force",
       "Overwrites directory if already exists. Use with caution!",
     )
     .action(
       withErrorHandling(async (name, options) => {
-        await scaffolder.generateComponentsProject(name, options.force);
+        const componentsScaffolder = new ComponentsScaffolder();
+        await componentsScaffolder.generateProject(name, options.force);
+      }),
+    );
+
+  components
+    .command("new <name>")
+    .description("Initialize a new component")
+    .action(
+      withErrorHandling(async (name) => {
+        const componentsScaffolder = new ComponentsScaffolder();
+        await componentsScaffolder.generateComponent(name);
       }),
     );
 
@@ -67,6 +72,7 @@ const runCLI = async () => {
 
   functions
     .command("init <name>")
+    .description("Initialize a new functions project")
     .option(
       "-f, --force",
       "Overwrites directory if already exists. Use with caution!",
@@ -74,15 +80,29 @@ const runCLI = async () => {
     .action(
       withErrorHandling(async (name, options) => {
         // bbs functions init <name>
-        await scaffolder.generateActionsProject(name, options.force);
+        const functionsScaffolder = new FunctionsScaffolder();
+        await functionsScaffolder.generateProject(name, options.force);
       }),
     );
 
   functions
-    .command("gen")
-    .command("types")
+    .command("new <name>")
+    .description("Initialize a new function")
+    .action(
+      withErrorHandling(async (name) => {
+        const functionsScaffolder = new FunctionsScaffolder();
+        await functionsScaffolder.generateFunction(name);
+      }),
+    );
+
+  functions
+    .command("gen-types")
+    .description(
+      "Generate a typescript file based on a Betty Blocks application",
+    )
     .action(
       withErrorHandling(async () => {
+        const functionsScaffolder = new FunctionsScaffolder();
         let packageJSONContent = director.getPackageJSON();
         if (!packageJSONContent) {
           const choice = (await prompter.select(
@@ -99,7 +119,7 @@ const runCLI = async () => {
                 "Please provide a name for the project",
                 true,
               );
-              await scaffolder.generateActionsProject(name, true);
+              await functionsScaffolder.generateProject(name, true);
 
               director.changeDir(name);
 
@@ -194,7 +214,7 @@ const runCLI = async () => {
           ));
         spinner.text = "Generating types";
         spinner.start();
-        await scaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
+        await functionsScaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
         await execa`npm run generate-types`;
         spinner.succeed("Types generated in generated/graphql.ts");
         process.exit(0);
