@@ -6,7 +6,7 @@ import { CONFIG, logger } from "../..";
 // Scaffolder for functions projects and individual functions
 export default class FunctionsScaffolder extends BaseScaffolder {
   async generateProject(name: string, force: boolean) {
-    const templateUrl = CONFIG.scaffolder.links.actions;
+    const templateUrl = CONFIG.scaffolder.templates.functions.typescript;
     await this.downloadTemplate(templateUrl, name, force);
 
     logger.info(
@@ -34,7 +34,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     logger.debug({ outputDir: targetDir, tempDir });
 
     const tempOutputDir = await this.downloadTemplate(
-      CONFIG.scaffolder.links.gqlCodeGen,
+      CONFIG.scaffolder.codeGeneration.gqlCodeGen,
       tempDir,
       true,
     );

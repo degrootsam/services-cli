@@ -31,8 +31,8 @@ const withErrorHandling = (fn: (...args: any[]) => Promise<void>) => {
       } else {
         logger.error(error);
       }
-      process.exit(1);
     }
+    process.exit(1);
   };
 };
 
@@ -217,7 +217,6 @@ const runCLI = async () => {
         await functionsScaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
         await execa`npm run generate-types`;
         spinner.succeed("Types generated in generated/graphql.ts");
-        process.exit(0);
       }),
     );
 

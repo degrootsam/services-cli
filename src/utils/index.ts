@@ -1,6 +1,5 @@
-import fs from "fs";
 import ora from "ora";
-import path from "path";
+import CONFIG from "./config";
 import Director from "./director";
 import GraphQLAPI from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
@@ -8,48 +7,12 @@ import Logger from "./logger/index";
 import Prompter from "./prompter";
 import ComponentsScaffolder from "./scaffolder/components";
 import FunctionsScaffolder from "./scaffolder/functions";
-import { Config } from "./types";
 
 const opts = process.argv.find((v) => v === "--v" || v === "--verbose");
 const logger = new Logger(opts && opts.length > 0);
 const prompter = new Prompter();
 const director = new Director();
 const spinner = ora();
-
-const DEFAULT_CONFIG: Config = {
-  scaffolder: {
-    links: {
-      actions: "https://github.com/Betty-Blocks-Services/generic-actions",
-      components: "https://github.com/Betty-Blocks-Services/generic-components",
-      gqlCodeGen: "https://github.com/degrootsam/codegen-template",
-    },
-  },
-  options: {
-    apiURL: "",
-  },
-};
-
-const CONFIG_PATH = path.resolve(process.cwd(), "config.json");
-
-const resolveConfig = (): Config => {
-  const logger = new Logger();
-  let userConfig = {};
-
-  if (fs.existsSync(CONFIG_PATH)) {
-    try {
-      userConfig = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8"));
-    } catch (err) {
-      logger.error(
-        "Unable to parse config.json! Falling back to default config. Use verbose logging for more information: -v, --verbose",
-      );
-      logger.debug(err);
-    }
-  }
-
-  return { ...DEFAULT_CONFIG, ...userConfig };
-};
-
-const CONFIG: Config = resolveConfig();
 
 function isErrorWithMessage(error: unknown): error is { message: string } {
   return typeof error === "object" && error !== null && "message" in error;
