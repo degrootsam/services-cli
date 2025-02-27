@@ -1,6 +1,6 @@
 import degit from "degit";
 import path from "path";
-import { isErrorWithCode, logger, spinner } from "..";
+import { director, isErrorWithCode, logger, spinner } from "..";
 
 // Base scaffolder with shared logic
 export default class BaseScaffolder {
@@ -9,7 +9,7 @@ export default class BaseScaffolder {
     location: string,
     force: boolean,
   ): Promise<string | undefined> {
-    const cloneLocation = path.resolve(process.cwd(), location);
+    const cloneLocation = director.resolvePath(location);
     const downloader = degit(url, { force });
 
     spinner.text = "Downloading template";

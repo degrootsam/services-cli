@@ -1,6 +1,7 @@
 import ora from "ora";
 import CONFIG from "./config";
 import Director from "./director";
+import FunctionsUtils from "./functions";
 import GraphQLAPI from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
 import Logger from "./logger/index";
@@ -23,16 +24,13 @@ function isErrorWithCode(error: unknown): error is { code: string } {
 }
 
 export {
-  // Functions
   clearToken,
   ComponentsScaffolder,
-  // Constants
   CONFIG,
-  // Initialized Classes
   director,
   FunctionsScaffolder,
+  FunctionsUtils,
   getToken,
-  // Classess
   GraphQLAPI,
   isErrorWithCode,
   isErrorWithMessage,

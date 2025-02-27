@@ -93,11 +93,13 @@ export default class Prompter {
       disabled?: string;
     }[],
     message?: string,
+    def?: string,
   ): Promise<string> {
     const answer = await select({
       message: message ?? "Please make a choice",
       choices,
       loop: true,
+      default: def,
     });
 
     logger.debug(`Answer ${answer}`);

@@ -26,9 +26,16 @@ const withErrorHandling = (fn: (...args: any[]) => Promise<void>) => {
       if (isErrorWithMessage(error)) {
         // Prevent logging when user cancels the action
         if (error.message !== "User force closed the prompt with 0 null") {
-          logger.error(error.message);
+          if (spinner.isSpinning) {
+            spinner.fail(error.message);
+          } else {
+            logger.error(error.message);
+          }
         }
       } else {
+        if (spinner.isSpinning) {
+          spinner.fail("Failed with an error");
+        }
         logger.error(error);
       }
     }
@@ -72,7 +79,8 @@ const runCLI = async () => {
 
   functions
     .command("init <name>")
-    .description("Initialize a new functions project")
+    .option("--j, --javascript", "Use vanilla JavaScript")
+    .description("Initialize a new TypeScript functions project")
     .option(
       "-f, --force",
       "Overwrites directory if already exists. Use with caution!",
@@ -81,7 +89,11 @@ const runCLI = async () => {
       withErrorHandling(async (name, options) => {
         // bbs functions init <name>
         const functionsScaffolder = new FunctionsScaffolder();
-        await functionsScaffolder.generateProject(name, options.force);
+        await functionsScaffolder.generateProject(
+          name,
+          options.force,
+          options.javascript,
+        );
       }),
     );
 
@@ -92,6 +104,16 @@ const runCLI = async () => {
       withErrorHandling(async (name) => {
         const functionsScaffolder = new FunctionsScaffolder();
         await functionsScaffolder.generateFunction(name);
+      }),
+    );
+
+  functions
+    .command("bump")
+    .description("Create a new version for a function")
+    .action(
+      withErrorHandling(async () => {
+        const functionsScaffolder = new FunctionsScaffolder();
+        await functionsScaffolder.bumpFunction();
       }),
     );
 
@@ -202,7 +224,7 @@ const runCLI = async () => {
 
         if (!tokens.jwtToken) {
           logger.error(
-            "Unable to generate types! Unable to get a jwt token. Turn on verbose logging with --verbose for more information",
+            "Unable to generate types! Unable to get a valid access token. Turn on verbose logging with --verbose for more information",
           );
           return;
         }

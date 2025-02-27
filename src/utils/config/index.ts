@@ -6,7 +6,7 @@ import { logger } from "..";
 
 const DEFAULT_CONFIG: Config = {
   scaffolder: {
-    templates: {
+    projects: {
       functions: {
         typescript:
           "https://github.com/degrootsam/bb-generic-actions-typescript",
@@ -19,7 +19,9 @@ const DEFAULT_CONFIG: Config = {
       },
     },
     codeGeneration: {
-      gqlCodeGen: "https://github.com/degrootsam/codegen-template",
+      gqlCodeGen: "https://github.com/degrootsam/gql-codegen/codegen-template",
+      newFunction: "https://github.com/degrootsam/gql-codegen/new-function",
+      newComponent: "https://github.com/degrootsam/gql-codegen/new-component",
     },
   },
   options: {

@@ -1,12 +1,29 @@
 import fs from "fs";
 import path from "path";
 import BaseScaffolder from "..";
-import { CONFIG, logger } from "../..";
+import {
+  CONFIG,
+  director,
+  FunctionsUtils,
+  logger,
+  prompter,
+  spinner,
+} from "../..";
 
 // Scaffolder for functions projects and individual functions
 export default class FunctionsScaffolder extends BaseScaffolder {
-  async generateProject(name: string, force: boolean) {
-    const templateUrl = CONFIG.scaffolder.templates.functions.typescript;
+  async generateProject(
+    name: string,
+    force: boolean = false,
+    javascript: boolean = false,
+  ) {
+    const functionTemplateURLs = CONFIG.scaffolder.projects.functions;
+    let templateUrl = functionTemplateURLs.typescript;
+
+    if (javascript) {
+      templateUrl = functionTemplateURLs.javascript;
+    }
+
     await this.downloadTemplate(templateUrl, name, force);
 
     logger.info(
@@ -14,17 +31,17 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
   To start developing:
   - cd ${name}
-  - npm install
+  - npm install ${!javascript ? "\r\n  - npm run build" : ""}
   - bbs functions publish
     `,
     );
   }
   async generateCodeGenFile(graphqlURL: string, accessToken: string) {
     if (!graphqlURL || !accessToken) {
-      logger.error(
+      logger.debug({ graphqlURL, accessToken });
+      throw new Error(
         "Unable to generate codegen.ts! Graphql URL or accessToken are empty",
       );
-      logger.debug({ graphqlURL, accessToken });
       return;
     }
 
@@ -40,17 +57,21 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     );
 
     if (!tempOutputDir) {
-      return;
+      throw new Error(
+        `Something went wrong while downloading the template. Cannot find the template at ${tempDir}`,
+      );
     }
 
     const templateFile = path.join(tempOutputDir, "codegen.template.ts");
 
     logger.debug(`Opening template file from ${templateFile}`);
 
-    let templateContent = fs.readFileSync(templateFile, "utf-8");
+    let templateContent = director.readFile(templateFile);
 
     if (!templateContent) {
-      return;
+      throw new Error(
+        `The codegen template yielded no content! Please check if the file at ${tempOutputDir} exists and if it contains any content`,
+      );
     }
 
     logger.debug("Replacing template content");
@@ -65,7 +86,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     logger.debug(`Writing template file to ${outputPath}`);
 
-    fs.writeFileSync(outputPath, templateContent);
+    director.writeFile(outputPath, templateContent);
 
     logger.debug(`Cleaning temp files  at ${tempOutputDir}`);
 
@@ -73,12 +94,107 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       if (err) {
         logger.error(err);
       }
-
       return true;
     });
   }
   async generateFunction(name: string) {
-    logger.info(`Creating a new function: ${name}`);
-    // Implement function generation logic here
+    spinner.start(`Creating a new function: ${name}`);
+    const tsConfig = director.getTsConfig();
+
+    const indexTsJsFileName = tsConfig ? "index.ts" : "index.js";
+    const srcPath = tsConfig ? "src" : "functions";
+
+    const functionUtils = new FunctionsUtils();
+    const functions = functionUtils.getFunctions();
+
+    const existingFunctionNames = Object.keys(functions);
+
+    if (existingFunctionNames.includes(name)) {
+      throw new Error(`Function ${name} already exists!`);
+    }
+
+    const newFunctionTemplateDir = path.resolve(
+      director.resolveCLITemplatePath(),
+      "scaffolder",
+      "functions",
+      "new",
+    );
+
+    let indexTsJs = director.readFile(
+      path.resolve(newFunctionTemplateDir, indexTsJsFileName),
+    );
+    let functionJSON = director.readFile(
+      path.resolve(newFunctionTemplateDir, "function.json"),
+    );
+
+    if (!indexTsJs || !functionJSON) {
+      logger.debug({ indexTsJs, functionJSON });
+      throw new Error("The template file(s) yielded no content");
+    }
+
+    indexTsJs = indexTsJs.replace("functionName", name);
+    functionJSON = functionJSON.replaceAll("{{ functionName }}", name);
+
+    const targetDir = path.resolve(srcPath, name, "1.0");
+
+    director.createDir(targetDir);
+
+    const newIndexTSPath = path.resolve(targetDir, indexTsJsFileName);
+    const newFunctionJSONPath = path.resolve(targetDir, "function.json");
+
+    director.writeFile(newIndexTSPath, indexTsJs);
+    director.writeFile(newFunctionJSONPath, functionJSON);
+
+    spinner.succeed(`Function ${name} created`);
+  }
+
+  async bumpFunction() {
+    const functionsUtils = new FunctionsUtils();
+    const functions = functionsUtils.getFunctions();
+    const functionNames = Object.keys(functions);
+
+    const selectedFunctionName = await prompter.select(
+      functionNames.map((func) => ({
+        value: func,
+        name: func,
+      })),
+      "Please choose a function to bump",
+    );
+
+    const selectedFunction = functions[selectedFunctionName];
+    const [currentMajorVersion, currentMinorVersion] =
+      selectedFunction.latestVersion.split(".").map(Number);
+
+    const newMajorVersion = Number(currentMajorVersion) + 1;
+    const newMinorVersion = Number(currentMinorVersion) + 1;
+
+    const newMajorVersionOption = {
+      name: newMajorVersion.toString() + ".0",
+      value: newMajorVersion.toString() + ".0",
+      description: "Major version",
+    };
+
+    const newMinorVersionOption = {
+      name: `${currentMajorVersion}.${newMinorVersion}`,
+      value: `${currentMajorVersion}.${newMinorVersion}`,
+      description: "Minor version",
+    };
+
+    const newVersion = await prompter.select(
+      [newMinorVersionOption, newMajorVersionOption],
+      "Please choose a new version",
+      newMinorVersion.toString(),
+    );
+
+    const sourceDir = path.resolve(
+      selectedFunction.path,
+      selectedFunction.latestVersion,
+    );
+
+    const targetDir = path.resolve(selectedFunction.path, newVersion);
+
+    spinner.start("Copying files...");
+    await director.copyDir(sourceDir, targetDir);
+    spinner.succeed(`Function successfully bumped to version ${newVersion}`);
   }
 }

@@ -1,0 +1,11 @@
+{
+  "description": "Provide a description about this function",
+  "label": "{{ functionName }}",
+  "category": "Misc",
+  "icon": {
+    "name": "ExpressionIcon",
+    "color": "Orange"
+  },
+  "options": [],
+  "yields": "NONE"
+}

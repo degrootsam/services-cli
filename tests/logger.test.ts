@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import { logger } from "../src/utils/index";
 import { DEBUG_PREFIX, ERROR_PREFIX } from "../src/utils/logger";
 
