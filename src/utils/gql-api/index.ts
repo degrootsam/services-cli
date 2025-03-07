@@ -1,4 +1,4 @@
-import { CONFIG, logger, prompter } from "../index";
+import { config, logger, prompter } from "../index";
 import {
   GraphQLErrorPayload,
   AuthenticationSuccessPayload,
@@ -7,7 +7,7 @@ import {
 import { getToken, saveToken } from "../keychain/index";
 
 export default class GraphQLAPI {
-  private apiURL = CONFIG.options.apiURL || "";
+  private apiURL = config.getConfig().options.apiURL || "";
   private jwtToken: string = "";
   private refreshToken: string = "";
   private accessTokenExpiresAt: number | null = null;

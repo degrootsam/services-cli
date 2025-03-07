@@ -1,10 +1,11 @@
 import BaseScaffolder from "..";
-import { CONFIG, logger } from "../..";
+import { config, logger } from "../..";
 
 // Scaffolder for components projects and individual components
 export default class ComponentsScaffolder extends BaseScaffolder {
   async generateProject(name: string, force: boolean) {
-    const templateUrl = CONFIG.scaffolder.projects.components.javascript;
+    const templateUrl =
+      config.getConfig().scaffolder.projects.components.javascript;
     await this.downloadTemplate(templateUrl, name, force);
 
     logger.info(

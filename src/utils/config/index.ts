@@ -1,8 +1,7 @@
 import path from "path";
-import { Config } from "../types";
 import fs from "fs";
-import { Logger } from "winston";
-import { logger } from "..";
+import { Config } from "../types";
+import { deepMerge, director, logger } from "..";
 
 const DEFAULT_CONFIG: Config = {
   scaffolder: {
@@ -26,28 +25,112 @@ const DEFAULT_CONFIG: Config = {
   },
   options: {
     apiURL: "",
+    env: "",
+    zone: "",
+    schemaURL: "https://raw.githubusercontent.com",
+    functionSchemaPath:
+      "/bettyblocks/json-schema/master/schemas/actions/function.json",
+    cacheDir: ".tmp/",
+    fusionAuthURL: "https://id{ENVPOSTFIX}.bettyblocks.com",
+    builderAPIURL: "/api/builder",
+    blockstoreAPIURL: "https://my{ENVPOSTFIX}.bettyblocks.com/block-store-api",
+    domain: "bettyblocks.com",
+    agentOptions: undefined,
+    skipCompile: false,
   },
 };
 
 const CONFIG_PATH = path.resolve(process.cwd(), "config.json");
 
-const resolveConfig = (): Config => {
-  let userConfig = {};
+export class ConfigManager {
+  private config: Config;
 
-  if (fs.existsSync(CONFIG_PATH)) {
-    try {
-      userConfig = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8"));
-    } catch (err) {
-      logger.error(
-        "Unable to parse config.json! Falling back to default config. Use verbose logging for more information: -v, --verbose",
-      );
-      logger.debug(err);
-    }
+  constructor() {
+    this.config = this.loadConfig();
   }
 
-  return { ...DEFAULT_CONFIG, ...userConfig };
-};
+  private loadConfig(): Config {
+    if (fs.existsSync(CONFIG_PATH)) {
+      try {
+        const userConfig = JSON.parse(director.readFile(CONFIG_PATH) ?? "");
+        return deepMerge(DEFAULT_CONFIG, { ...userConfig }) as Config;
+      } catch (err) {
+        logger.error(
+          "Unable to parse config.json! Falling back to default config.",
+        );
+        logger.debug(err);
+      }
+    }
+    return DEFAULT_CONFIG;
+  }
 
-const CONFIG: Config = resolveConfig();
+  getConfig(): Config {
+    return this.config;
+  }
 
-export { CONFIG as default };
+  saveConfig(newConfig: Partial<Config> = {}): void {
+    logger.debug("Saving new config to config.json");
+    logger.debug({ newConfig });
+    this.config = deepMerge(this.config, newConfig) as Config;
+    director.writeFile(CONFIG_PATH, JSON.stringify(this.config, null, 2));
+  }
+
+  get options() {
+    return this.config.options;
+  }
+
+  get apiURL() {
+    return this.config.options.apiURL;
+  }
+
+  get env() {
+    return this.config.options.env;
+  }
+
+  get zone() {
+    return this.config.options.zone;
+  }
+
+  set zone(zone: string) {
+    this.config.options.zone = zone;
+  }
+
+  get schemaURL() {
+    return this.config.options.schemaURL;
+  }
+
+  get functionSchemaPath() {
+    return this.config.options.functionSchemaPath;
+  }
+
+  get cacheDir() {
+    return this.config.options.cacheDir;
+  }
+
+  get fusionAuthURL() {
+    return this.config.options.fusionAuthURL.replace("{ENVPOSTFIX}", this.env);
+  }
+
+  get builderAPIURL() {
+    return this.config.options.builderAPIURL;
+  }
+
+  get blockstoreAPIURL() {
+    return this.config.options.blockstoreAPIURL.replace(
+      "{ENVPOSTFIX}",
+      this.env,
+    );
+  }
+
+  get domain() {
+    return this.config.options.domain;
+  }
+
+  get agentOptions() {
+    return this.config.options.agentOptions;
+  }
+
+  get skipCompile() {
+    return this.config.options.skipCompile;
+  }
+}

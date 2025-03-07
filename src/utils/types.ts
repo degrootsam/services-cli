@@ -1,3 +1,5 @@
+import { AgentOptions } from "http";
+
 type TemplateLinks = {
   typescript: string;
   javascript: string;
@@ -17,6 +19,17 @@ export type Config = {
   };
   options: {
     apiURL: string;
+    env: string;
+    zone: string;
+    schemaURL: string;
+    functionSchemaPath: string;
+    cacheDir: string;
+    fusionAuthURL: string;
+    builderAPIURL: string;
+    blockstoreAPIURL: string;
+    domain: string;
+    agentOptions?: AgentOptions;
+    skipCompile?: false;
   };
 };
 

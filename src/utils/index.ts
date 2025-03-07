@@ -1,5 +1,5 @@
 import ora from "ora";
-import CONFIG from "./config";
+import { ConfigManager } from "./config";
 import Director from "./director";
 import FunctionsUtils from "./functions";
 import GraphQLAPI from "./gql-api";
@@ -14,6 +14,25 @@ const logger = new Logger(opts && opts.length > 0);
 const prompter = new Prompter();
 const director = new Director();
 const spinner = ora();
+const config = new ConfigManager();
+
+function deepMerge(
+  target: Record<string, any>,
+  source: Record<string, any>,
+): Record<string, any> {
+  for (const key of Object.keys(source)) {
+    if (
+      source[key] &&
+      typeof source[key] === "object" &&
+      !Array.isArray(source[key])
+    ) {
+      target[key] = deepMerge(target[key] ?? {}, source[key]);
+    } else {
+      target[key] = source[key];
+    }
+  }
+  return target;
+}
 
 function isErrorWithMessage(error: unknown): error is { message: string } {
   return typeof error === "object" && error !== null && "message" in error;
@@ -26,7 +45,8 @@ function isErrorWithCode(error: unknown): error is { code: string } {
 export {
   clearToken,
   ComponentsScaffolder,
-  CONFIG,
+  config,
+  deepMerge,
   director,
   FunctionsScaffolder,
   FunctionsUtils,

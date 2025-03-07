@@ -2,22 +2,25 @@ import fs from "fs";
 import path from "path";
 import BaseScaffolder from "..";
 import {
-  CONFIG,
+  config,
   director,
   FunctionsUtils,
   logger,
   prompter,
   spinner,
 } from "../..";
+import { Config } from "../../types";
 
 // Scaffolder for functions projects and individual functions
 export default class FunctionsScaffolder extends BaseScaffolder {
+  private config: Config = config.getConfig();
+
   async generateProject(
     name: string,
     force: boolean = false,
     javascript: boolean = false,
   ) {
-    const functionTemplateURLs = CONFIG.scaffolder.projects.functions;
+    const functionTemplateURLs = this.config.scaffolder.projects.functions;
     let templateUrl = functionTemplateURLs.typescript;
 
     if (javascript) {
@@ -51,7 +54,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     logger.debug({ outputDir: targetDir, tempDir });
 
     const tempOutputDir = await this.downloadTemplate(
-      CONFIG.scaffolder.codeGeneration.gqlCodeGen,
+      this.config.scaffolder.codeGeneration.gqlCodeGen,
       tempDir,
       true,
     );

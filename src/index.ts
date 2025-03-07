@@ -4,6 +4,7 @@ import { Command } from "commander";
 import { execa } from "execa";
 import {
   ComponentsScaffolder,
+  config,
   director,
   FunctionsScaffolder,
   isErrorWithMessage,
@@ -13,6 +14,7 @@ import {
 } from "./utils";
 import GraphQLAPI from "./utils/gql-api";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
+import FusionAuth from "./utils/fusion-auth";
 
 const program = new Command();
 
@@ -21,6 +23,7 @@ const withErrorHandling = (fn: (...args: any[]) => Promise<void>) => {
   return async (...args: any[]) => {
     try {
       await fn(...args);
+      config.saveConfig();
     } catch (error) {
       logger.debug(error);
       if (isErrorWithMessage(error)) {
@@ -47,7 +50,14 @@ const runCLI = async () => {
   program
     .name("Betty Blocks Services CLI (Proof of Concept)")
     .version("0.0.1")
-    .option("-v, --verbose", "Enable verbose logging");
+    .option("-v, --verbose", "Enable verbose logging")
+    .command("login")
+    .action(
+      withErrorHandling(async () => {
+        const fusionAuth = new FusionAuth();
+        await fusionAuth.login();
+      }),
+    );
 
   const components = program.command("components");
 
