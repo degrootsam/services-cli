@@ -1,5 +1,4 @@
 import { confirm, editor, input, password, select } from "@inquirer/prompts";
-import { Separator } from "@inquirer/core";
 import { logger } from "..";
 
 export default class Prompter {

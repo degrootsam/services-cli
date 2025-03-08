@@ -1,4 +1,4 @@
-import ora from "ora";
+import { createSpinner } from "nanospinner";
 import { ConfigManager } from "./config";
 import Director from "./director";
 import FunctionsUtils from "./functions";
@@ -13,8 +13,10 @@ const opts = process.argv.find((v) => v === "--v" || v === "--verbose");
 const logger = new Logger(opts && opts.length > 0);
 const prompter = new Prompter();
 const director = new Director();
-const spinner = ora();
+const spinner = createSpinner();
 const config = new ConfigManager();
+const SOURCEPATH = "functions";
+const BUILDPATH = ".tmp";
 
 function deepMerge(
   target: Record<string, any>,
@@ -58,4 +60,6 @@ export {
   prompter,
   saveToken,
   spinner,
+  SOURCEPATH,
+  BUILDPATH,
 };

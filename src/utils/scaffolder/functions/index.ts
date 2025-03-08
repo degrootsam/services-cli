@@ -7,9 +7,10 @@ import {
   FunctionsUtils,
   logger,
   prompter,
+  SOURCEPATH,
   spinner,
 } from "../..";
-import { Config } from "../../types";
+import { Config, Functions } from "../../types";
 
 // Scaffolder for functions projects and individual functions
 export default class FunctionsScaffolder extends BaseScaffolder {
@@ -105,7 +106,6 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     const tsConfig = director.getTsConfig();
 
     const indexTsJsFileName = tsConfig ? "index.ts" : "index.js";
-    const srcPath = tsConfig ? "src" : "functions";
 
     const functionUtils = new FunctionsUtils();
     const functions = functionUtils.getFunctions();
@@ -135,10 +135,14 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       throw new Error("The template file(s) yielded no content");
     }
 
-    indexTsJs = indexTsJs.replace("functionName", name);
-    functionJSON = functionJSON.replaceAll("{{ functionName }}", name);
+    const parsedName = functionUtils.parseName(name);
 
-    const targetDir = path.resolve(srcPath, name, "1.0");
+    logger.info(parsedName);
+
+    indexTsJs = indexTsJs.replace("functionName", parsedName);
+    functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
+
+    const targetDir = path.resolve(SOURCEPATH, name, "1.0");
 
     director.createDir(targetDir);
 
@@ -148,7 +152,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     director.writeFile(newIndexTSPath, indexTsJs);
     director.writeFile(newFunctionJSONPath, functionJSON);
 
-    spinner.succeed(`Function ${name} created`);
+    spinner.success(`Function ${name} created`);
   }
 
   async bumpFunction() {
@@ -198,6 +202,59 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     spinner.start("Copying files...");
     await director.copyDir(sourceDir, targetDir);
-    spinner.succeed(`Function successfully bumped to version ${newVersion}`);
+    spinner.success(
+      `${selectedFunctionName} successfully bumped to version ${newVersion}`,
+    );
+  }
+
+  generateBarrelFunctionDeclaration(functions: Functions) {
+    const functionsUtils = new FunctionsUtils();
+    let result = "const fn = {\r\n";
+    const functionNames = Object.keys(functions);
+    functionNames.forEach((name, index) => {
+      const currentFunction = functions[name];
+      const { latestVersion } = currentFunction;
+      const functionName = functionsUtils.parseName(name);
+      const key = `"${functionName} ${latestVersion}"`;
+      const value = `${functionName}_${latestVersion.replace(".", "_")}`;
+      result += `${key}: ${value},\r\n`;
+    });
+
+    result += "};";
+    return result;
+  }
+
+  generateBarrelImportDeclarations(functions: Functions) {
+    const functionsUtils = new FunctionsUtils();
+    let result = "";
+    const functionNames = Object.keys(functions);
+    functionNames.forEach((name) => {
+      const currentFunction = functions[name];
+      const { latestVersion } = currentFunction;
+      const relativePath = `.${currentFunction.path.replace(process.cwd(), "")}/${latestVersion}`;
+      const functionName = functionsUtils.parseName(name);
+      result += `import { default as ${functionName}_${latestVersion.replace(".", "_")} } from "${relativePath}";\r\n`;
+    });
+
+    return result;
+  }
+
+  generateFunctionsBarrelFile(outputDir: string, fileType: "js" | "ts" = "ts") {
+    const functionsUtils = new FunctionsUtils();
+    const functions = functionsUtils.getFunctions();
+    const validatedFunctions = functionsUtils.validateFunctions(functions);
+    const validFunctions = functionsUtils.getValidFunctions(validatedFunctions);
+
+    let barrelContent = "";
+
+    barrelContent += this.generateBarrelImportDeclarations(validFunctions);
+
+    barrelContent += "\r\n";
+
+    barrelContent += this.generateBarrelFunctionDeclaration(validFunctions);
+
+    const outputPath = path.resolve(outputDir, `index.${fileType}`);
+
+    director.writeFile(outputPath, barrelContent);
   }
 }

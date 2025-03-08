@@ -1,18 +1,16 @@
 import degit from "degit";
-import path from "path";
-import { director, isErrorWithCode, logger, spinner } from "..";
+import { isErrorWithCode, logger, spinner } from "..";
 
 // Base scaffolder with shared logic
 export default class BaseScaffolder {
   async downloadTemplate(
     url: string,
-    location: string,
+    cloneLocation: string,
     force: boolean,
   ): Promise<string | undefined> {
-    const cloneLocation = director.resolvePath(location);
     const downloader = degit(url, { force });
 
-    spinner.text = "Downloading template";
+    spinner.update("Downloading template");
     spinner.start();
 
     try {
@@ -36,11 +34,7 @@ export default class BaseScaffolder {
       throw new Error(JSON.stringify(err));
     }
 
-    spinner.succeed("Template downloaded successfully");
+    spinner.success("Template downloaded successfully");
     return cloneLocation;
-  }
-
-  parseName(name: string) {
-    return name.replace(/\s/g, "_").toLowerCase();
   }
 }

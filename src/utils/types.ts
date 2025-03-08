@@ -39,4 +39,9 @@ export type FunctionInfo = {
   versions: string[];
   latestVersion: string;
   path: string;
+  validation: {
+    valid: boolean;
+    info: string;
+  };
+  fileType: "js" | "ts";
 };

@@ -1,12 +1,12 @@
-#!/usr/bin/env node
-
+#!/usr/bin/env -S node --no-warnings=ExperimentalWarning
 import { Command } from "commander";
-import { execa } from "execa";
 import {
+  BUILDPATH,
   ComponentsScaffolder,
   config,
   director,
   FunctionsScaffolder,
+  FunctionsUtils,
   isErrorWithMessage,
   logger,
   prompter,
@@ -15,6 +15,7 @@ import {
 import GraphQLAPI from "./utils/gql-api";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
 import FusionAuth from "./utils/fusion-auth";
+import path from "path";
 
 const program = new Command();
 
@@ -29,15 +30,15 @@ const withErrorHandling = (fn: (...args: any[]) => Promise<void>) => {
       if (isErrorWithMessage(error)) {
         // Prevent logging when user cancels the action
         if (error.message !== "User force closed the prompt with 0 null") {
-          if (spinner.isSpinning) {
-            spinner.fail(error.message);
+          if (spinner.isSpinning()) {
+            spinner.error(error.message);
           } else {
             logger.error(error.message);
           }
         }
       } else {
-        if (spinner.isSpinning) {
-          spinner.fail("Failed with an error");
+        if (spinner.isSpinning()) {
+          spinner.error("Failed with an error");
         }
         logger.error(error);
       }
@@ -128,6 +129,58 @@ const runCLI = async () => {
     );
 
   functions
+    .command("validate")
+    .description("Validate your functions")
+    .action(
+      withErrorHandling(async () => {
+        const functionsUtils = new FunctionsUtils();
+        const functions = functionsUtils.getFunctions();
+        functionsUtils.validateFunctions(functions);
+      }),
+    );
+
+  functions
+    .command("gen-barrel")
+    .description("Generate a barrel file for the current functions project")
+    .action(
+      withErrorHandling(async () => {
+        const functionsScaffolder = new FunctionsScaffolder();
+        functionsScaffolder.generateFunctionsBarrelFile("./.tmp");
+      }),
+    );
+
+  functions
+    .command("build")
+    .description("Build your functions")
+    .option("-d, --destination <path>")
+    .action(
+      withErrorHandling(async (options) => {
+        const tsConfig = director.getTsConfig();
+        const functionsUtils = new FunctionsUtils();
+        await functionsUtils.buildFunctions(
+          tsConfig ? "ts" : "js",
+          options.destination,
+        );
+      }),
+    );
+  functions
+    .command("publish")
+    .description("Publish your functions")
+    .action(
+      withErrorHandling(async () => {
+        const tsConfig = director.getTsConfig();
+
+        const functionsUtils = new FunctionsUtils();
+
+        const functionsScaffolder = new FunctionsScaffolder();
+        functionsScaffolder.generateFunctionsBarrelFile(
+          path.resolve(BUILDPATH, "app"),
+        );
+        await functionsUtils.buildFunctions(tsConfig ? "ts" : "js");
+      }),
+    );
+
+  functions
     .command("gen-types")
     .description(
       "Generate a typescript file based on a Betty Blocks application",
@@ -167,7 +220,7 @@ const runCLI = async () => {
                 director.createDir(newDirectoryName);
                 director.changeDir(newDirectoryName);
               }
-              await execa("npm", ["init"], { stdio: "inherit" });
+              await director.runCommand("npm", ["init"], { stdio: "inherit" });
           }
         }
 
@@ -189,15 +242,17 @@ const runCLI = async () => {
           "-D @graphql-codegen/introspection",
           "graphql",
         ];
-        spinner.text = `Installing dependencies (0/${dependencies.length})`;
+        spinner.update(`Installing dependencies (0/${dependencies.length})`);
         spinner.start();
         for (let i = 0; i < dependencies.length; i++) {
-          spinner.text = `Installing dependencies (${i + 1}/${dependencies.length})`;
+          spinner.update(
+            `Installing dependencies (${i + 1}/${dependencies.length})`,
+          );
           const dependency = dependencies[i];
           const command = `npm i ${dependency}`;
-          await execa(command, { shell: true });
+          await director.runCommand(command, undefined, { shell: true });
         }
-        spinner.succeed("Dependencies installed");
+        spinner.success("Dependencies installed");
 
         packageJSONContent = {
           ...packageJSONContent,
@@ -244,11 +299,11 @@ const runCLI = async () => {
           (await prompter.getURL(
             "Please enter the URL to the GraphqQL Playground",
           ));
-        spinner.text = "Generating types";
+        spinner.update("Generating types...");
         spinner.start();
         await functionsScaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
-        await execa`npm run generate-types`;
-        spinner.succeed("Types generated in generated/graphql.ts");
+        await director.runCommand("npm run generate-types");
+        spinner.success("Types generated in generated/graphql.ts");
       }),
     );
 

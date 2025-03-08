@@ -20,7 +20,7 @@ export default class FusionAuth {
     return fusionAuthURL;
   }
 
-  async login() {
+  async login(): Promise<undefined> {
     const loginId = await prompter.getUsername();
     const password = await prompter.getPassword();
     const fusionAuthURL = await this.getFusionAuthURL();

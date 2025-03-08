@@ -1,18 +1,9 @@
-import chalk from "chalk";
 import fs from "fs";
 import path from "path";
 import { isErrorWithMessage, logger } from "..";
-import { Functions } from "../types";
+import { spawn, SpawnOptions } from "child_process";
 
 export default class Director {
-  resolvePath(name: string) {
-    // This function always resolves the full path
-    return path.resolve(
-      process.cwd(),
-      ...name.replace(process.cwd(), "").split("/"),
-    );
-  }
-
   resolveCLIPath(): string {
     return __dirname.split("/dist/")[0];
   }
@@ -22,13 +13,11 @@ export default class Director {
   }
 
   createDir(name: string) {
-    const path = this.resolvePath(name);
-    logger.debug(`Creating directory in ${path}`);
-    fs.mkdirSync(path, { recursive: true });
+    logger.debug(`Creating directory in ${name}`);
+    fs.mkdirSync(name, { recursive: true });
   }
 
-  writeFile(name: string, content: string, encoding: BufferEncoding = "utf-8") {
-    const path = this.resolvePath(name);
+  writeFile(path: string, content: string, encoding: BufferEncoding = "utf-8") {
     logger.debug(`Writing file to ${path}`);
     const contentSize = Buffer.byteLength(content, "utf-8");
     logger.debug(`Size in bytes ${contentSize}`);
@@ -37,18 +26,10 @@ export default class Director {
     logger.debug("File written successfully");
   }
 
-  readFile(
-    name: string,
-    resolvePath: boolean = false,
-    silent: boolean = false,
-  ): string | null {
-    let resolvedPath = name;
-    if (resolvePath) {
-      resolvedPath = this.resolvePath(name);
-    }
-    logger.debug(`Opening file at ${resolvedPath}`);
+  readFile(path: string, silent: boolean = false): string | null {
+    logger.debug(`Opening file at ${path}`);
     try {
-      return fs.readFileSync(resolvedPath, { encoding: "utf-8" });
+      return fs.readFileSync(path, { encoding: "utf-8" });
     } catch (error) {
       if (silent) {
         return null;
@@ -63,52 +44,31 @@ export default class Director {
     }
   }
 
-  readDir(name: string, recursive: boolean = false): string[] {
-    const resolvedPath = this.resolvePath(name);
-    logger.debug(`Reading directory at ${resolvedPath}`);
-    const directory = fs.readdirSync(resolvedPath, {
+  readDir(path: string, recursive: boolean = false): string[] {
+    logger.debug(`Reading directory at ${path}`);
+    const directory = fs.readdirSync(path, {
       recursive,
       encoding: "utf8",
     });
     return directory;
   }
 
-  async copyDir(
-    sourceDir: string,
-    targetDir: string,
-    resolveSource: boolean = false,
-    resolveTarget: boolean = true,
-  ) {
-    let resolvedSourceDir = sourceDir;
-    let resolvedTargetDir = targetDir;
-
-    if (resolveSource) {
-      resolvedSourceDir = this.resolvePath(resolvedSourceDir);
-    }
-
-    if (resolveTarget) {
-      resolvedTargetDir = this.resolvePath(resolvedTargetDir);
-    }
-
-    fs.cpSync(resolvedSourceDir, resolvedTargetDir, { recursive: true });
+  async copyDir(sourceDir: string, targetDir: string) {
+    fs.cpSync(sourceDir, targetDir, { recursive: true });
   }
 
-  changeDir(name: string) {
-    const targetDir = path.resolve(process.cwd(), name);
-    const targetDirExists = fs.existsSync(targetDir);
-    if (!targetDirExists) {
+  changeDir(path: string) {
+    if (!path) {
       throw new Error(
-        `Unable to move to project dir! Directory ${targetDir} does not exist.`,
+        `Unable to move to project dir! Directory ${path} does not exist.`,
       );
     }
 
-    logger.debug(`Closing shell and moving to directory at: ${targetDir}`);
+    logger.debug(`Closing shell and moving to directory at: ${path}`);
 
-    process.chdir(targetDir);
+    process.chdir(path);
 
-    logger.debug(
-      `Successfully changed current working directory to ${targetDir}`,
-    );
+    logger.debug(`Successfully changed current working directory to ${path}`);
   }
 
   getPackageJSON(): null | Record<string, any> {
@@ -128,7 +88,7 @@ export default class Director {
 
   getTsConfig(): null | Record<string, any> {
     try {
-      let fileContent = this.readFile("tsconfig.json", true, true);
+      let fileContent = this.readFile("tsconfig.json", true);
 
       if (!fileContent) {
         return null;
@@ -143,5 +103,25 @@ export default class Director {
       logger.error("Unable to parse tsconfig.json");
       throw new Error(error as any);
     }
+  }
+
+  runCommand(
+    command: string,
+    args: string[] = [],
+    options: SpawnOptions = { stdio: "inherit" },
+  ) {
+    return new Promise<void>((resolve, reject) => {
+      const child = spawn(command, args, options);
+
+      child.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(`Command failed with exit code ${code}`));
+        } else {
+          resolve();
+        }
+      });
+
+      child.on("error", reject);
+    });
   }
 }
