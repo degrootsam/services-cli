@@ -18,10 +18,12 @@ export type Config = {
     };
   };
   options: {
-    apiURL: string;
+    appUUID: string;
+    appIdentifier: string;
     env: string;
     zone: string;
     schemaURL: string;
+    appDomain: string;
     functionSchemaPath: string;
     cacheDir: string;
     fusionAuthURL: string;
@@ -29,7 +31,8 @@ export type Config = {
     blockstoreAPIURL: string;
     domain: string;
     agentOptions?: AgentOptions;
-    skipCompile?: false;
+    skipCompile?: boolean;
+    https: boolean;
   };
 };
 
@@ -39,9 +42,18 @@ export type FunctionInfo = {
   versions: string[];
   latestVersion: string;
   path: string;
-  validation: {
-    valid: boolean;
-    info: string;
-  };
+  validation: FunctionValidation;
   fileType: "js" | "ts";
+};
+
+export type FunctionValidation = {
+  valid: boolean;
+  info: string;
+};
+
+export type ExtractedFunctionInfo = {
+  name: string;
+  isExported: boolean;
+  isDefaultExport: boolean;
+  isAsync: boolean;
 };

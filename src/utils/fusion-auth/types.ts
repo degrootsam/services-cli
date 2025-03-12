@@ -26,4 +26,10 @@ export interface AuthToken {
   token: string;
   tokenExpirationInstant: number;
   user: User;
+  twoFactorId: string;
 }
+
+export type StoredFusionAuthToken = {
+  token: string;
+  expiresAt: number;
+};

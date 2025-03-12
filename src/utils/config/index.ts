@@ -1,7 +1,8 @@
 import path from "path";
 import fs from "fs";
 import { Config } from "../types";
-import { deepMerge, director, logger } from "..";
+import { deepMerge, director, logger, prompter } from "..";
+import { Agent, AgentOptions } from "https";
 
 const DEFAULT_CONFIG: Config = {
   scaffolder: {
@@ -18,13 +19,16 @@ const DEFAULT_CONFIG: Config = {
       },
     },
     codeGeneration: {
-      gqlCodeGen: "https://github.com/degrootsam/gql-codegen/codegen-template",
+      gqlCodeGen: "degrootsam/codegen-templates/gql-codegen",
       newFunction: "https://github.com/degrootsam/gql-codegen/new-function",
       newComponent: "https://github.com/degrootsam/gql-codegen/new-component",
     },
   },
   options: {
-    apiURL: "",
+    appUUID: "",
+    appDomain: "betty.app",
+    appIdentifier: "",
+    https: true,
     env: "",
     zone: "",
     schemaURL: "https://raw.githubusercontent.com",
@@ -32,7 +36,7 @@ const DEFAULT_CONFIG: Config = {
       "/bettyblocks/json-schema/master/schemas/actions/function.json",
     cacheDir: ".tmp/",
     fusionAuthURL: "https://id{ENVPOSTFIX}.bettyblocks.com",
-    builderAPIURL: "/api/builder",
+    builderAPIURL: "api/builder",
     blockstoreAPIURL: "https://my{ENVPOSTFIX}.bettyblocks.com/block-store-api",
     domain: "bettyblocks.com",
     agentOptions: undefined,
@@ -75,12 +79,47 @@ export class ConfigManager {
     director.writeFile(CONFIG_PATH, JSON.stringify(this.config, null, 2));
   }
 
+  updateConfig(newConfig: Partial<Config> = {}): void {
+    logger.debug("Storing new config value", newConfig);
+    this.config = deepMerge(this.config, newConfig) as Config;
+  }
+
+  async getAppUUID() {
+    let appUUID = this.config.options.appUUID;
+    if (!appUUID) {
+      appUUID = await prompter.input("Please enter your app UUID");
+      this.updateConfig({ options: { ...this.options, appUUID } });
+    }
+    return (
+      this.config.options.appUUID ??
+      (await prompter.input("Please enter your app UUID"))
+    );
+  }
+
+  async getAppIdentifier() {
+    let appIdentifier = this.config.options.appIdentifier;
+    if (!appIdentifier) {
+      appIdentifier = await prompter.input("Please enter your app identifier");
+      this.updateConfig({ options: { ...this.options, appIdentifier } });
+    }
+    return appIdentifier;
+  }
+
+  async getApiURL() {
+    const appIdentifier = await this.getAppIdentifier();
+    const appUUID = await this.getAppUUID();
+    const appDomain = this.config.options.appDomain;
+    const protocol = this.httpProtocol;
+
+    return `${protocol}://${appIdentifier}.${appDomain}/api/runtime/${appUUID}`;
+  }
+
   get options() {
     return this.config.options;
   }
 
-  get apiURL() {
-    return this.config.options.apiURL;
+  get httpProtocol() {
+    return this.config.options.https ? "https" : "http";
   }
 
   get env() {
@@ -88,11 +127,7 @@ export class ConfigManager {
   }
 
   get zone() {
-    return this.config.options.zone;
-  }
-
-  set zone(zone: string) {
-    this.config.options.zone = zone;
+    return this.config.options.zone ?? "production";
   }
 
   get schemaURL() {
@@ -111,8 +146,11 @@ export class ConfigManager {
     return this.config.options.fusionAuthURL.replace("{ENVPOSTFIX}", this.env);
   }
 
-  get builderAPIURL() {
-    return this.config.options.builderAPIURL;
+  async builderAPIURL() {
+    let subdomain = await this.getAppIdentifier();
+    subdomain = `${subdomain}.${this.domain}`;
+
+    return `${this.httpProtocol}://${subdomain}/${this.config.options.builderAPIURL}`;
   }
 
   get blockstoreAPIURL() {

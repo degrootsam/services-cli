@@ -5,6 +5,7 @@ interface AccountNames {
   gqlAccessToken: string;
   gqlRefreshToken: string;
   gqlAccessTokenExpiresAt: string;
+  fusionAuthToken: string;
 }
 const SERVICE_NAME = process.env.SERVICE_NAME ?? "bbs-cli-dev";
 

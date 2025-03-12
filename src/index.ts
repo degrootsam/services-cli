@@ -140,26 +140,30 @@ const runCLI = async () => {
     );
 
   functions
-    .command("gen-barrel")
-    .description("Generate a barrel file for the current functions project")
-    .action(
-      withErrorHandling(async () => {
-        const functionsScaffolder = new FunctionsScaffolder();
-        functionsScaffolder.generateFunctionsBarrelFile("./.tmp");
-      }),
-    );
-
-  functions
     .command("build")
     .description("Build your functions")
     .option("-d, --destination <path>")
+    .option("--debug", "Outputs a non minified version for debugging purposes")
     .action(
       withErrorHandling(async (options) => {
         const tsConfig = director.getTsConfig();
         const functionsUtils = new FunctionsUtils();
+
+        const appDir = path.resolve(BUILDPATH, "app");
+        const functionsScaffolder = new FunctionsScaffolder();
+        const functions = functionsUtils.getFunctions();
+        const validatedFunctions = functionsUtils.validateFunctions(functions);
+
+        functionsScaffolder.generateFunctionsBarrelFile(
+          appDir,
+          validatedFunctions,
+          "js",
+        );
+
         await functionsUtils.buildFunctions(
           tsConfig ? "ts" : "js",
           options.destination,
+          options.debug,
         );
       }),
     );
@@ -169,14 +173,30 @@ const runCLI = async () => {
     .action(
       withErrorHandling(async () => {
         const tsConfig = director.getTsConfig();
-
+        const appDir = path.resolve(BUILDPATH, "app");
         const functionsUtils = new FunctionsUtils();
+
+        const functions = functionsUtils.getFunctions();
+        const validatedFunctions = functionsUtils.validateFunctions(functions);
+        const validFunctions =
+          functionsUtils.getValidFunctions(validatedFunctions);
 
         const functionsScaffolder = new FunctionsScaffolder();
         functionsScaffolder.generateFunctionsBarrelFile(
-          path.resolve(BUILDPATH, "app"),
+          appDir,
+          validFunctions,
+          "js",
         );
+
         await functionsUtils.buildFunctions(tsConfig ? "ts" : "js");
+
+        const outputZipPath = path.resolve(BUILDPATH, "app.zip");
+
+        await director.zipDir(appDir, outputZipPath);
+
+        director.removeDir(appDir);
+
+        await functionsUtils.uploadFunctions(outputZipPath, validFunctions);
       }),
     );
 
@@ -207,7 +227,7 @@ const runCLI = async () => {
               await functionsScaffolder.generateProject(name, true);
 
               director.changeDir(name);
-
+              break;
             case "npm":
               const createNewDirectory = await prompter.confirm(
                 "Do you want to create a new directory?",
@@ -221,16 +241,7 @@ const runCLI = async () => {
                 director.changeDir(newDirectoryName);
               }
               await director.runCommand("npm", ["init"], { stdio: "inherit" });
-          }
-        }
-
-        if (!packageJSONContent) {
-          // Reload package.json
-          packageJSONContent = director.getPackageJSON();
-          if (!packageJSONContent) {
-            throw new Error(
-              "Unable to generate types. Cannot load package.json! Please make sure you are inside a functions project",
-            );
+              break;
           }
         }
 
@@ -243,8 +254,18 @@ const runCLI = async () => {
           "graphql",
         ];
         spinner.update(`Installing dependencies (0/${dependencies.length})`);
-        spinner.start();
+        spinner.loop();
         for (let i = 0; i < dependencies.length; i++) {
+          try {
+            const dependency = dependencies[i].replace("-D ", "");
+            // Try to resolve the package
+            require.resolve(dependency);
+            spinner.success(`${dependency} is already installed. Skipping.`);
+            spinner.start();
+            continue; // Skip installation if the module exists
+          } catch (error) {
+            // Module is not found, proceed with installation
+          }
           spinner.update(
             `Installing dependencies (${i + 1}/${dependencies.length})`,
           );
@@ -253,6 +274,14 @@ const runCLI = async () => {
           await director.runCommand(command, undefined, { shell: true });
         }
         spinner.success("Dependencies installed");
+
+        // Reload the packageJSON with the new dependencies
+        packageJSONContent = director.getPackageJSON();
+        if (!packageJSONContent) {
+          throw new Error(
+            "Unable to generate types. Cannot load package.json! Please make sure you are inside a functions project",
+          );
+        }
 
         packageJSONContent = {
           ...packageJSONContent,
@@ -294,15 +323,12 @@ const runCLI = async () => {
           return;
         }
 
-        const apiURL =
-          gqlAPI.getApiURL() ||
-          (await prompter.getURL(
-            "Please enter the URL to the GraphqQL Playground",
-          ));
+        const apiURL = await config.getApiURL();
+
         spinner.update("Generating types...");
         spinner.start();
         await functionsScaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
-        await director.runCommand("npm run generate-types");
+        await director.runCommand("npm", ["run", "generate-types"]);
         spinner.success("Types generated in generated/graphql.ts");
       }),
     );

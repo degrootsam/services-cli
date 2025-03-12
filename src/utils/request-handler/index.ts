@@ -1,8 +1,9 @@
-import { logger } from "..";
+import { config, logger } from "..";
 
 type RequestResponse<T> = {
   data?: T;
-  error?: { message: string; status: number };
+  responseStatus: number;
+  error?: { message: string } | undefined;
 };
 
 export class RequestHandler {
@@ -45,26 +46,30 @@ export class RequestHandler {
     headers: Record<string, string> = {},
   ): Promise<RequestResponse<T>> {
     logger.debug(`${method} request at ${this.baseUrl}${endpoint}`);
-    logger.debug({ body });
+    logger.debug("Body:", body);
     logger.debug({ headers });
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method,
       headers: {
-        "Content-Type": "application/json",
         ...headers,
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: body
+        ? body instanceof FormData
+          ? body
+          : JSON.stringify(body)
+        : undefined,
     });
 
     logger.debug(`Response status: ${response.status}`);
+    logger.debug(response);
 
     if (!response.ok) {
       return {
         error: {
           message: response.statusText,
-          status: response.status,
         },
+        responseStatus: response.status,
       };
     }
 
@@ -73,6 +78,6 @@ export class RequestHandler {
     logger.debug("Parsed result:");
     logger.debug({ data });
 
-    return { data };
+    return { data, responseStatus: response.status };
   }
 }

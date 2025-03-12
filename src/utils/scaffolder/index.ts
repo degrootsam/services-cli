@@ -8,14 +8,16 @@ export default class BaseScaffolder {
     cloneLocation: string,
     force: boolean,
   ): Promise<string | undefined> {
+    logger.debug(`Downloading template at ${url}`);
+
     const downloader = degit(url, { force });
 
-    spinner.update("Downloading template");
+    spinner.update(`Downloading template at ${url}`);
     spinner.start();
 
     try {
       await downloader.clone(cloneLocation);
-      logger.debug(`Downloaded template from ${url} to ${cloneLocation}`);
+      logger.debug(`Template downloaded and saved at ${cloneLocation}`);
     } catch (err) {
       spinner.stop();
       logger.error("Error downloading template!");

@@ -220,7 +220,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       result += `${key}: ${value},\r\n`;
     });
 
-    result += "};";
+    result += "};\r\n";
     return result;
   }
 
@@ -239,11 +239,13 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     return result;
   }
 
-  generateFunctionsBarrelFile(outputDir: string, fileType: "js" | "ts" = "ts") {
+  generateFunctionsBarrelFile(
+    outputDir: string,
+    functions: Functions,
+    fileType: "js" | "ts" = "ts",
+  ) {
     const functionsUtils = new FunctionsUtils();
-    const functions = functionsUtils.getFunctions();
-    const validatedFunctions = functionsUtils.validateFunctions(functions);
-    const validFunctions = functionsUtils.getValidFunctions(validatedFunctions);
+    const validFunctions = functionsUtils.getValidFunctions(functions);
 
     let barrelContent = "";
 
@@ -252,6 +254,10 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     barrelContent += "\r\n";
 
     barrelContent += this.generateBarrelFunctionDeclaration(validFunctions);
+
+    barrelContent += "\r\n";
+
+    barrelContent += "export default fn;";
 
     const outputPath = path.resolve(outputDir, `index.${fileType}`);
 

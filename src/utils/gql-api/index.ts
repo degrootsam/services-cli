@@ -7,17 +7,12 @@ import {
 import { getToken, saveToken } from "../keychain/index";
 
 export default class GraphQLAPI {
-  private apiURL = config.getConfig().options.apiURL || "";
   private jwtToken: string = "";
   private refreshToken: string = "";
   private accessTokenExpiresAt: number | null = null;
 
   async getAccessTokens() {
     return await this.getTokensFromKeychain();
-  }
-
-  getApiURL() {
-    return this.apiURL;
   }
 
   private loginQuery(
@@ -115,13 +110,7 @@ export default class GraphQLAPI {
         "You need to login to the GraphQL API. Please choose your preferred method",
       ));
 
-    const apiURL =
-      currentAPIURL ??
-      (await prompter.getURL(
-        "Please enter the URL to the GraphqQL Playground",
-      ));
-
-    this.apiURL = apiURL;
+    const apiURL = currentAPIURL ?? (await config.getApiURL());
 
     switch (choice) {
       case "query":
@@ -173,7 +162,6 @@ export default class GraphQLAPI {
           accessExpiresAt,
         };
 
-        break;
       case "action":
         const mutation = await prompter.editor(
           "Copy/Paste the login mutation from the action",
@@ -203,7 +191,9 @@ export default class GraphQLAPI {
   ): Promise<{ data?: D; error?: { message: string } }> {
     logger.debug(`Preparing POST request to ${url}`);
     logger.debug({ body, headers });
-    const response = await fetch(this.apiURL, {
+    const apiURL = await config.getApiURL();
+
+    const response = await fetch(apiURL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -251,29 +241,3 @@ export default class GraphQLAPI {
     return { error: undefined };
   }
 }
-
-fetch(
-  "https://degrootsam-dev.betty.app/api/runtime/403f375931924b56bc7853a3016088c8",
-  {
-    headers: {
-      accept: "application/json, multipart/mixed",
-      "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
-      "cache-control": "no-cache",
-      "content-type": "application/json",
-      pragma: "no-cache",
-      priority: "u=1, i",
-      "sec-ch-ua":
-        '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
-      "sec-ch-ua-mobile": "?0",
-      "sec-ch-ua-platform": '"macOS"',
-      "sec-fetch-dest": "empty",
-      "sec-fetch-mode": "cors",
-      "sec-fetch-site": "same-origin",
-      Referer:
-        "https://degrootsam-dev.betty.app/api/runtime/403f375931924b56bc7853a3016088c8",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
-    },
-    body: '{"query":"mutation { \\n\\taction(id: \\"90a3c018f593426ba3936cacbfc9e425\\", input: $input)\\n}","variables":{"input":{"email_address":"Text","hidden":"Text","password":"Text"}}}',
-    method: "POST",
-  },
-);

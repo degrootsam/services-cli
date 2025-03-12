@@ -39,8 +39,11 @@ export default class Logger {
         latestVersion,
         validation: { valid, info },
       } = currentFunction;
-      const prefix = valid ? "✔ " : "❌";
-      console.log(` - ${prefix} ${name}/${latestVersion}: ${info}`);
+      const prefix = valid ? "√" : "x";
+      const color = valid ? chalk.greenBright : chalk.red;
+      console.log(
+        `${color(prefix)} ${color(name + "/" + latestVersion)}: ${info}`,
+      );
     });
   }
 }
