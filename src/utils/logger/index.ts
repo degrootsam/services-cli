@@ -37,13 +37,11 @@ export default class Logger {
       const currentFunction = functions[name];
       const {
         latestVersion,
-        validation: { valid, info },
+        validation: { valid },
       } = currentFunction;
       const prefix = valid ? "√" : "x";
       const color = valid ? chalk.greenBright : chalk.red;
-      console.log(
-        `${color(prefix)} ${color(name + "/" + latestVersion)}: ${info}`,
-      );
+      console.log(` - ${color(prefix)} ${color(name + "/" + latestVersion)}`);
     });
   }
 }

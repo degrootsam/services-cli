@@ -133,9 +133,10 @@ const runCLI = async () => {
     .description("Validate your functions")
     .action(
       withErrorHandling(async () => {
+        const tsConfig = director.getTsConfig();
         const functionsUtils = new FunctionsUtils();
         const functions = functionsUtils.getFunctions();
-        functionsUtils.validateFunctions(functions);
+        functionsUtils.validateFunctions(functions, tsConfig ? "ts" : "js");
       }),
     );
 

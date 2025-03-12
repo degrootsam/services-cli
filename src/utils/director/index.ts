@@ -145,7 +145,6 @@ export default class Director {
         /((\/\*\*)(\/\*)[\S\s]*?(\*\/))|((\/\/)[\S\s]*?(?=[\n\r]))/g;
 
       fileContent = fileContent?.replaceAll(commentRegex, "");
-      console.log(fileContent);
       return JSON.parse(fileContent);
     } catch (error) {
       logger.error("Unable to parse tsconfig.json");

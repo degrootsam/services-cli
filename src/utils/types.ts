@@ -48,12 +48,11 @@ export type FunctionInfo = {
 
 export type FunctionValidation = {
   valid: boolean;
-  info: string;
+  info: FunctionValidationInfo;
 };
 
-export type ExtractedFunctionInfo = {
-  name: string;
-  isExported: boolean;
+export type FunctionValidationInfo = {
+  exportedAs: string;
   isDefaultExport: boolean;
   isAsync: boolean;
 };

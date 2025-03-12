@@ -1,15 +1,14 @@
-import * as acorn from "acorn";
-import tsPlugin from "acorn-typescript";
-import * as acornWalk from "acorn-walk";
 import chalk from "chalk";
 import esbuild from "esbuild";
 import * as fs from "fs";
 import path from "path";
 import { BUILDPATH, director, logger, SOURCEPATH, spinner } from "..";
+import CodeParser from "../code-parser";
 import { ConfigManager } from "../config";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
-import { ExtractedFunctionInfo, FunctionInfo, Functions } from "../types";
+import { FunctionInfo, Functions } from "../types";
+
 export default class FunctionsUtils {
   private functionRegexp = new RegExp(
     /^([A-Za-z0-9_-]+)\/(\d+\.\d+)\/([^\/]+)\.(ts|js)$/,
@@ -158,8 +157,12 @@ export default class FunctionsUtils {
           latestVersion: version,
           path: path.resolve(SOURCEPATH, filePath.split(funcName)[0], funcName),
           validation: {
-            valid: Boolean(),
-            info: String(),
+            valid: false,
+            info: {
+              isAsync: false,
+              isDefaultExport: false,
+              exportedAs: "",
+            },
           },
           fileType: fileType as "js" | "ts",
         };
@@ -200,11 +203,12 @@ export default class FunctionsUtils {
     return exportDefaultRegexp.test(functionContent);
   }
 
-  validateFunctions(functions: Functions): Functions {
+  validateFunctions(functions: Functions, type: "js" | "ts" = "ts"): Functions {
     const functionNames = Object.keys(functions);
-    let validatedFuctions: Functions = {};
+    let validatedFunctions: Functions = {};
 
     spinner.start("Validating functions...");
+    const parser = new CodeParser(type);
     for (let i = 0; i < functionNames.length; i++) {
       const currentFunctionName = functionNames[i];
       const currentFunction = functions[currentFunctionName];
@@ -213,51 +217,27 @@ export default class FunctionsUtils {
       );
 
       if (!functionContent) {
-        validatedFuctions[currentFunctionName] = {
+        validatedFunctions[currentFunctionName] = {
           ...currentFunction,
           validation: {
-            info: "The function yielded no content",
+            ...currentFunction.validation,
             valid: false,
           },
         };
         continue;
       }
 
-      const codeValidationInfo = this.parseCode(functionContent);
-
-      //
-      // const functionDeclaration = this.parseName(currentFunctionName);
-      //
-      // const isExportedDefault = this.functionIsExportedAsDefault(
-      // 	functionContent,
-      // 	functionDeclaration,
-      // );
-      //
-      // if (!isExportedDefault) {
-      // 	validatedFuctions[currentFunctionName] = {
-      // 		...currentFunction,
-      //
-      // 		validation: {
-      // 			info: "The function is not exported as default",
-      // 			valid: false,
-      // 		},
-      // 	};
-      // 	continue;
-      // }
-      //
-      // validatedFuctions[currentFunctionName] = {
-      // 	...currentFunction,
-      // 	validation: {
-      // 		valid: true,
-      // 		info: "Success",
-      // 	},
-      // };
+      const validatedFunction = parser.validateFunction(
+        functionContent,
+        currentFunction,
+      );
+      validatedFunctions[currentFunctionName] = validatedFunction;
     }
     spinner.stop();
     logger.info("Your functions were validated:");
-    logger.functions(validatedFuctions);
+    logger.functions(validatedFunctions);
 
-    return validatedFuctions;
+    return validatedFunctions;
   }
 
   getValidFunctions(functions: Functions) {
@@ -273,125 +253,5 @@ export default class FunctionsUtils {
       },
       {},
     );
-  }
-
-  // Using acorn with TypeScript plugin to support parsing .ts files.
-  private acornParser: typeof acorn.Parser = (acorn.Parser as any).extend(
-    tsPlugin(),
-  );
-
-  /** Parse code from a string (JavaScript or TypeScript) */
-  parseCode(code: string): ExtractedFunctionInfo[] {
-    // Parse the code as an ES Module (ESM)
-    const ast = this.acornParser.parse(code, {
-      sourceType: "module",
-      ecmaVersion: "latest",
-    }) as acorn.Node;
-
-    return this.extractFunctions(ast);
-  }
-
-  /** Extract function information from the AST */
-  private extractFunctions(ast: acorn.Node): ExtractedFunctionInfo[] {
-    const functions: ExtractedFunctionInfo[] = [];
-    // We will track names of exported bindings for functions
-    const exportedNames = new Set<string>();
-    let defaultExportFunction: acorn.Node | null = null;
-
-    // First pass: collect exported names and identify default export function (if any)
-    acornWalk.simple(ast, {
-      ExportNamedDeclaration: (node: any) => {
-        if (node.declaration) {
-          // If the export directly declares a function or variable
-          if (node.declaration.type === "FunctionDeclaration") {
-            const fnName = node.declaration.id
-              ? node.declaration.id.name
-              : null;
-            if (fnName) exportedNames.add(fnName);
-          } else if (node.declaration.type === "VariableDeclaration") {
-            // For exported variables, collect their names if they are initialized with functions
-            for (const decl of node.declaration.declarations) {
-              if (decl.id && decl.id.type === "Identifier") {
-                // Mark this variable name as exported (actual function check later)
-                exportedNames.add(decl.id.name);
-              }
-            }
-          }
-        }
-        if (node.specifiers) {
-          // e.g., export { foo, bar as baz }
-          for (const spec of node.specifiers) {
-            if (spec.type === "ExportSpecifier") {
-              // const exportedName = spec.exported.name;
-              const localName = spec.local.name;
-              // Here we consider the local name (the function in this file)
-              exportedNames.add(localName);
-            }
-          }
-        }
-      },
-      ExportDefaultDeclaration: (node: any) => {
-        // Export default could be a function declaration or expression
-        defaultExportFunction = node.declaration;
-      },
-    });
-
-    // Second pass: find all function definitions and record details
-    acornWalk.ancestor(ast, {
-      FunctionDeclaration: (node: any) => {
-        const name = node.id ? node.id.name : null;
-        if (!name) return; // anonymous function (shouldn't happen for decl)
-        const isExported =
-          exportedNames.has(name) || node === defaultExportFunction;
-        const isDefault = node === defaultExportFunction;
-        functions.push({
-          name,
-          isExported,
-          isDefaultExport: isDefault,
-          isAsync: node.async === true,
-        });
-      },
-      FunctionExpression: (node: any, _state: any, ancestors: any[]) => {
-        // Function expressions (including arrow functions) don't have their own name,
-        // so we check if they are assigned to an identifier that is exported.
-        const parent = ancestors[ancestors.length - 1]; // Get the parent node
-        if (
-          parent?.type === "VariableDeclarator" &&
-          parent.id.type === "Identifier"
-        ) {
-          const name = parent.id.name;
-          const isExported =
-            exportedNames.has(name) || node === defaultExportFunction;
-          const isDefault = node === defaultExportFunction;
-          functions.push({
-            name,
-            isExported,
-            isDefaultExport: isDefault,
-            isAsync: node.async === true,
-          });
-        }
-      },
-      ArrowFunctionExpression: (node: any, _state: any, ancestors: any[]) => {
-        // Similar handling for arrow functions assigned to exported variables
-        const parent = ancestors[ancestors.length - 1]; // Get the parent node
-        if (
-          parent?.type === "VariableDeclarator" &&
-          parent.id.type === "Identifier"
-        ) {
-          const name = parent.id.name;
-          const isExported =
-            exportedNames.has(name) || node === defaultExportFunction;
-          const isDefault = node === defaultExportFunction;
-          functions.push({
-            name,
-            isExported,
-            isDefaultExport: isDefault,
-            isAsync: node.async === true,
-          });
-        }
-      },
-    });
-
-    return functions;
   }
 }
