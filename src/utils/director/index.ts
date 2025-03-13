@@ -56,8 +56,6 @@ export default class Director {
       );
     }
 
-    const dirName = path.dirname(sourceDir);
-
     const output = fs.createWriteStream(outputPath);
 
     const archive = archiver("zip", { zlib: { level: 9 } });

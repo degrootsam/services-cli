@@ -16,6 +16,7 @@ import GraphQLAPI from "./utils/gql-api";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
 import FusionAuth from "./utils/fusion-auth";
 import path from "path";
+import { tmpdir } from "os";
 
 const program = new Command();
 
@@ -105,6 +106,18 @@ const runCLI = async () => {
           options.force,
           options.javascript,
         );
+        director.changeDir(name);
+        spinner.start("Installing dependencies...");
+        await director.runCommand("npm", ["i"], { stdio: "ignore" });
+        spinner.success("Dependencies installed");
+        logger.info(
+          `Functions project "${name}" created!
+
+  To start developing:
+  - cd ${name}
+  - bbs functions publish
+    `,
+        );
       }),
     );
 
@@ -192,6 +205,7 @@ const runCLI = async () => {
         await functionsUtils.buildFunctions(tsConfig ? "ts" : "js");
 
         const outputZipPath = path.resolve(BUILDPATH, "app.zip");
+        await director.zipDir(appDir, path.resolve(BUILDPATH, "app.zip"));
 
         await director.zipDir(appDir, outputZipPath);
 

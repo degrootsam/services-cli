@@ -21,6 +21,7 @@ export default class FunctionsUtils {
     logger.debug(
       `Building functions with mode ${mode} in destination ${outdir}`,
     );
+    spinner.start("Building functions...");
     const functionsOutputDir = path.resolve(outdir, "app", "functions");
     switch (mode) {
       case "ts":
@@ -60,7 +61,7 @@ export default class FunctionsUtils {
         break;
     }
 
-    logger.info("Build complete! 🚀");
+    spinner.success("Build complete! 🚀");
     return functionsOutputDir;
   }
 
@@ -240,8 +241,7 @@ export default class FunctionsUtils {
       );
       validatedFunctions[currentFunctionName] = validatedFunction;
     }
-    spinner.stop();
-    logger.info("Your functions were validated:");
+    spinner.success("Functions validated:");
     logger.functions(validatedFunctions);
 
     return validatedFunctions;

@@ -106,7 +106,6 @@ export default class CodeParser {
           const isDefaultExport = exportedName === name;
           const matchesName = name === functionName && isDefaultExport;
           const isAsync = path.node.async;
-          console.log({ name, functionName, matchesName });
 
           const valid = isDefaultExport && isAsync;
           currentFunction = {

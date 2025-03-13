@@ -29,16 +29,6 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     }
 
     await this.downloadTemplate(templateUrl, name, force);
-
-    logger.info(
-      `Functions project "${name}" created!
-
-  To start developing:
-  - cd ${name}
-  - npm install ${!javascript ? "\r\n  - npm run build" : ""}
-  - bbs functions publish
-    `,
-    );
   }
   async generateCodeGenFile(graphqlURL: string, accessToken: string) {
     if (!graphqlURL || !accessToken) {
