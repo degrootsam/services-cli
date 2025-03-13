@@ -204,6 +204,9 @@ export default class FunctionsUtils {
   }
 
   validateFunctions(functions: Functions, type: "js" | "ts" = "ts"): Functions {
+    logger.debug(
+      `Validating functions in ${type === "js" ? "JavaScript" : "TypeScript"}`,
+    );
     const functionNames = Object.keys(functions);
     let validatedFunctions: Functions = {};
 
