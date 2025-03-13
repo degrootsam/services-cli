@@ -1,6 +1,7 @@
 import chalk from "chalk";
-import { SOURCEPATH, spinner } from "..";
+import { FunctionsUtils, SOURCEPATH, spinner } from "..";
 import { Functions } from "../types";
+import path from "path";
 
 export const DEBUG_PREFIX = chalk.bgWhite(chalk.black("DEBUG:"));
 export const ERROR_PREFIX = chalk.bgRed(chalk.black("ERROR:"));
@@ -31,17 +32,41 @@ export default class Logger {
     console.info(INFO_PREFIX, ...message);
   }
 
+  getValidationPrefix(state: boolean): string {
+    return state ? "√" : "x";
+  }
+
+  getValidationColor(state: boolean) {
+    return state ? chalk.greenBright : chalk.red;
+  }
+
   functions(functions: Functions) {
+    const functionsUtils = new FunctionsUtils();
     const functionNames = Object.keys(functions);
     functionNames.forEach((name) => {
       const currentFunction = functions[name];
+      const parsedName = functionsUtils.parseName(name);
       const {
         latestVersion,
-        validation: { valid },
+        validation: { valid, info },
       } = currentFunction;
-      const prefix = valid ? "√" : "x";
-      const color = valid ? chalk.greenBright : chalk.red;
-      console.log(` - ${color(prefix)} ${color(name + "/" + latestVersion)}`);
+      const prefix = this.getValidationPrefix(valid);
+      const color = this.getValidationColor(valid);
+      const message = ` - ${color(prefix)} ${color(name + "/" + latestVersion)}`;
+      if (valid) {
+        console.log(message);
+      } else {
+        const { isAsync, isDefaultExport } = info;
+        console.log(`${message}: `);
+        !isDefaultExport &&
+          console.log(
+            color(
+              `\t- Your function name should be '${parsedName}' and it should be defined as a default export!`,
+            ),
+          );
+        !isAsync &&
+          console.log(color("\t- Your function should return a Promise!"));
+      }
     });
   }
 }

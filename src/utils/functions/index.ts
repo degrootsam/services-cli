@@ -18,6 +18,9 @@ export default class FunctionsUtils {
     outdir: string = BUILDPATH,
     debug: boolean = false,
   ): Promise<string> {
+    logger.debug(
+      `Building functions with mode ${mode} in destination ${outdir}`,
+    );
     const functionsOutputDir = path.resolve(outdir, "app", "functions");
     switch (mode) {
       case "ts":
@@ -161,7 +164,7 @@ export default class FunctionsUtils {
             info: {
               isAsync: false,
               isDefaultExport: false,
-              exportedAs: "",
+              matchesName: false,
             },
           },
           fileType: fileType as "js" | "ts",
@@ -233,6 +236,7 @@ export default class FunctionsUtils {
       const validatedFunction = parser.validateFunction(
         functionContent,
         currentFunction,
+        this.parseName(currentFunctionName),
       );
       validatedFunctions[currentFunctionName] = validatedFunction;
     }

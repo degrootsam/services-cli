@@ -52,7 +52,7 @@ export type FunctionValidation = {
 };
 
 export type FunctionValidationInfo = {
-  exportedAs: string;
   isDefaultExport: boolean;
   isAsync: boolean;
+  matchesName: boolean;
 };
