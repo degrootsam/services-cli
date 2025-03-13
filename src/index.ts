@@ -166,7 +166,8 @@ const runCLI = async () => {
         const appDir = path.resolve(BUILDPATH, "app");
         const functionsScaffolder = new FunctionsScaffolder();
         const functions = functionsUtils.getFunctions();
-        const validatedFunctions = functionsUtils.validateFunctions(functions);
+        const validatedFunctions =
+          await functionsUtils.validateFunctions(functions);
 
         functionsScaffolder.generateFunctionsBarrelFile(
           appDir,
@@ -191,7 +192,8 @@ const runCLI = async () => {
         const functionsUtils = new FunctionsUtils();
 
         const functions = functionsUtils.getFunctions();
-        const validatedFunctions = functionsUtils.validateFunctions(functions);
+        const validatedFunctions =
+          await functionsUtils.validateFunctions(functions);
         const validFunctions =
           functionsUtils.getValidFunctions(validatedFunctions);
 

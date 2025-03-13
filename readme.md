@@ -11,3 +11,4 @@
 - [Keytar](https://github.com/atom/node-keytar)
 - [Degit](https://github.com/Rich-Harris/degit)
 - [Execa](https://github.com/sindresorhus/execa)
+- [jtd: JSON Validation for JavaScript](https://github.com/jsontypedef/json-typedef-js)

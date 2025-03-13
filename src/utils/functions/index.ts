@@ -8,6 +8,7 @@ import { ConfigManager } from "../config";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
 import { FunctionInfo, Functions } from "../types";
+import JsonSchema from "../json-schema";
 
 export default class FunctionsUtils {
   private functionRegexp = new RegExp(
@@ -195,6 +196,14 @@ export default class FunctionsUtils {
     return path.resolve(func.path, version, `index.${func.fileType}`);
   }
 
+  getFunctionJsonFilePath(
+    func: FunctionInfo,
+    v?: FunctionInfo["latestVersion"],
+  ) {
+    const version = v ? v : func.latestVersion;
+    return path.resolve(func.path, version, "function.json");
+  }
+
   functionIsExportedAsDefault(
     functionContent: string,
     functionDeclaration: string,
@@ -207,7 +216,10 @@ export default class FunctionsUtils {
     return exportDefaultRegexp.test(functionContent);
   }
 
-  validateFunctions(functions: Functions, type: "js" | "ts" = "ts"): Functions {
+  async validateFunctions(
+    functions: Functions,
+    type: "js" | "ts" = "ts",
+  ): Promise<Functions> {
     logger.debug(
       `Validating functions in ${type === "js" ? "JavaScript" : "TypeScript"}`,
     );
@@ -216,6 +228,7 @@ export default class FunctionsUtils {
 
     spinner.start("Validating functions...");
     const parser = new CodeParser(type);
+    const jsonSchema = new JsonSchema();
     for (let i = 0; i < functionNames.length; i++) {
       const currentFunctionName = functionNames[i];
       const currentFunction = functions[currentFunctionName];

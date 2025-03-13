@@ -50,6 +50,7 @@
     "degit": "^2.8.4",
     "esbuild": "^0.25.0",
     "graphql": "^16.10.0",
+    "jtd": "^0.1.1",
     "keytar": "^7.9.0",
     "nanospinner": "^1.2.2",
     "winston": "^3.17.0"
