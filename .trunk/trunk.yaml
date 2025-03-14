@@ -17,6 +17,7 @@ runtimes:
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
   enabled:
+    - pre-commit-hooks@5.0.0
     - checkov@3.2.372
     - dotenv-linter@3.3.0
     - git-diff-check
@@ -31,3 +32,4 @@ actions:
     - trunk-check-pre-push
     - trunk-fmt-pre-commit
     - trunk-upgrade-available
+    - commitizen

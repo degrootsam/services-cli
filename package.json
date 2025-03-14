@@ -29,15 +29,19 @@
     "@types/node": "^22.13.4",
     "@types/winston": "^2.4.4",
     "babel-jest": "^29.7.0",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.6",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "typescript": "^5.7.3"
   },
+  "optionalDependencies": {
+    "@esbuild/linux-x64": "^0.25.1"
+  },
   "dependencies": {
     "@babel/parser": "^7.26.10",
-    "@esbuild/linux-x64": "^0.25.1",
     "@inquirer/prompts": "^7.3.2",
     "@sveltejs/acorn-typescript": "^1.0.5",
     "@types/acorn": "^4.0.6",
@@ -54,5 +58,10 @@
     "keytar": "^7.9.0",
     "nanospinner": "^1.2.2",
     "winston": "^3.17.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
