@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import esbuild from "esbuild";
 import * as fs from "fs";
+import fsExtra from "fs-extra";
 import path from "path";
 import { BUILDPATH, director, logger, SOURCEPATH, spinner } from "..";
 import CodeParser from "../code-parser";
@@ -9,6 +10,7 @@ import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
 import { FunctionInfo, Functions } from "../types";
 import JsonSchema from "../json-schema";
+import FormData from "form-data";
 
 export default class FunctionsUtils {
   private functionRegexp = new RegExp(
@@ -98,7 +100,7 @@ export default class FunctionsUtils {
     const functionsJson = this.getFunctionsJSON(functions);
     form.append("functions", JSON.stringify(functionsJson));
     form.append("options", JSON.stringify({ compile: !config.skipCompile }));
-    form.append("file", fs.createReadStream(zipPath));
+    form.append("file", fsExtra.createReadStream(zipPath));
     const builderAPIURL = await config.builderAPIURL();
     const request = new RequestHandler(builderAPIURL);
     const fusionAuth = new FusionAuth();
@@ -110,6 +112,7 @@ export default class FunctionsUtils {
       form,
       {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     );
 

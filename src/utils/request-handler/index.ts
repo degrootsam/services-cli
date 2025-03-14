@@ -1,4 +1,5 @@
 import { config, logger } from "..";
+import fetch from "node-fetch";
 
 type RequestResponse<T> = {
   data?: T;
@@ -54,11 +55,7 @@ export class RequestHandler {
       headers: {
         ...headers,
       },
-      body: body
-        ? body instanceof FormData
-          ? body
-          : JSON.stringify(body)
-        : undefined,
+      body: body ? (body as any) : undefined,
     });
 
     logger.debug(`Response status: ${response.status}`);

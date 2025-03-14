@@ -79,17 +79,23 @@ export default class FusionAuth {
     const requestHandler = new RequestHandler(fusionAuthURL);
 
     const { data, error, responseStatus } =
-      await requestHandler.post<AuthToken>("/api/login", {
-        loginId,
-        password,
-      });
+      await requestHandler.post<AuthToken>(
+        "/api/login",
+        JSON.stringify({
+          loginId,
+          password,
+        }),
+        {
+          "Content-Type": "application/json; charset=UTF-8",
+        },
+      );
 
     if (error || !data) {
       if (responseStatus === 404) {
         logger.error("Invalid login credentials! Pleasry again");
         return await this.login();
       }
-      throw new Error(error?.message ?? "Something went wrong");
+      throw new Error(error?.message || "Something went wrong");
     }
 
     switch (responseStatus) {
@@ -101,7 +107,7 @@ export default class FusionAuth {
         return await this.handle2FA(twoFactorId);
       default:
         throw new Error(
-          `Unhandle response status from Fusion Auth: ${responseStatus}`,
+          `Unhandled response status from Fusion Auth: ${responseStatus}`,
         );
     }
   }
