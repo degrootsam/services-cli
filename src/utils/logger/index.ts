@@ -2,6 +2,7 @@ import chalk from "chalk";
 import { FunctionsUtils, SOURCEPATH, spinner } from "..";
 import { Functions } from "../types";
 import path from "path";
+import { FunctionResult } from "../functions/types";
 
 export const DEBUG_PREFIX = chalk.bgWhite(chalk.black("DEBUG:"));
 export const ERROR_PREFIX = chalk.bgRed(chalk.black("ERROR:"));
@@ -40,7 +41,14 @@ export default class Logger {
     return state ? chalk.greenBright : chalk.red;
   }
 
-  functions(functions: Functions) {
+  success(...message: any) {
+    const color = this.getValidationColor(true);
+    const prefix = color(this.getValidationPrefix(true));
+
+    console.log(`${prefix} ${message}`);
+  }
+
+  validatedFunctions(functions: Functions) {
     const functionsUtils = new FunctionsUtils();
     const functionNames = Object.keys(functions);
     functionNames.forEach((name) => {
@@ -52,7 +60,7 @@ export default class Logger {
       } = currentFunction;
       const prefix = this.getValidationPrefix(valid);
       const color = this.getValidationColor(valid);
-      const message = ` - ${color(prefix)} ${color(name + "/" + latestVersion)}`;
+      const message = color(` - ${prefix} ${name}/${latestVersion}`);
       if (valid) {
         console.log(message);
       } else {
@@ -68,5 +76,15 @@ export default class Logger {
           console.log(color("\t- Your function should return a Promise!"));
       }
     });
+  }
+
+  uploadedFunction(functionResult: FunctionResult) {
+    const { status, name, error, version } = functionResult;
+    const valid = status === "ok";
+    const prefix = this.getValidationPrefix(valid);
+    const color = this.getValidationColor(valid);
+    const info = valid ? "successfully published" : error;
+    const message = color(` - ${prefix} ${name}/${version}`) + `: ${info}`;
+    console.log(message);
   }
 }
