@@ -1,0 +1,3 @@
+[submodule "codegen-templates"]
+	path = codegen-templates
+	url = https://github.com/degrootsam/codegen-templates
