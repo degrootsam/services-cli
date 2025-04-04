@@ -1,7 +1,6 @@
 import chalk from "chalk";
 import esbuild from "esbuild";
 import * as fs from "fs";
-import fsExtra from "fs-extra";
 import path from "path";
 import { BUILDPATH, director, logger, SOURCEPATH, spinner } from "..";
 import CodeParser from "../code-parser";
@@ -11,6 +10,7 @@ import { RequestHandler } from "../request-handler";
 import { FunctionInfo, Functions } from "../types";
 import JsonSchema from "../json-schema";
 import FormData from "form-data";
+import { PublishResponse } from "./types";
 
 export default class FunctionsUtils {
   private functionRegexp = new RegExp(
@@ -25,7 +25,8 @@ export default class FunctionsUtils {
       `Building functions with mode ${mode} in destination ${outdir}`,
     );
     spinner.start("Building functions...");
-    const functionsOutputDir = path.resolve(outdir, "app", "functions");
+    const appDir = path.resolve(outdir, "app");
+    const functionsOutputDir = path.resolve(appDir, "functions");
     switch (mode) {
       case "ts":
         await esbuild.build({
@@ -64,6 +65,11 @@ export default class FunctionsUtils {
         break;
     }
 
+    const packageSourcePath = path.resolve(process.cwd(), "package.json");
+    const packageTargetPath = path.resolve(appDir, "package.json");
+
+    fs.copyFileSync(packageSourcePath, packageTargetPath);
+
     spinner.success("Build complete! 🚀");
     return functionsOutputDir;
   }
@@ -73,14 +79,24 @@ export default class FunctionsUtils {
     const functionsJSON = functionNames.map((functionName) => {
       const currentFunction = functions[functionName];
       const { latestVersion, path: functionPath } = currentFunction;
+
       const functionJSONPath = path.resolve(
         functionPath,
         latestVersion,
         "function.json",
       );
+
       const functionJSONContent = director.readFile(functionJSONPath) ?? "";
+
       try {
-        return JSON.parse(functionJSONContent);
+        const parsedContent = JSON.parse(functionJSONContent);
+        return {
+          ...parsedContent,
+          options: JSON.stringify(parsedContent.options),
+          paths: "{}",
+          name: functionName,
+          version: latestVersion,
+        };
       } catch (error) {
         logger.debug(error);
         throw new Error(
@@ -88,7 +104,6 @@ export default class FunctionsUtils {
         );
       }
     });
-    logger.debug({ functionsJSON });
     return functionsJSON;
   }
 
@@ -100,7 +115,7 @@ export default class FunctionsUtils {
     const functionsJson = this.getFunctionsJSON(functions);
     form.append("functions", JSON.stringify(functionsJson));
     form.append("options", JSON.stringify({ compile: !config.skipCompile }));
-    form.append("file", fsExtra.createReadStream(zipPath));
+    form.append("file", fs.createReadStream(zipPath));
     const builderAPIURL = await config.builderAPIURL();
     const request = new RequestHandler(builderAPIURL);
     const fusionAuth = new FusionAuth();
@@ -112,11 +127,17 @@ export default class FunctionsUtils {
       form,
       {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
       },
     );
 
-    console.log(response.data, response.error);
+    switch (response.status) {
+      case 409:
+        const { created, updated, deleted, message } =
+          (await response.json()) as PublishResponse;
+        created.forEach((result) => logger.uploadedFunction(result));
+        updated.forEach((result) => logger.uploadedFunction(result));
+        deleted.forEach((result) => logger.uploadedFunction(result));
+    }
   }
 
   parseName(name: string): string {
@@ -258,7 +279,7 @@ export default class FunctionsUtils {
       validatedFunctions[currentFunctionName] = validatedFunction;
     }
     spinner.success("Functions validated:");
-    logger.functions(validatedFunctions);
+    logger.validatedFunctions(validatedFunctions);
 
     return validatedFunctions;
   }

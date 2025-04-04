@@ -1,5 +1,6 @@
 #!/usr/bin/env -S node --no-warnings=ExperimentalWarning
 import { Command } from "commander";
+import path from "path";
 import {
   BUILDPATH,
   ComponentsScaffolder,
@@ -12,11 +13,11 @@ import {
   prompter,
   spinner,
 } from "./utils";
+import FusionAuth from "./utils/fusion-auth";
 import GraphQLAPI from "./utils/gql-api";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
-import FusionAuth from "./utils/fusion-auth";
-import path from "path";
-import { tmpdir } from "os";
+import { checkTemplateUpdate, handleTemplateUpdate } from "./utils/templates";
+import { template } from "@babel/core";
 
 const program = new Command();
 
@@ -49,6 +50,8 @@ const withErrorHandling = (fn: (...args: any[]) => Promise<void>) => {
 };
 
 const runCLI = async () => {
+  await handleTemplateUpdate();
+
   program
     .name("Betty Blocks Services CLI (Proof of Concept)")
     .version("0.0.1")
@@ -198,16 +201,20 @@ const runCLI = async () => {
           functionsUtils.getValidFunctions(validatedFunctions);
 
         const functionsScaffolder = new FunctionsScaffolder();
+
         functionsScaffolder.generateFunctionsBarrelFile(
           appDir,
           validFunctions,
           "js",
         );
 
-        await functionsUtils.buildFunctions(tsConfig ? "ts" : "js");
+        await functionsUtils.buildFunctions(
+          tsConfig ? "ts" : "js",
+          undefined,
+          true,
+        );
 
         const outputZipPath = path.resolve(BUILDPATH, "app.zip");
-        await director.zipDir(appDir, path.resolve(BUILDPATH, "app.zip"));
 
         await director.zipDir(appDir, outputZipPath);
 
@@ -217,8 +224,19 @@ const runCLI = async () => {
       }),
     );
 
-  functions
-    .command("gen-types")
+  const gen = functions.command("gen").description("Code generation tools");
+
+  gen
+    .command("test")
+    .description("Generate test files for a selected function")
+    .action(
+      withErrorHandling(async () => {
+        const functionsScaffolder = new FunctionsScaffolder();
+        await functionsScaffolder.generateTestFiles();
+      }),
+    );
+  gen
+    .command("types")
     .description(
       "Generate a typescript file based on a Betty Blocks application",
     )

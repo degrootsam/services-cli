@@ -1,9 +1,9 @@
 import fs from "fs-extra";
 import path from "path";
-import { isErrorWithMessage, logger } from "..";
+import { config, isErrorWithMessage, logger } from "..";
 import { spawn, SpawnOptions } from "child_process";
 import archiver from "archiver";
-import { level } from "winston";
+import os from "os";
 
 export default class Director {
   resolveCLIPath(): string {
@@ -11,7 +11,7 @@ export default class Director {
   }
 
   resolveCLITemplatePath(): string {
-    return path.resolve(this.resolveCLIPath(), "templates");
+    return path.resolve(this.resolveCLIPath(), config.scaffolder.git.name);
   }
 
   createDir(name: string) {
@@ -150,23 +150,62 @@ export default class Director {
     }
   }
 
-  runCommand(
+  async findBbsCliPath(): Promise<string | null> {
+    const command = os.platform() === "win32" ? "where" : "which";
+
+    try {
+      const path = await this.runCommand(command, ["bbs"]);
+      return path; // Might be multiple lines on Windows, first one is the path
+    } catch {
+      return null;
+    }
+  }
+  async runCommand(
     command: string,
     args: string[] = [],
-    options: SpawnOptions = { stdio: "inherit" },
-  ) {
-    return new Promise<void>((resolve, reject) => {
-      const child = spawn(command, args, options);
+    options: SpawnOptions = {},
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let output = "";
+      let errorOutput = "";
 
-      child.on("close", (code) => {
-        if (code !== 0) {
-          reject(new Error(`Command failed with exit code ${code}`));
-        } else {
-          resolve();
-        }
-      });
+      try {
+        const child = spawn(command, args, { ...options, stdio: "pipe" });
 
-      child.on("error", reject);
+        child.stdout?.on("data", (data) => {
+          output += data.toString();
+        });
+
+        child.stderr?.on("data", (data) => {
+          errorOutput += data.toString();
+        });
+
+        child.on("close", (code) => {
+          if (code !== 0) {
+            reject(
+              new Error(
+                `Command failed with exit code ${code}: ${command} ${args.join(" ")}\n${errorOutput}`,
+              ),
+            );
+          } else {
+            resolve(output.trim());
+          }
+        });
+
+        child.on("error", (err) => {
+          reject(
+            new Error(
+              `Failed to run command: ${command} ${args.join(" ")}\n${err.message}`,
+            ),
+          );
+        });
+      } catch (err) {
+        reject(
+          new Error(
+            `Unexpected error while running command: ${command} ${args.join(" ")}\n${(err as Error).message}`,
+          ),
+        );
+      }
     });
   }
 }

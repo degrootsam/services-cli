@@ -78,36 +78,35 @@ export default class FusionAuth {
     const fusionAuthURL = await this.getFusionAuthURL();
     const requestHandler = new RequestHandler(fusionAuthURL);
 
-    const { data, error, responseStatus } =
-      await requestHandler.post<AuthToken>(
-        "/api/login",
-        JSON.stringify({
-          loginId,
-          password,
-        }),
-        {
-          "Content-Type": "application/json; charset=UTF-8",
-        },
-      );
+    const response = await requestHandler.post(
+      "/api/login",
+      JSON.stringify({
+        loginId,
+        password,
+      }),
+      {
+        "Content-Type": "application/json; charset=UTF-8",
+      },
+    );
 
-    if (error || !data) {
-      if (responseStatus === 404) {
-        logger.error("Invalid login credentials! Pleasry again");
+    switch (response.status) {
+      case 404:
+        logger.error("Invalid login credentials! Please try again");
         return await this.login();
-      }
-      throw new Error(error?.message || "Something went wrong");
-    }
-
-    switch (responseStatus) {
       case 200:
-        const { token, tokenExpirationInstant } = data;
+        const { token, tokenExpirationInstant } = (await response.json()) as {
+          token: string;
+          tokenExpirationInstant: number;
+        };
         return await this.storeToken(token, tokenExpirationInstant);
       case 242:
-        const { twoFactorId } = data;
+        const { twoFactorId } = (await response.json()) as {
+          twoFactorId: string;
+        };
         return await this.handle2FA(twoFactorId);
       default:
         throw new Error(
-          `Unhandled response status from Fusion Auth: ${responseStatus}`,
+          `Unhandled response status from Fusion Auth: ${response.status} - ${response.statusText}`,
         );
     }
   }
@@ -116,22 +115,26 @@ export default class FusionAuth {
     const code = await prompter.input("Please enter your 2FA code", true);
     const request = new RequestHandler(config.fusionAuthURL);
 
-    const { data, error, responseStatus } = await request.post<AuthToken>(
-      "/api/two-factor/login",
-      {
-        code,
-        twoFactorId,
-      },
-    );
-    if (responseStatus !== 200) {
+    const response = await request.post("/api/two-factor/login", {
+      code,
+      twoFactorId,
+    });
+
+    if (response.status !== 200) {
       return await this.handle2FA(twoFactorId);
     }
 
-    if (error || !data) {
-      throw new Error(error?.message ?? "Unable to verify 2FA response");
+    const result = (await response.json()) as {
+      error?: any;
+      token: string;
+      tokenExpirationInstant: number;
+    };
+
+    if (result.error || !result) {
+      throw new Error(result.error?.message ?? "Unable to verify 2FA response");
     }
 
-    const { token, tokenExpirationInstant } = data;
+    const { token, tokenExpirationInstant } = result;
     return await this.storeToken(token, tokenExpirationInstant);
   }
 }

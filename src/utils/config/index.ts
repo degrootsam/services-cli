@@ -6,6 +6,10 @@ import { Agent, AgentOptions } from "https";
 
 const DEFAULT_CONFIG: Config = {
   scaffolder: {
+    git: {
+      name: "codegen-templates",
+      url: "https://github.com/degrootsam/codegen-templates",
+    },
     projects: {
       functions: {
         typescript:
@@ -19,18 +23,23 @@ const DEFAULT_CONFIG: Config = {
       },
     },
     codeGeneration: {
-      gqlCodeGen: "degrootsam/codegen-templates/gql-codegen",
-      newFunction: "https://github.com/degrootsam/gql-codegen/new-function",
-      newComponent: "https://github.com/degrootsam/gql-codegen/new-component",
+      gqlCodeGen: "gql-codegen",
+      newFunction: "new-function",
+      newComponent: "",
     },
   },
+  tests: {
+    directory: "__tests__",
+  },
+  app: {
+    uuid: "",
+    identifier: "",
+    zone: "",
+  },
   options: {
-    appUUID: "",
     appDomain: "betty.app",
-    appIdentifier: "",
     https: true,
     env: "",
-    zone: "",
     schemaURL: "https://raw.githubusercontent.com",
     functionSchemaPath:
       "/bettyblocks/json-schema/master/schemas/actions/function.json",
@@ -85,24 +94,24 @@ export class ConfigManager {
   }
 
   async getAppUUID() {
-    let appUUID = this.config.options.appUUID;
-    if (!appUUID) {
-      appUUID = await prompter.input("Please enter your app UUID");
-      this.updateConfig({ options: { ...this.options, appUUID } });
+    let uuid = this.config.app.uuid;
+    if (!uuid) {
+      uuid = await prompter.input("Please enter your app UUID");
+      this.updateConfig({ app: { ...this.app, uuid } });
     }
     return (
-      this.config.options.appUUID ??
+      this.config.app.uuid ??
       (await prompter.input("Please enter your app UUID"))
     );
   }
 
   async getAppIdentifier() {
-    let appIdentifier = this.config.options.appIdentifier;
-    if (!appIdentifier) {
-      appIdentifier = await prompter.input("Please enter your app identifier");
-      this.updateConfig({ options: { ...this.options, appIdentifier } });
+    let identifier = this.config.app.identifier;
+    if (!identifier) {
+      identifier = await prompter.input("Please enter your app identifier");
+      this.updateConfig({ app: { ...this.app, identifier } });
     }
-    return appIdentifier;
+    return identifier;
   }
 
   async getApiURL() {
@@ -112,6 +121,14 @@ export class ConfigManager {
     const protocol = this.httpProtocol;
 
     return `${protocol}://${appIdentifier}.${appDomain}/api/runtime/${appUUID}`;
+  }
+
+  get app() {
+    return this.config.app;
+  }
+
+  get scaffolder() {
+    return this.config.scaffolder;
   }
 
   get options() {
@@ -127,7 +144,7 @@ export class ConfigManager {
   }
 
   get zone() {
-    return this.config.options.zone ?? "production";
+    return this.config.app.zone;
   }
 
   get schemaURL() {

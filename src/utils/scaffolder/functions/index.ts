@@ -10,18 +10,16 @@ import {
   SOURCEPATH,
   spinner,
 } from "../..";
-import { Config, Functions } from "../../types";
+import { FunctionInfo, Functions } from "../../types";
 
 // Scaffolder for functions projects and individual functions
 export default class FunctionsScaffolder extends BaseScaffolder {
-  private config: Config = config.getConfig();
-
   async generateProject(
     name: string,
     force: boolean = false,
     javascript: boolean = false,
   ) {
-    const functionTemplateURLs = this.config.scaffolder.projects.functions;
+    const functionTemplateURLs = config.scaffolder.projects.functions;
     let templateUrl = functionTemplateURLs.typescript;
 
     if (javascript) {
@@ -44,8 +42,8 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     logger.debug({ outputDir: targetDir, tempDir });
 
-    const tempOutputDir = await this.downloadTemplate(
-      this.config.scaffolder.codeGeneration.gqlCodeGen,
+    const tempOutputDir = await this.copyTemplateFromLocal(
+      config.scaffolder.codeGeneration.gqlCodeGen,
       tempDir,
       true,
     );
@@ -106,12 +104,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       throw new Error(`Function ${name} already exists!`);
     }
 
-    const newFunctionTemplateDir = path.resolve(
-      director.resolveCLITemplatePath(),
-      "scaffolder",
-      "functions",
-      "new",
-    );
+    const newFunctionTemplateDir = config.scaffolder.codeGeneration.gqlCodeGen;
 
     let indexTsJs = director.readFile(
       path.resolve(newFunctionTemplateDir, indexTsJsFileName),
@@ -126,8 +119,6 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     }
 
     const parsedName = functionUtils.parseName(name);
-
-    logger.info(parsedName);
 
     indexTsJs = indexTsJs.replace("functionName", parsedName);
     functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
@@ -197,6 +188,18 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     );
   }
 
+  async generateTestFiles(func?: FunctionInfo) {
+    let parsedFunction = func;
+    if (!parsedFunction) {
+      const functionsUtils = new FunctionsUtils();
+      const functions = functionsUtils.getFunctions();
+      const functionNames = Object.keys(functions);
+      for (const functionName of functionNames) {
+        console.log(functionName);
+      }
+    }
+  }
+
   generateBarrelFunctionDeclaration(functions: Functions) {
     const functionsUtils = new FunctionsUtils();
     let result = "const fn = {\r\n";
@@ -205,7 +208,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       const currentFunction = functions[name];
       const { latestVersion } = currentFunction;
       const functionName = functionsUtils.parseName(name);
-      const key = `"${functionName} ${latestVersion}"`;
+      const key = `\t"${functionName} ${latestVersion}"`;
       const value = `${functionName}_${latestVersion.replace(".", "_")}`;
       result += `${key}: ${value},\r\n`;
     });

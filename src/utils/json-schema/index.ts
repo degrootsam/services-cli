@@ -5,7 +5,8 @@ import { RequestHandler } from "../request-handler";
 export default class JsonSchema {
   async validateJson(pathToJson: string, schemaURL: string = config.schemaURL) {
     const request = new RequestHandler(schemaURL);
-    const { data: schema } = await request.get("");
+    const response = await request.get("");
+    const schema = await response.json();
     const jsonContent = director.readFile(pathToJson);
     const jsonData = JSON.parse(jsonContent!);
     console.log(schema);

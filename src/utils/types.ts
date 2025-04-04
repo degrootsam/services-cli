@@ -7,6 +7,10 @@ type TemplateLinks = {
 
 export type Config = {
   scaffolder: {
+    git: {
+      name: string;
+      url: string;
+    };
     projects: {
       functions: TemplateLinks;
       components: TemplateLinks;
@@ -17,11 +21,16 @@ export type Config = {
       newComponent: string;
     };
   };
-  options: {
-    appUUID: string;
-    appIdentifier: string;
-    env: string;
+  tests: {
+    directory: string;
+  };
+  app: {
+    uuid: string;
+    identifier: string;
     zone: string;
+  };
+  options: {
+    env: string;
     schemaURL: string;
     appDomain: string;
     functionSchemaPath: string;
