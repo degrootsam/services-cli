@@ -48,48 +48,7 @@ const withErrorHandling = (fn: (...args: any[]) => Promise<void>) => {
   };
 };
 
-const initCLI = async () => {
-  const cliPath = director.resolveCLIPath();
-  const codegenTemplatesPath = path.resolve(
-    cliPath,
-    config.scaffolder.templates.path,
-  );
-  const codegenTemplatesSubModule = new Git({
-    name: "codegen-templates",
-    path: codegenTemplatesPath,
-    version: config.scaffolder.templates.version,
-  });
-  await codegenTemplatesSubModule.handleUpdate();
-
-  // Step 2: Initialize its submodules (projects)
-  await director.runCommand("git", ["submodule", "update", "--init"], {
-    cwd: codegenTemplatesPath,
-  });
-
-  const { ts: tsProject, js: jsProject } =
-    config.scaffolder.templates.functions.project;
-
-  const tsProjectPath = path.resolve(codegenTemplatesPath, tsProject.path);
-  const jsProjectPath = path.resolve(codegenTemplatesPath, jsProject.path);
-
-  const tsProjectSubModule = new Git({
-    name: "bb-generic-actions-typescript",
-    path: tsProjectPath,
-    version: tsProject.version,
-  });
-  await tsProjectSubModule.handleUpdate();
-
-  const jsProjectSubModule = new Git({
-    name: "bb-generic-actions",
-    path: jsProjectPath,
-    version: jsProject.version,
-  });
-  await jsProjectSubModule.handleUpdate();
-};
-
 const runCLI = async () => {
-  await initCLI();
-
   program
     .name("Betty Blocks Services CLI (Proof of Concept)")
     .version("0.0.1")
@@ -99,6 +58,26 @@ const runCLI = async () => {
       withErrorHandling(async () => {
         const fusionAuth = new FusionAuth();
         await fusionAuth.login();
+      }),
+    );
+
+  const update = program.command("update");
+
+  update
+    .command("install")
+    .description("Update the CLI and it's submodules")
+    .action(
+      withErrorHandling(async () => {
+        await director.updateSubmodules();
+      }),
+    );
+
+  update
+    .command("check")
+    .description("Check for new updates for the CLI and it's submodules")
+    .action(
+      withErrorHandling(async () => {
+        await director.checkSubmodulesForUpdate();
       }),
     );
 

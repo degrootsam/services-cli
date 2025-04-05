@@ -11,12 +11,12 @@ export type GitTemplateConfig = {
 export default class Git {
   private readonly repoPath: string;
   private readonly name: string;
-  private readonly version: string;
+  private readonly version: string | undefined;
 
   constructor(config: GitTemplateConfig) {
     this.name = config.name;
     this.repoPath = path.resolve(config.path);
-    this.version = config.version ?? "latest";
+    this.version = config.version;
   }
 
   async getLatestRemoteTag(): Promise<string | null> {
@@ -60,42 +60,53 @@ export default class Git {
     }
   }
 
-  async checkForUpdate(): Promise<
-    | { updateAvailable: true; currentVersion: string; latestVersion: string }
-    | { updateAvailable: false }
-  > {
-    if (this.version !== "latest") {
-      return { updateAvailable: false }; // always "update" if version is pinned
+  async getAvailableRemoteTags(): Promise<string[]> {
+    logger.debug("Getting available remote tags");
+    const tagsOutput = await director.runCommand(
+      "git",
+      ["ls-remote", "--tags", "origin"],
+      { cwd: this.repoPath },
+    );
+
+    const tags = tagsOutput
+      .split("\n")
+      .map((line) => {
+        const ref = line.split("\t")[1];
+        return ref?.match(/refs\/tags\/(.+?)(\^\{\})?$/)?.[1] ?? null;
+      })
+      .filter(
+        (tag): tag is string => Boolean(tag) && Boolean(semver.valid(tag)),
+      )
+      .sort(semver.rcompare);
+
+    logger.debug({ tags });
+
+    return tags;
+  }
+
+  async getSafeVersion(targetVersion: string): Promise<string | null> {
+    const remoteTags = await this.getAvailableRemoteTags();
+
+    if (remoteTags.includes(targetVersion)) {
+      return targetVersion; // we're good
     }
 
-    try {
-      const latestVersion = await this.getLatestRemoteTag();
-      const currentVersion = await this.getCurrentTag();
+    logger.warn(
+      `[${this.name}] Version ${targetVersion} not found on remote. Downgrading...`,
+    );
 
-      const currentSemver = currentVersion
-        ? semver.coerce(currentVersion)
-        : semver.parse("0.0.0");
-      const latestSemver = latestVersion ? semver.coerce(latestVersion) : null;
+    return remoteTags[0] ?? null;
+  }
 
-      const updateAvailable =
-        !!latestSemver && semver.gt(latestSemver, currentSemver!);
-
-      if (updateAvailable) {
-        return {
-          updateAvailable: true,
-          currentVersion: currentVersion ?? "0.0.0",
-          latestVersion: latestVersion ?? "N/A",
-        };
-      }
-    } catch (err) {
-      logger.error(`[${this.name}] Error checking for updates:`, err);
-    }
-
-    return { updateAvailable: false };
+  parseTag(tag: string) {
+    const normalized = tag.replaceAll("^", "");
+    const version = normalized.startsWith("v") ? normalized : `v${normalized}`;
+    return version;
   }
 
   private async checkoutVersion(tag: string): Promise<void> {
-    const parsedTag = tag.startsWith("v") ? tag : `v${tag}`;
+    const parsedTag = this.parseTag(tag);
+
     try {
       logger.debug(`[${this.name}] Cleaning untracked files...`);
       await director.runCommand("git", ["clean", "-fd"], {
@@ -123,27 +134,77 @@ export default class Git {
     }
   }
 
-  async handleUpdate(): Promise<void> {
-    if (this.version && this.version !== "latest") {
-      logger.debug(`[${this.name}] Using pinned version: ${this.version}`);
+  static compareVersions(a: string, b: string = "0.0.0") {
+    const cleanA = semver.clean(a);
+    const cleanB = semver.clean(b);
+    logger.debug(`Comparing version a: ${cleanA} with version: b ${cleanB}`);
+    return semver.compare(semver.clean(a) ?? "", semver.clean(b) ?? "");
+  }
 
-      await this.checkoutVersion(this.version);
-      return;
+  async checkForNewVersion(): Promise<string> {
+    const remoteTags = await this.getAvailableRemoteTags();
+    const resolvedVersion = remoteTags[0] ?? null;
+    if (!resolvedVersion) {
+      throw new Error(
+        `Unable to fetch latest version from GitHub for ${this.name}`,
+      );
+    }
+    return resolvedVersion;
+  }
+
+  async handleUpdate(): Promise<string | null> {
+    let resolvedVersion: string | null;
+
+    const remoteTags = await this.getAvailableRemoteTags();
+
+    if (!this.version) {
+      logger.warn(
+        `[${this.name}] No version specified. Defaulting to latest available version.`,
+      );
+      resolvedVersion = remoteTags[0] ? `^${remoteTags[0]}` : null;
+    } else if (this.version.startsWith("^")) {
+      const versionRange = this.version;
+      logger.debug(
+        `[${this.name}] Looking for highest version matching range: ${versionRange}`,
+      );
+
+      const matching = remoteTags
+        .filter((tag) => semver.satisfies(tag, versionRange))
+        .sort(semver.rcompare);
+
+      resolvedVersion = matching[0] ?? null;
+
+      if (!resolvedVersion) {
+        logger.warn(
+          `[${this.name}] No versions match range "${versionRange}". Falling back to latest available.`,
+        );
+        resolvedVersion = remoteTags[0] ?? null;
+      }
+      resolvedVersion = `^${resolvedVersion}`;
+    } else {
+      // exact version requested
+      const exactMatch = remoteTags.includes(this.version);
+      resolvedVersion = exactMatch ? this.version : (remoteTags[0] ?? null);
+
+      if (!exactMatch) {
+        logger.warn(
+          `[${this.name}] Requested version "${this.version}" not found. Falling back to latest: ${resolvedVersion}`,
+        );
+      }
     }
 
-    const result = await this.checkForUpdate();
-    if (!result.updateAvailable) {
-      logger.debug(`[${this.name}] Already up to date.`);
-      return;
+    if (!resolvedVersion) {
+      logger.error(
+        `[${this.name}] No valid versions available. Cannot update.`,
+      );
+      return null;
     }
 
-    const confirm = await prompter.confirm(
-      `A newer version (${result.currentVersion} → ${result.latestVersion}) is available for ${this.name}. Do you want to update?`,
-      true,
-    );
+    if (resolvedVersion === this.version) {
+      return resolvedVersion;
+    }
 
-    if (!confirm) return;
-
-    await this.checkoutVersion(result.latestVersion);
+    await this.checkoutVersion(resolvedVersion);
+    return resolvedVersion.replaceAll("v", "");
   }
 }

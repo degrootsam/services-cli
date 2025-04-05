@@ -1,23 +1,26 @@
 import path from "path";
 import fs from "fs";
-import { Config } from "../types";
+import { Config } from "./types";
 import { deepMerge, director, logger, prompter } from "..";
 import { AgentOptions } from "https";
+import { DeepPartial } from "../types";
 
 const DEFAULT_CONFIG: Config = {
   scaffolder: {
     templates: {
+      name: "codegen-templates",
       functions: {
         new: "functions/new",
         test: "functions/test",
         project: {
           ts: {
+            name: "bb-generic-actions-typescript",
             path: "functions/projects/ts",
             url: "https://github.com/degrootsam/bb-generic-actions-typescript",
-            version: "latest",
             description: "TypeScript project template",
           },
           js: {
+            name: "bb-generic-actions",
             path: "functions/projects/js",
             url: "https://github.com/degrootsam/bb-generic-actions",
             description: "JavaScript project template",
@@ -28,6 +31,7 @@ const DEFAULT_CONFIG: Config = {
       components: {
         new: "components/new",
         project: {
+          name: "bb-generic-components",
           path: "templates/components/project",
           url: "https://github.com/degrootsam/component-templates",
         },
@@ -65,6 +69,7 @@ const CONFIG_PATH = path.resolve(process.cwd(), "config.json");
 
 export class ConfigManager {
   private config: Config;
+  private configUpdated: boolean = false;
 
   constructor() {
     this.config = this.loadConfig();
@@ -89,20 +94,33 @@ export class ConfigManager {
     return this.config;
   }
 
-  saveConfig(newConfig: Partial<Config> = {}, full: boolean = false): void {
+  saveConfig(
+    newConfig: DeepPartial<Config> = {},
+    full: boolean = false,
+    force: boolean = false,
+  ): void {
     logger.debug("Saving new config to config.json");
     logger.debug({ newConfig });
-    this.config = deepMerge(this.config, newConfig) as Config;
-    const content = full ? this.config : { app: this.app };
-    director.writeFile(
-      CONFIG_PATH,
-      JSON.stringify({ app: this.config.app }, null, 2),
-    );
+    if (this.configUpdated || newConfig || force) {
+      this.updateConfig(newConfig);
+      const content = full
+        ? this.config
+        : ({
+            app: this.app,
+            scaffolder: {
+              templates: {
+                versions: { ...this.config.scaffolder.templates.versions },
+              },
+            },
+          } as DeepPartial<Config>);
+      director.writeFile(CONFIG_PATH, JSON.stringify(content, null, 2));
+    }
   }
 
-  updateConfig(newConfig: Partial<Config> = {}): void {
+  updateConfig(newConfig: DeepPartial<Config> = {}): void {
     logger.debug("Storing new config value", newConfig);
     this.config = deepMerge(this.config, newConfig) as Config;
+    this.configUpdated = true;
   }
 
   async getAppUUID() {

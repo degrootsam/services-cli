@@ -1,7 +1,6 @@
 import { config, getToken, logger, prompter, saveToken } from "..";
 import { RequestHandler } from "../request-handler";
-import { Config } from "../types";
-import { AuthToken, StoredFusionAuthToken, User } from "./types";
+import { StoredFusionAuthToken } from "./types";
 
 export default class FusionAuth {
   private token?: StoredFusionAuthToken;

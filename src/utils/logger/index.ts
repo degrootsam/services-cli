@@ -4,10 +4,16 @@ import { Functions, FunctionResult } from "../functions/types";
 
 export const DEBUG_PREFIX = chalk.bgWhite(chalk.black("DEBUG:"));
 export const ERROR_PREFIX = chalk.bgRed(chalk.black("ERROR:"));
-export const INFO_PREFIX = chalk.bgWhite(chalk.black("INFO:"));
 
 export default class Logger {
   private verbose: boolean = false;
+
+  public successPrefix = "√";
+  public errorPrefix = "x";
+  public warningPrefix = "⚠";
+  public errorColor = chalk.redBright;
+  public successColor = chalk.greenBright;
+  public warningColor = chalk.yellowBright;
 
   constructor(verbose?: boolean) {
     this.verbose = verbose ?? false;
@@ -28,15 +34,15 @@ export default class Logger {
   }
 
   info(...message: any) {
-    console.info(INFO_PREFIX, ...message);
+    console.info(...message);
   }
 
   getValidationPrefix(state: boolean): string {
-    return state ? "√" : "x";
+    return state ? this.successPrefix : this.errorPrefix;
   }
 
   getValidationColor(state: boolean) {
-    return state ? chalk.greenBright : chalk.red;
+    return state ? this.successColor : this.errorColor;
   }
 
   success(...message: any) {
@@ -44,6 +50,13 @@ export default class Logger {
     const prefix = this.getValidationPrefix(true);
 
     console.log(color(`${prefix} ${message}`));
+  }
+
+  warn(...message: any) {
+    const color = this.warningColor;
+    const prefix = this.warningPrefix;
+
+    console.log(color(prefix, message));
   }
 
   validatedFunctions(functions: Functions) {

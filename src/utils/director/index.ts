@@ -1,9 +1,17 @@
 import fs from "fs-extra";
 import path from "path";
-import { config, isErrorWithMessage, logger } from "..";
+import {
+  config,
+  director,
+  Git,
+  isErrorWithMessage,
+  logger,
+  prompter,
+} from "..";
 import { spawn, SpawnOptions } from "child_process";
 import archiver from "archiver";
 import os from "os";
+import chalk from "chalk";
 
 export default class Director {
   resolveCLIPath(): string {
@@ -204,7 +212,6 @@ export default class Director {
               ),
             );
           } else {
-            logger.debug(output.trim());
             resolve(output.trim());
           }
         });
@@ -224,5 +231,194 @@ export default class Director {
         );
       }
     });
+  }
+
+  async checkSubmodulesForUpdate() {
+    const logUpdate = (
+      name: string,
+      currentVersion: string = "none",
+      newVersion: string,
+    ) =>
+      logger.info(
+        `New version available for ${name}: ${chalk.redBright(currentVersion)} → ${chalk.greenBright(newVersion)}`,
+      );
+
+    const cliPath = this.resolveCLIPath();
+    const codegenTemplatesPath = path.resolve(
+      cliPath,
+      config.scaffolder.templates.path,
+    );
+    const codegenTemplatesVersion =
+      config.scaffolder.templates.versions?.templates;
+    const codegenTemplatesName = config.scaffolder.templates.name;
+
+    const codegenTemplates = new Git({
+      name: codegenTemplatesName,
+      path: codegenTemplatesPath,
+      version: codegenTemplatesVersion,
+    });
+
+    const newCodegenTemplatesVersion =
+      await codegenTemplates.checkForNewVersion();
+
+    if (
+      Git.compareVersions(
+        newCodegenTemplatesVersion,
+        codegenTemplatesVersion || "0.0.0",
+      ) === 1
+    ) {
+      logUpdate(
+        codegenTemplatesName,
+        codegenTemplatesVersion,
+        newCodegenTemplatesVersion,
+      );
+    }
+
+    // Initialize the submodules for codegen-templates (projects)
+    await director.runCommand("git", ["submodule", "update", "--init"], {
+      cwd: codegenTemplatesPath,
+    });
+
+    const { ts: tsProject, js: jsProject } =
+      config.scaffolder.templates.functions.project;
+
+    const functionVersions = config.scaffolder.templates.versions?.functions;
+
+    const tsProjectPath = path.resolve(codegenTemplatesPath, tsProject.path);
+    const tsProjectName = tsProject.name;
+    const tsProjectVersion = functionVersions?.ts;
+
+    const jsProjectPath = path.resolve(codegenTemplatesPath, jsProject.path);
+    const jsProjectName = jsProject.name;
+    const jsProjectVersion = functionVersions?.js;
+
+    const tsProjectSubModule = new Git({
+      name: tsProjectName,
+      path: tsProjectPath,
+      version: tsProjectVersion,
+    });
+
+    const newTsProjectVersion = await tsProjectSubModule.checkForNewVersion();
+
+    if (Git.compareVersions(newTsProjectVersion, tsProjectVersion)) {
+      logUpdate(tsProjectName, tsProjectVersion, newTsProjectVersion);
+    }
+
+    const jsProjectSubModule = new Git({
+      name: jsProjectName,
+      path: jsProjectPath,
+      version: config.scaffolder.templates.versions?.functions?.js,
+    });
+
+    const newJsProjectVersion = await jsProjectSubModule.checkForNewVersion();
+
+    if (Git.compareVersions(newJsProjectVersion, jsProjectVersion)) {
+      logUpdate(jsProjectName, jsProjectVersion, newJsProjectVersion);
+    }
+  }
+
+  async updateSubmodules() {
+    const cliPath = this.resolveCLIPath();
+    const codegenTemplatesPath = path.resolve(
+      cliPath,
+      config.scaffolder.templates.path,
+    );
+    const codegenTemplateVersion =
+      config.scaffolder.templates.versions?.templates;
+    const codegenTemplateName = config.scaffolder.templates.name;
+
+    const codegenTemplatesSubModule = new Git({
+      name: codegenTemplateName,
+      path: codegenTemplatesPath,
+      version: codegenTemplateVersion,
+    });
+    const newCodegenVersion = await codegenTemplatesSubModule.handleUpdate();
+
+    if (newCodegenVersion) {
+      if (codegenTemplateVersion !== newCodegenVersion) {
+        config.updateConfig({
+          scaffolder: {
+            templates: { versions: { templates: newCodegenVersion } },
+          },
+        });
+      }
+    } else {
+      logger.warn(
+        `Unable to retrieve a new version for ${codegenTemplateName}!`,
+      );
+    }
+
+    // Initialize the submodules for codegen-templates (projects)
+    await director.runCommand("git", ["submodule", "update", "--init"], {
+      cwd: codegenTemplatesPath,
+    });
+
+    const { ts: tsProject, js: jsProject } =
+      config.scaffolder.templates.functions.project;
+
+    const functionVersions = config.scaffolder.templates.versions?.functions;
+
+    const tsProjectPath = path.resolve(codegenTemplatesPath, tsProject.path);
+    const tsProjectName = tsProject.name;
+    const tsProjectVersion = functionVersions?.ts;
+
+    const jsProjectPath = path.resolve(codegenTemplatesPath, jsProject.path);
+    const jsProjectName = jsProject.name;
+    const jsProjectVersion = functionVersions?.js;
+
+    const tsProjectSubModule = new Git({
+      name: tsProjectName,
+      path: tsProjectPath,
+      version: tsProjectVersion,
+    });
+
+    const newTsProjectVersion = await tsProjectSubModule.handleUpdate();
+
+    if (newTsProjectVersion) {
+      if (newTsProjectVersion !== tsProjectVersion) {
+        config.updateConfig({
+          scaffolder: {
+            templates: {
+              versions: {
+                functions: {
+                  ts: newTsProjectVersion,
+                },
+              },
+            },
+          },
+        });
+      }
+    } else {
+      logger.warn(
+        "The submodule bb-generic-actions-typescript did not yield a version!",
+      );
+    }
+
+    const jsProjectSubModule = new Git({
+      name: jsProjectName,
+      path: jsProjectPath,
+      version: config.scaffolder.templates.versions?.functions?.js,
+    });
+    const newJsProjectVersion = await jsProjectSubModule.handleUpdate();
+
+    if (newJsProjectVersion) {
+      if (newJsProjectVersion !== jsProjectVersion) {
+        config.updateConfig({
+          scaffolder: {
+            templates: {
+              versions: {
+                functions: {
+                  js: newJsProjectVersion,
+                },
+              },
+            },
+          },
+        });
+      }
+    } else {
+      logger.warn("The submodule bb-generic-actions did not yield a version!");
+    }
+
+    config.saveConfig();
   }
 }
