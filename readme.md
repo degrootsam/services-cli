@@ -75,18 +75,6 @@ Jest is used alongside `ts-jest` for testing TypeScript.
 
 ---
 
-## 🧬 Code Generation
-
-If you're using GraphQL:
-
-```bash
-npm run codegen
-```
-
-> This uses the `codegen.ts` config for `graphql-codegen`
-
----
-
 ## 🔄 Syncing the Repo
 
 To pull the latest changes and auto-commit any unstaged work:

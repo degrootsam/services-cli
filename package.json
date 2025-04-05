@@ -13,7 +13,6 @@
   "scripts": {
     "test": "jest",
     "build": "tsc -p tsconfig.json && chmod +x dist/index.js",
-    "codegen": "graphql-codegen --config codegen.ts",
     "sync": "git pull && (git diff --quiet && git diff --cached --quiet && git ls-files --others --exclude-standard) || (git add . && git commit -m 'sync' && git push)"
   },
   "bin": {
