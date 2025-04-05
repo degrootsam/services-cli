@@ -11,7 +11,10 @@ export default class Director {
   }
 
   resolveCLITemplatePath(): string {
-    return path.resolve(this.resolveCLIPath(), config.scaffolder.git.name);
+    return path.resolve(
+      this.resolveCLIPath(),
+      config.scaffolder.templates.path,
+    );
   }
 
   createDir(name: string) {
@@ -25,11 +28,19 @@ export default class Director {
       recursive,
       encoding: "utf8",
     });
+    logger.debug(directory);
     return directory;
   }
 
   async copyDir(sourceDir: string, targetDir: string) {
-    fs.cpSync(sourceDir, targetDir, { recursive: true });
+    return fs.cpSync(sourceDir, targetDir, { recursive: true });
+  }
+
+  exists(targetPath: string): boolean {
+    logger.debug(`Checking if ${targetPath} exists`);
+    const result = fs.existsSync(targetPath);
+    logger.debug(`Result: ${result}`);
+    return result;
   }
 
   changeDir(path: string) {
@@ -98,18 +109,18 @@ export default class Director {
     logger.debug("File written successfully");
   }
 
-  readFile(path: string, silent: boolean = false): string | null {
+  readFile(path: string, silent: boolean = false): string {
     logger.debug(`Opening file at ${path}`);
     try {
       return fs.readFileSync(path, { encoding: "utf-8" });
     } catch (error) {
       if (silent) {
-        return null;
+        return "";
       }
 
       if (isErrorWithMessage(error) && error.message.includes("ENOENT")) {
         logger.error(error.message);
-        return null;
+        return "";
       } else {
         throw new Error(error as any);
       }
@@ -169,6 +180,11 @@ export default class Director {
       let output = "";
       let errorOutput = "";
 
+      logger.debug({
+        command,
+        args,
+        options,
+      });
       try {
         const child = spawn(command, args, { ...options, stdio: "pipe" });
 
@@ -188,6 +204,7 @@ export default class Director {
               ),
             );
           } else {
+            logger.debug(output.trim());
             resolve(output.trim());
           }
         });

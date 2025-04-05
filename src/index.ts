@@ -8,6 +8,7 @@ import {
   director,
   FunctionsScaffolder,
   FunctionsUtils,
+  Git,
   isErrorWithMessage,
   logger,
   prompter,
@@ -16,8 +17,6 @@ import {
 import FusionAuth from "./utils/fusion-auth";
 import GraphQLAPI from "./utils/gql-api";
 import { GraphQLAccessToken } from "./utils/gql-api/types";
-import { checkTemplateUpdate, handleTemplateUpdate } from "./utils/templates";
-import { template } from "@babel/core";
 
 const program = new Command();
 
@@ -49,8 +48,47 @@ const withErrorHandling = (fn: (...args: any[]) => Promise<void>) => {
   };
 };
 
+const initCLI = async () => {
+  const cliPath = director.resolveCLIPath();
+  const codegenTemplatesPath = path.resolve(
+    cliPath,
+    config.scaffolder.templates.path,
+  );
+  const codegenTemplatesSubModule = new Git({
+    name: "codegen-templates",
+    path: codegenTemplatesPath,
+    version: config.scaffolder.templates.version,
+  });
+  await codegenTemplatesSubModule.handleUpdate();
+
+  // Step 2: Initialize its submodules (projects)
+  await director.runCommand("git", ["submodule", "update", "--init"], {
+    cwd: codegenTemplatesPath,
+  });
+
+  const { ts: tsProject, js: jsProject } =
+    config.scaffolder.templates.functions.project;
+
+  const tsProjectPath = path.resolve(codegenTemplatesPath, tsProject.path);
+  const jsProjectPath = path.resolve(codegenTemplatesPath, jsProject.path);
+
+  const tsProjectSubModule = new Git({
+    name: "bb-generic-actions-typescript",
+    path: tsProjectPath,
+    version: tsProject.version,
+  });
+  await tsProjectSubModule.handleUpdate();
+
+  const jsProjectSubModule = new Git({
+    name: "bb-generic-actions",
+    path: jsProjectPath,
+    version: jsProject.version,
+  });
+  await jsProjectSubModule.handleUpdate();
+};
+
 const runCLI = async () => {
-  await handleTemplateUpdate();
+  await initCLI();
 
   program
     .name("Betty Blocks Services CLI (Proof of Concept)")
@@ -71,7 +109,7 @@ const runCLI = async () => {
     .description("Initialize a new components project")
     .option(
       "-f, --force",
-      "Overwrites directory if already exists. Use with caution!",
+      "Overwrites directory if it already exists. Use with caution!",
     )
     .action(
       withErrorHandling(async (name, options) => {
@@ -98,7 +136,7 @@ const runCLI = async () => {
     .description("Initialize a new TypeScript functions project")
     .option(
       "-f, --force",
-      "Overwrites directory if already exists. Use with caution!",
+      "Overwrites directory if it already exists. Use with caution!",
     )
     .action(
       withErrorHandling(async (name, options) => {
@@ -228,11 +266,15 @@ const runCLI = async () => {
 
   gen
     .command("test")
+    .option(
+      "-f, --force",
+      "Overwrites test if it already exists. Use with caution!",
+    )
     .description("Generate test files for a selected function")
     .action(
-      withErrorHandling(async () => {
+      withErrorHandling(async (options) => {
         const functionsScaffolder = new FunctionsScaffolder();
-        await functionsScaffolder.generateTestFiles();
+        await functionsScaffolder.generateTestFiles(undefined, options.force);
       }),
     );
   gen

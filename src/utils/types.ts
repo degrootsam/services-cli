@@ -1,29 +1,40 @@
+import { TransformOptions } from "esbuild";
 import { AgentOptions } from "http";
+import { Functions } from "./functions/types";
 
-type TemplateLinks = {
-  typescript: string;
-  javascript: string;
+export type TemplateConfig = {
+  path: string;
+  url: string;
+  version?: string;
+  description?: string;
+};
+
+export type ProjectVariants = {
+  ts: TemplateConfig;
+  js: TemplateConfig;
+};
+
+export type ScaffolderConfig = {
+  templates: {
+    functions: {
+      new: string;
+      test: string;
+      project: ProjectVariants;
+      typegen: string;
+    };
+    components: {
+      new: string;
+      project: TemplateConfig;
+    };
+    path: string;
+    url: string;
+    version?: string;
+  };
+  tests: { directory: string; transform?: TransformOptions };
 };
 
 export type Config = {
-  scaffolder: {
-    git: {
-      name: string;
-      url: string;
-    };
-    projects: {
-      functions: TemplateLinks;
-      components: TemplateLinks;
-    };
-    codeGeneration: {
-      gqlCodeGen: string;
-      newFunction: string;
-      newComponent: string;
-    };
-  };
-  tests: {
-    directory: string;
-  };
+  scaffolder: ScaffolderConfig;
   app: {
     uuid: string;
     identifier: string;
@@ -43,25 +54,4 @@ export type Config = {
     skipCompile?: boolean;
     https: boolean;
   };
-};
-
-export type Functions = Record<string, FunctionInfo>;
-
-export type FunctionInfo = {
-  versions: string[];
-  latestVersion: string;
-  path: string;
-  validation: FunctionValidation;
-  fileType: "js" | "ts";
-};
-
-export type FunctionValidation = {
-  valid: boolean;
-  info: FunctionValidationInfo;
-};
-
-export type FunctionValidationInfo = {
-  isDefaultExport: boolean;
-  isAsync: boolean;
-  matchesName: boolean;
 };

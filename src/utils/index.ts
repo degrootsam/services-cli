@@ -8,6 +8,7 @@ import Logger from "./logger/index";
 import Prompter from "./prompter";
 import ComponentsScaffolder from "./scaffolder/components";
 import FunctionsScaffolder from "./scaffolder/functions";
+import Git from "./git";
 
 const opts = process.argv.find((v) => v === "--v" || v === "--verbose");
 const logger = new Logger(opts && opts.length > 0);
@@ -54,6 +55,7 @@ export {
   FunctionsUtils,
   getToken,
   GraphQLAPI,
+  Git,
   isErrorWithCode,
   isErrorWithMessage,
   logger,

@@ -1,8 +1,6 @@
 import chalk from "chalk";
-import { FunctionsUtils, SOURCEPATH, spinner } from "..";
-import { Functions } from "../types";
-import path from "path";
-import { FunctionResult } from "../functions/types";
+import { FunctionsUtils } from "..";
+import { Functions, FunctionResult } from "../functions/types";
 
 export const DEBUG_PREFIX = chalk.bgWhite(chalk.black("DEBUG:"));
 export const ERROR_PREFIX = chalk.bgRed(chalk.black("ERROR:"));
@@ -43,9 +41,9 @@ export default class Logger {
 
   success(...message: any) {
     const color = this.getValidationColor(true);
-    const prefix = color(this.getValidationPrefix(true));
+    const prefix = this.getValidationPrefix(true);
 
-    console.log(`${prefix} ${message}`);
+    console.log(color(`${prefix} ${message}`));
   }
 
   validatedFunctions(functions: Functions) {

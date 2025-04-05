@@ -2,34 +2,42 @@ import path from "path";
 import fs from "fs";
 import { Config } from "../types";
 import { deepMerge, director, logger, prompter } from "..";
-import { Agent, AgentOptions } from "https";
+import { AgentOptions } from "https";
 
 const DEFAULT_CONFIG: Config = {
   scaffolder: {
-    git: {
-      name: "codegen-templates",
-      url: "https://github.com/degrootsam/codegen-templates",
-    },
-    projects: {
+    templates: {
       functions: {
-        typescript:
-          "https://github.com/degrootsam/bb-generic-actions-typescript",
-        javascript: "https://github.com/degrootsam/bb-generic-actions",
+        new: "functions/new",
+        test: "functions/test",
+        project: {
+          ts: {
+            path: "functions/projects/ts",
+            url: "https://github.com/degrootsam/bb-generic-actions-typescript",
+            version: "latest",
+            description: "TypeScript project template",
+          },
+          js: {
+            path: "functions/projects/js",
+            url: "https://github.com/degrootsam/bb-generic-actions",
+            description: "JavaScript project template",
+          },
+        },
+        typegen: "functions/typegen/index.ts",
       },
       components: {
-        typescript: "",
-        javascript:
-          "https://github.com/Betty-Blocks-Services/generic-components",
+        new: "components/new",
+        project: {
+          path: "templates/components/project",
+          url: "https://github.com/degrootsam/component-templates",
+        },
       },
+      url: "https://github.com/degrootsam/codegen-templates",
+      path: "codegen-templates",
     },
-    codeGeneration: {
-      gqlCodeGen: "gql-codegen",
-      newFunction: "new-function",
-      newComponent: "",
+    tests: {
+      directory: "__tests__",
     },
-  },
-  tests: {
-    directory: "__tests__",
   },
   app: {
     uuid: "",
@@ -81,11 +89,15 @@ export class ConfigManager {
     return this.config;
   }
 
-  saveConfig(newConfig: Partial<Config> = {}): void {
+  saveConfig(newConfig: Partial<Config> = {}, full: boolean = false): void {
     logger.debug("Saving new config to config.json");
     logger.debug({ newConfig });
     this.config = deepMerge(this.config, newConfig) as Config;
-    director.writeFile(CONFIG_PATH, JSON.stringify(this.config, null, 2));
+    const content = full ? this.config : { app: this.app };
+    director.writeFile(
+      CONFIG_PATH,
+      JSON.stringify({ app: this.config.app }, null, 2),
+    );
   }
 
   updateConfig(newConfig: Partial<Config> = {}): void {
@@ -129,6 +141,10 @@ export class ConfigManager {
 
   get scaffolder() {
     return this.config.scaffolder;
+  }
+
+  get tests() {
+    return this.scaffolder.tests;
   }
 
   get options() {

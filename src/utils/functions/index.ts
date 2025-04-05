@@ -7,7 +7,7 @@ import CodeParser from "../code-parser";
 import { ConfigManager } from "../config";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
-import { FunctionInfo, Functions } from "../types";
+import { FunctionInfo, Functions } from "../functions/types";
 import JsonSchema from "../json-schema";
 import FormData from "form-data";
 import { PublishResponse } from "./types";
@@ -154,16 +154,19 @@ export default class FunctionsUtils {
   getFunctions(): Functions {
     const srcDirectory = director.readDir(SOURCEPATH, true);
 
-    const functionPaths: string[] = srcDirectory.filter((v: string) => {
-      const result = this.functionRegexp.test(v);
-      logger.debug(
-        `Regex test result for ${v}: ${result ? chalk.green(result) : chalk.red(result)}`,
-      );
-      return result;
-    });
+    const functionPaths: string[] = srcDirectory
+      .filter((v) => v.endsWith(".ts") || v.endsWith(".js"))
+      .filter((v: string) => {
+        const result = this.functionRegexp.test(v);
+        logger.debug(
+          `Regex test result for ${v}: ${result ? chalk.green(result) : chalk.red(result)}`,
+        );
+        return result;
+      });
 
     logger.debug("Found the following functions", functionPaths);
-    const functions = functionPaths.reduce(this.reduceFunctionDirs, {});
+    const unsortedFunctions = functionPaths.reduce(this.reduceFunctionDirs, {});
+    const functions = this.sortFunctions(unsortedFunctions);
     logger.debug("Parsed functions object", functions);
 
     return functions;
@@ -173,42 +176,50 @@ export default class FunctionsUtils {
     acc: Functions,
     filePath: string,
   ): Functions => {
-    {
-      const match = filePath.match(this.functionRegexp);
+    const match = filePath.match(this.functionRegexp);
+    if (!match) return acc;
 
-      if (!match) return acc; // Skip if it doesn't match
+    const [, funcName, version, fileName, fileType] = match;
 
-      const [, funcName, version, fileName, fileType] = match;
-
-      if (!acc[funcName]) {
-        acc[funcName] = {
-          versions: [],
-          latestVersion: version,
-          path: path.resolve(SOURCEPATH, filePath.split(funcName)[0], funcName),
-          validation: {
-            valid: false,
-            info: {
-              isAsync: false,
-              isDefaultExport: false,
-              matchesName: false,
-            },
+    if (!acc[funcName]) {
+      acc[funcName] = {
+        versions: new Set<string>(),
+        latestVersion: version,
+        path: path.resolve(SOURCEPATH, filePath.split(funcName)[0], funcName),
+        validation: {
+          valid: false,
+          info: {
+            isAsync: false,
+            isDefaultExport: false,
+            matchesName: false,
           },
-          fileType: fileType as "js" | "ts",
-        };
-      }
-
-      if (!acc[funcName].versions.includes(version)) {
-        acc[funcName].versions.push(version);
-      }
-
-      // Ensure latestVersion is the highest
-      acc[funcName].latestVersion = acc[funcName].versions.sort(
-        (a, b) => parseFloat(b) - parseFloat(a),
-      )[0];
-
-      return acc;
+        },
+        fileType: fileType as "js" | "ts",
+      };
     }
+
+    acc[funcName].versions.add(version);
+
+    return acc;
   };
+
+  sortFunctions(functions: Functions): Functions {
+    const sortedFunctions: Functions = {};
+
+    for (const [name, fn] of Object.entries(functions)) {
+      const sortedVersions = Array.from(fn.versions).sort(
+        (a, b) => parseFloat(b) - parseFloat(a),
+      );
+
+      sortedFunctions[name] = {
+        ...fn,
+        versions: new Set(sortedVersions),
+        latestVersion: sortedVersions[0],
+      };
+    }
+
+    return sortedFunctions;
+  }
 
   getBuildPath(func: FunctionInfo, v?: FunctionInfo["latestVersion"]) {
     const version = v ? v : func.latestVersion;

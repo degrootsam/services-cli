@@ -5,6 +5,12 @@ import { isErrorWithCode, logger, spinner } from "..";
 import degit from "degit";
 
 export default class BaseScaffolder {
+  private force: boolean = false;
+
+  constructor(force: boolean = false) {
+    this.force = force;
+  }
+
   async copyTemplateFromLocal(
     templatePath: string,
     destinationPath: string,

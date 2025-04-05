@@ -2,8 +2,7 @@ import { parse } from "@babel/parser";
 import traverse, { NodePath } from "@babel/traverse";
 import * as t from "@babel/types";
 import { logger } from "..";
-import { FunctionInfo } from "../types";
-import { FunctionDeclaration } from "acorn";
+import { FunctionInfo } from "../functions/types";
 
 export default class CodeParser {
   private type: string = "js";
