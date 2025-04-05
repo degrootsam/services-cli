@@ -33,3 +33,15 @@ actions:
     - trunk-fmt-pre-commit
     - trunk-upgrade-available
     - commitizen
+    - init-submodules
+    - check-submodules
+    - update-submodules
+  definitions:
+    - id: init-submodules
+      run: git submodule update --init --recursive
+    - id: check-submodules
+      triggers:
+        - git_hooks: [pre-commit]
+      run: ./scripts/check-submodule-status.sh
+    - id: update-submodules
+      run: git submodule update --remote --merge
