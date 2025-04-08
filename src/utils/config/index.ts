@@ -34,7 +34,7 @@ const DEFAULT_CONFIG: Config = {
             description: "JavaScript project template",
           },
         },
-        typegen: "functions/typegen/index.ts",
+        typegen: "functions/types/index.ts",
       },
       components: {
         new: "components/new",

@@ -121,7 +121,7 @@ Once the `release` script is in place, this process will be automated.
 
 ## ✅ TODO
 
-- [ ] Create a `npm run release` script to tag and push versions
+- [x] Create a `npm run release` script to tag and push versions
 - [x] Configure Trunk actions to manage and validate Git submodules
 - [ ] Document supported CLI commands
 - [ ] Add CLI usage examples to README

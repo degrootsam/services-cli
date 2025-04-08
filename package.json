@@ -13,7 +13,13 @@
   "scripts": {
     "test": "jest",
     "build": "tsc -p tsconfig.json && chmod +x dist/index.js",
-    "sync": "git pull && (git diff --quiet && git diff --cached --quiet && git ls-files --others --exclude-standard) || (git add . && git commit -m 'sync' && git push)"
+    "sync": "git pull && (git diff --quiet && git diff --cached --quiet && git ls-files --others --exclude-standard) || (git add . && git commit -m 'sync' && git push)",
+    "update:projects": "trunk actions run update-submodules",
+    "setup": "trunk actions run init-submodules",
+    "trunk": "trunk",
+    "lint": "trunk check",
+    "fmt": "trunk fmt",
+    "release": "node scripts/create-release-tag.js"
   },
   "bin": {
     "bbs": "./dist/index.js"
