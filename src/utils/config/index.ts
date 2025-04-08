@@ -6,6 +6,14 @@ import { AgentOptions } from "https";
 import { DeepPartial } from "../types";
 
 const DEFAULT_CONFIG: Config = {
+  buildOptions: {
+    js: {
+      srcDir: "",
+    },
+    ts: {
+      srcDir: "src",
+    },
+  },
   scaffolder: {
     templates: {
       name: "codegen-templates",
@@ -70,9 +78,12 @@ const CONFIG_PATH = path.resolve(process.cwd(), "config.json");
 export class ConfigManager {
   private config: Config;
   private configUpdated: boolean = false;
+  private isTypescript: boolean = true;
 
   constructor() {
     this.config = this.loadConfig();
+    const tsConfig = director.getTsConfig();
+    this.isTypescript = tsConfig ? true : false;
   }
 
   private loadConfig(): Config {
@@ -155,6 +166,24 @@ export class ConfigManager {
 
   get app() {
     return this.config.app;
+  }
+
+  get buildOptions() {
+    return this.isTypescript
+      ? this.config.buildOptions.ts
+      : this.config.buildOptions.js;
+  }
+
+  get srcDir() {
+    return this.buildOptions.srcDir;
+  }
+
+  get buildDir() {
+    return this.buildOptions.buildPath || ".tmp";
+  }
+
+  get projectExtension() {
+    return this.isTypescript ? ".ts" : ".js";
   }
 
   get scaffolder() {

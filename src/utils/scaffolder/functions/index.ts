@@ -7,7 +7,6 @@ import {
   FunctionsUtils,
   logger,
   prompter,
-  SOURCEPATH,
   spinner,
 } from "../..";
 import { FunctionInfo, Functions } from "../../functions/types";
@@ -127,7 +126,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     indexTsJs = indexTsJs.replace("functionName", parsedName);
     functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
-    const functionDir = path.resolve(SOURCEPATH, name);
+    const functionDir = path.resolve(config.srcDir, name);
 
     const targetDir = path.resolve(functionDir, "1.0");
 

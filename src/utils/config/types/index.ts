@@ -43,7 +43,16 @@ export type ScaffolderConfig = {
   tests: { directory: string; transform?: TransformOptions };
 };
 
+export type BuildSettings = {
+  srcDir: string;
+  buildPath?: string;
+};
+
 export type Config = {
+  buildOptions: {
+    js: BuildSettings;
+    ts: BuildSettings;
+  };
   scaffolder: ScaffolderConfig;
   app: {
     uuid: string;

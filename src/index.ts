@@ -2,13 +2,11 @@
 import { Command } from "commander";
 import path from "path";
 import {
-  BUILDPATH,
   ComponentsScaffolder,
   config,
   director,
   FunctionsScaffolder,
   FunctionsUtils,
-  Git,
   isErrorWithMessage,
   logger,
   prompter,
@@ -183,7 +181,7 @@ const runCLI = async () => {
         const tsConfig = director.getTsConfig();
         const functionsUtils = new FunctionsUtils();
 
-        const appDir = path.resolve(BUILDPATH, "app");
+        const appDir = path.resolve(config.buildDir, "app");
         const functionsScaffolder = new FunctionsScaffolder();
         const functions = functionsUtils.getFunctions();
         const validatedFunctions =
@@ -194,7 +192,6 @@ const runCLI = async () => {
           validatedFunctions,
           "js",
         );
-
         await functionsUtils.buildFunctions(
           tsConfig ? "ts" : "js",
           options.destination,
@@ -208,7 +205,7 @@ const runCLI = async () => {
     .action(
       withErrorHandling(async () => {
         const tsConfig = director.getTsConfig();
-        const appDir = path.resolve(BUILDPATH, "app");
+        const appDir = path.resolve(config.buildDir, "app");
         const functionsUtils = new FunctionsUtils();
 
         const functions = functionsUtils.getFunctions();
@@ -231,7 +228,7 @@ const runCLI = async () => {
           true,
         );
 
-        const outputZipPath = path.resolve(BUILDPATH, "app.zip");
+        const outputZipPath = path.resolve(config.buildDir, "app.zip");
 
         await director.zipDir(appDir, outputZipPath);
 

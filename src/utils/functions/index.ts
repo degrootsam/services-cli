@@ -2,7 +2,7 @@ import chalk from "chalk";
 import esbuild from "esbuild";
 import * as fs from "fs";
 import path from "path";
-import { BUILDPATH, director, logger, SOURCEPATH, spinner } from "..";
+import { config, director, logger, spinner } from "..";
 import CodeParser from "../code-parser";
 import { ConfigManager } from "../config";
 import FusionAuth from "../fusion-auth";
@@ -18,7 +18,7 @@ export default class FunctionsUtils {
   );
   async buildFunctions(
     mode: "ts" | "js" = "ts",
-    outdir: string = BUILDPATH,
+    outdir: string = ".tmp",
     debug: boolean = false,
   ): Promise<string> {
     logger.debug(
@@ -27,10 +27,12 @@ export default class FunctionsUtils {
     spinner.start("Building functions...");
     const appDir = path.resolve(outdir, "app");
     const functionsOutputDir = path.resolve(appDir, "functions");
+    const srcDir = config.srcDir;
+    const srcEntryPoint = `${srcDir}/**/*${config.projectExtension}`;
     switch (mode) {
       case "ts":
         await esbuild.build({
-          entryPoints: ["functions/**/*.ts"],
+          entryPoints: [srcEntryPoint],
           outdir: functionsOutputDir,
           platform: "node",
           format: "esm",
@@ -38,7 +40,7 @@ export default class FunctionsUtils {
           minify: !debug,
         });
 
-        fs.cpSync("functions", functionsOutputDir, {
+        fs.cpSync(srcDir, functionsOutputDir, {
           recursive: true,
           filter: (src) => !src.endsWith(".ts"),
         });
@@ -46,7 +48,7 @@ export default class FunctionsUtils {
         break;
       case "js":
         await esbuild.build({
-          entryPoints: ["functions/**/*.js"],
+          entryPoints: [srcEntryPoint],
           outdir: functionsOutputDir,
           platform: "node",
           format: "esm",
@@ -54,7 +56,7 @@ export default class FunctionsUtils {
           minify: !debug,
         });
 
-        fs.cpSync("functions", functionsOutputDir, {
+        fs.cpSync(srcDir, functionsOutputDir, {
           recursive: true,
           filter: (src) => {
             logger.debug(src);
@@ -152,7 +154,8 @@ export default class FunctionsUtils {
   }
 
   getFunctions(): Functions {
-    const srcDirectory = director.readDir(SOURCEPATH, true);
+    const srcDir = config.buildOptions.srcDir;
+    const srcDirectory = director.readDir(srcDir, true);
 
     const functionPaths: string[] = srcDirectory
       .filter((v) => v.endsWith(".ts") || v.endsWith(".js"))
@@ -185,7 +188,11 @@ export default class FunctionsUtils {
       acc[funcName] = {
         versions: new Set<string>(),
         latestVersion: version,
-        path: path.resolve(SOURCEPATH, filePath.split(funcName)[0], funcName),
+        path: path.resolve(
+          config.srcDir,
+          filePath.split(funcName)[0],
+          funcName,
+        ),
         validation: {
           valid: false,
           info: {

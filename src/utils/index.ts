@@ -16,8 +16,6 @@ const prompter = new Prompter();
 const director = new Director();
 const spinner = createSpinner();
 const config = new ConfigManager();
-const SOURCEPATH = "functions";
-const BUILDPATH = ".tmp";
 
 function deepMerge(
   target: Record<string, any>,
@@ -62,6 +60,4 @@ export {
   prompter,
   saveToken,
   spinner,
-  SOURCEPATH,
-  BUILDPATH,
 };
