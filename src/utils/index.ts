@@ -17,6 +17,34 @@ const director = new Director();
 const spinner = createSpinner();
 const config = new ConfigManager();
 
+// Wrapper function to catch errors
+function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
+  return async (...args: any[]) => {
+    try {
+      await fn(...args);
+      config.saveConfig();
+    } catch (error) {
+      logger.debug(error);
+      if (isErrorWithMessage(error)) {
+        // Prevent logging when user cancels the action
+        if (error.message !== "User force closed the prompt with 0 null") {
+          if (spinner.isSpinning()) {
+            spinner.error(error.message);
+          } else {
+            logger.error(error.message);
+          }
+        }
+      } else {
+        if (spinner.isSpinning()) {
+          spinner.error("Failed with an error");
+        }
+        logger.error(error);
+      }
+    }
+    process.exit(1);
+  };
+}
+
 function deepMerge(
   target: Record<string, any>,
   source: Record<string, any>,
@@ -60,4 +88,5 @@ export {
   prompter,
   saveToken,
   spinner,
+  withErrorHandling,
 };
