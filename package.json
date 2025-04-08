@@ -17,7 +17,8 @@
     "update:projects": "trunk actions run update-submodules",
     "setup": "trunk actions run init-submodules",
     "trunk": "trunk",
-    "lint": "trunk check",
+    "lint": "trunk check --show-existing",
+    "lint:fix": "trunk check --fix --show-existing",
     "fmt": "trunk fmt",
     "release": "node scripts/create-release-tag.js"
   },
