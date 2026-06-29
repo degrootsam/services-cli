@@ -25,7 +25,7 @@ import { createLogger } from "./logger/index";
 import { createPrompter } from "./prompter";
 import ComponentsScaffolder from "./scaffolder/components";
 import FunctionsScaffolder from "./scaffolder/functions";
-import Git from "./git";
+import { createGit, compareVersions } from "./git";
 import { createCodeParser } from "./code-parser";
 import type { AppDeps } from "./types";
 
@@ -123,7 +123,8 @@ export {
   getToken,
   getValidFunctions,
   GraphQLAPI,
-  Git,
+  createGit,
+  compareVersions,
   isErrorWithCode,
   isErrorWithMessage,
   logUploadedFunction,
