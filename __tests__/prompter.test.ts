@@ -1,34 +1,24 @@
 // __tests__/prompter.test.ts
 //
-// ESM mock setup must happen before any module that transitively imports
-// @inquirer/prompts is loaded. We:
-//   1. Statically import only @jest/globals and our mock-function helpers
-//      (neither pulls in @inquirer/prompts at runtime).
-//   2. Call jest.unstable_mockModule in the module body (runs before any
-//      top-level await).
-//   3. Dynamically import everything else so Node.js ESM uses the registered
-//      mock when it resolves @inquirer/prompts.
+// vi.mock is hoisted by vitest before imports execute, so static imports of
+// @inquirer/prompts (and anything that loads it) receive the mocked version.
 
-import { jest } from "@jest/globals";
-import {
-  mockedInput,
-  mockedPassword,
-  mockedSelect,
-  mockedConfirm,
-  mockedEditor,
-} from "../__mocks__/prompter";
-
-jest.unstable_mockModule("@inquirer/prompts", () => ({
-  input: mockedInput,
-  password: mockedPassword,
-  select: mockedSelect,
-  confirm: mockedConfirm,
-  editor: mockedEditor,
+vi.mock("@inquirer/prompts", () => ({
+  input: vi.fn(),
+  password: vi.fn(),
+  select: vi.fn(),
+  confirm: vi.fn(),
+  editor: vi.fn(),
 }));
 
-const { createLogger } = await import("../src/utils/logger");
-const { createPrompter } = await import("../src/utils/prompter");
-const { prompter } = await import("../src/utils/index");
+import * as inquirer from "@inquirer/prompts";
+import { createLogger } from "../src/utils/logger";
+import { createPrompter } from "../src/utils/prompter";
+import { prompter } from "../src/utils/index";
+
+const mockedInput = vi.mocked(inquirer.input);
+const mockedPassword = vi.mocked(inquirer.password);
+const mockedSelect = vi.mocked(inquirer.select);
 
 describe("createPrompter", () => {
   it("returns an object with prompt methods", () => {
@@ -42,7 +32,7 @@ describe("createPrompter", () => {
 
 describe("Prompter", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should return the provided username", async () => {

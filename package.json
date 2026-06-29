@@ -11,7 +11,8 @@
   "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "test": "node --experimental-vm-modules --no-warnings node_modules/.bin/jest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "tsc -p tsconfig.json && chmod +x dist/index.js",
     "sync": "git pull && (git diff --quiet && git diff --cached --quiet && git ls-files --others --exclude-standard) || (git add . && git commit -m 'sync' && git push)",
     "update:projects": "trunk actions run update-submodules",
@@ -26,33 +27,29 @@
     "bbs": "./dist/index.js"
   },
   "devDependencies": {
-    "@babel/core": "^7.26.9",
-    "@babel/preset-env": "^7.26.9",
-    "@babel/preset-typescript": "^7.26.0",
     "@graphql-codegen/typescript": "^6.0.2",
-    "@jest/globals": "^29.7.0",
+    "@types/babel__traverse": "^7.28.0",
     "@types/commander": "^2.12.0",
     "@types/degit": "^2.8.6",
     "@types/fs-extra": "^11.0.4",
-    "@types/jest": "^29.5.14",
     "@types/node": "^22.13.4",
     "@types/semver": "^7.7.0",
     "@types/winston": "^2.4.4",
-    "babel-jest": "^29.7.0",
+    "@vitest/coverage-v8": "^4.1.9",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
-    "esbuild-jest": "^0.5.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.3.1",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.9"
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "^0.25.1"
   },
   "dependencies": {
     "@babel/parser": "^7.26.10",
+    "@babel/traverse": "^7.29.7",
+    "@babel/types": "^7.29.7",
     "@inquirer/prompts": "^7.3.2",
     "@sveltejs/acorn-typescript": "^1.0.5",
     "@types/acorn": "^4.0.6",

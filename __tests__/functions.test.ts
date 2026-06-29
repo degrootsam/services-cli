@@ -1,4 +1,3 @@
-import { jest } from "@jest/globals";
 import { parseName, getValidFunctions } from "../src/utils/functions";
 import type { Functions } from "../src/utils/functions/types";
 

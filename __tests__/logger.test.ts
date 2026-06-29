@@ -1,14 +1,13 @@
-import { jest } from "@jest/globals";
 import { logger } from "../src/utils/index";
 import { DEBUG_PREFIX, ERROR_PREFIX, createLogger } from "../src/utils/logger";
 
 describe("Logger", () => {
-  let debugSpy: jest.SpiedFunction<typeof console.debug>;
-  let errorSpy: jest.SpiedFunction<typeof console.error>;
+  let debugSpy: ReturnType<typeof vi.spyOn>;
+  let errorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    debugSpy = jest.spyOn(console, "debug").mockImplementation(() => {});
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -35,12 +34,12 @@ describe("Logger", () => {
 });
 
 describe("createLogger", () => {
-  let debugSpy: ReturnType<typeof jest.spyOn>;
-  let errorSpy: ReturnType<typeof jest.spyOn>;
+  let debugSpy: ReturnType<typeof vi.spyOn>;
+  let errorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    debugSpy = jest.spyOn(console, "debug").mockImplementation(() => {});
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {

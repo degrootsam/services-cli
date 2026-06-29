@@ -3,7 +3,7 @@ export const autoMock = (object: Object) => {
   // Build a mock object by iterating over all exports.
   for (const key in object) {
     // Replace functions with jest.fn(), keep non-functions as they are.
-    autoMock[key] = typeof object[key] === "function" ? jest.fn() : object[key];
+    autoMock[key] = typeof object[key] === "function" ? vi.fn() : object[key];
   }
 
   return autoMock;

@@ -1,27 +1,26 @@
-import { jest } from "@jest/globals";
 import { createConfig } from "../src/utils/config";
 import type { LoggerAPI } from "../src/utils/logger";
 import type { DirectorAPI } from "../src/utils/director";
 import type { PrompterAPI } from "../src/utils/prompter";
 
 const mockLogger: LoggerAPI = {
-  debug: jest.fn() as any,
-  error: jest.fn() as any,
-  info: jest.fn() as any,
-  warn: jest.fn() as any,
-  toggleVerbose: jest.fn() as any,
-  getValidationPrefix: jest.fn(() => "√") as any,
-  getValidationColor: jest.fn() as any,
+  debug: vi.fn() as any,
+  error: vi.fn() as any,
+  info: vi.fn() as any,
+  warn: vi.fn() as any,
+  toggleVerbose: vi.fn() as any,
+  getValidationPrefix: vi.fn(() => "√") as any,
+  getValidationColor: vi.fn() as any,
 };
 
 const mockDirector: Partial<DirectorAPI> = {
-  exists: jest.fn(() => false) as any, // no config.json on disk
-  readFile: jest.fn(() => "") as any,
-  getTsConfig: jest.fn(() => null) as any, // JS project
+  exists: vi.fn(() => false) as any,
+  readFile: vi.fn(() => "") as any,
+  getTsConfig: vi.fn(() => null) as any,
 };
 
 const mockPrompter: Partial<PrompterAPI> = {
-  input: jest.fn() as any,
+  input: vi.fn() as any,
 };
 
 const makeDeps = () => ({
@@ -31,7 +30,7 @@ const makeDeps = () => ({
 });
 
 describe("createConfig", () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it("defaults srcDir to 'functions'", () => {
     const config = createConfig({ force: false }, makeDeps());

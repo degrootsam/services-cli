@@ -6,7 +6,7 @@
     "target": "ES2020",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["jest"],
+    "types": ["vitest/globals"],
     "rootDir": ".", // allow relative imports in this test folder
     "baseUrl": "." // make relative imports resolve locally
   },
