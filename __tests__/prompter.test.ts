@@ -1,7 +1,16 @@
 // __tests__/prompter.test.ts
 
+import { jest } from "@jest/globals";
 import { createPrompter } from "../src/utils/prompter";
 import { createLogger } from "../src/utils/logger";
+import {
+  mockedInput,
+  mockedPassword,
+  mockedSelect,
+} from "../__mocks__/prompter";
+
+// Note: use dynamic (await import) so the mocks are picked up.
+const { prompter } = await import("../src/utils/index");
 
 describe("createPrompter", () => {
   it("returns an object with prompt methods", () => {
@@ -12,17 +21,6 @@ describe("createPrompter", () => {
     expect(typeof prompter.select).toBe("function");
   });
 });
-
-import { jest } from "@jest/globals";
-import {
-  mockedInput,
-  mockedPassword,
-  mockedSelect,
-} from "../__mocks__/prompter";
-
-// 2. Now import the mocked module and your Prompter instance.
-// Note: use dynamic (await import) so the mocks are picked up.
-const { prompter } = await import("../src/utils/index");
 
 describe("Prompter", () => {
   beforeEach(() => {
