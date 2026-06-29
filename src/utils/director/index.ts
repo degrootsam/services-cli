@@ -32,10 +32,15 @@ export type DirectorAPI = {
   ) => Promise<string>;
 };
 
-export function createDirector(logger: LoggerAPI): DirectorAPI {
+export function createDirector(
+  logger: LoggerAPI,
+  dirPath?: string,
+): DirectorAPI {
+  const resolvedDirPath =
+    dirPath ?? (typeof __dirname !== "undefined" ? __dirname : process.cwd());
   return {
     resolveCLIPath() {
-      return __dirname.split("/dist/")[0];
+      return resolvedDirPath.split("/dist/")[0];
     },
 
     resolveCLITemplatePath(templatesPath) {

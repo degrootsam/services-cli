@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("createDirector", () => {
   const logger = createLogger({ verbose: false });
-  const director = createDirector(logger);
+  const director = createDirector(logger, __dirname);
 
   it("returns an object with core filesystem methods", () => {
     expect(typeof director.readFile).toBe("function");
