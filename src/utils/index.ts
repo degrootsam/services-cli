@@ -5,7 +5,7 @@ import FunctionsUtils from "./functions";
 import GraphQLAPI from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
 import { createLogger } from "./logger/index";
-import Prompter from "./prompter";
+import { createPrompter } from "./prompter";
 import ComponentsScaffolder from "./scaffolder/components";
 import FunctionsScaffolder from "./scaffolder/functions";
 import Git from "./git";
@@ -17,7 +17,7 @@ const forceArg = opts.find((v) => v === "-f" || v === "--force");
 const logger = createLogger({
   verbose: !!(verboseArg && verboseArg.length > 0),
 });
-const prompter = new Prompter();
+const prompter = createPrompter(logger);
 const director = createDirector(logger);
 const spinner = createSpinner();
 const config = new ConfigManager({ force: forceArg && forceArg.length > 0 });

@@ -1,5 +1,18 @@
 // __tests__/prompter.test.ts
 
+import { createPrompter } from "../src/utils/prompter";
+import { createLogger } from "../src/utils/logger";
+
+describe("createPrompter", () => {
+  it("returns an object with prompt methods", () => {
+    const logger = createLogger({ verbose: false });
+    const prompter = createPrompter(logger);
+    expect(typeof prompter.input).toBe("function");
+    expect(typeof prompter.confirm).toBe("function");
+    expect(typeof prompter.select).toBe("function");
+  });
+});
+
 import { jest } from "@jest/globals";
 import {
   mockedInput,
