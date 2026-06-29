@@ -1,6 +1,9 @@
 import path from "path";
 import { Config } from "./types";
 import { DeepPartial } from "../types";
+import type { LoggerAPI } from "../logger";
+import type { DirectorAPI } from "../director";
+import type { PrompterAPI } from "../prompter";
 
 function deepMerge(
   target: Record<string, any>,
@@ -19,9 +22,6 @@ function deepMerge(
   }
   return target;
 }
-import type { LoggerAPI } from "../logger";
-import type { DirectorAPI } from "../director";
-import type { PrompterAPI } from "../prompter";
 
 const DEFAULT_CONFIG: Config = {
   buildOptions: {
