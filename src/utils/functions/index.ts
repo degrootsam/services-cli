@@ -134,8 +134,8 @@ export default class FunctionsUtils {
 
     switch (response.status) {
       case 409:
-        const { created, updated, deleted, message } =
-          (await response.json()) as PublishResponse;
+      // const { created, updated, deleted, message } =
+      //   (await response.json()) as PublishResponse;
       // TODO(Task 8): Migrate uploadedFunction call sites
       // created.forEach((result) => logger.uploadedFunction(result));
       // updated.forEach((result) => logger.uploadedFunction(result));

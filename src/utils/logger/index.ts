@@ -1,5 +1,4 @@
-import chalk from "chalk";
-import { Functions, FunctionResult } from "../functions/types";
+import chalk, { ChalkInstance } from "chalk";
 
 export const DEBUG_PREFIX = chalk.bgWhite(chalk.black("DEBUG:"));
 export const ERROR_PREFIX = chalk.bgRed(chalk.black("ERROR:"));
@@ -11,7 +10,7 @@ export type LoggerAPI = {
   warn: (...message: any[]) => void;
   toggleVerbose: (verbose: boolean) => void;
   getValidationPrefix: (state: boolean) => string;
-  getValidationColor: (state: boolean) => typeof chalk.greenBright;
+  getValidationColor: (state: boolean) => ChalkInstance;
 };
 
 export function createLogger({
