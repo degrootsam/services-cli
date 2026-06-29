@@ -1,7 +1,7 @@
-import { createConfig } from "../src/utils/config";
-import type { LoggerAPI } from "../src/utils/logger";
-import type { DirectorAPI } from "../src/utils/director";
-import type { PrompterAPI } from "../src/utils/prompter";
+import { createConfig } from "../utils/config";
+import type { LoggerAPI } from "../utils/logger";
+import type { DirectorAPI } from "../utils/director";
+import type { PrompterAPI } from "../utils/prompter";
 
 const mockLogger: LoggerAPI = {
   debug: vi.fn() as any,

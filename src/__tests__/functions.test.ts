@@ -1,5 +1,5 @@
-import { parseName, getValidFunctions } from "../src/utils/functions";
-import type { Functions } from "../src/utils/functions/types";
+import { parseName, getValidFunctions } from "../utils/functions";
+import type { Functions } from "../utils/functions/types";
 
 describe("parseName", () => {
   it("converts kebab-case function name to camelCase", () => {

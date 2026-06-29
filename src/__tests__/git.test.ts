@@ -1,6 +1,6 @@
-import { createGit, compareVersions } from "../src/utils/git";
-import { createLogger } from "../src/utils/logger";
-import type { AppDeps } from "../src/utils/types";
+import { createGit, compareVersions } from "../utils/git";
+import { createLogger } from "../utils/logger";
+import type { AppDeps } from "../utils/types";
 
 describe("compareVersions", () => {
   it("returns 1 when a is greater than b", () => {

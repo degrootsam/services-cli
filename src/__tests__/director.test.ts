@@ -1,5 +1,5 @@
-import { createDirector } from "../src/utils/director";
-import { createLogger } from "../src/utils/logger";
+import { createDirector } from "../utils/director";
+import { createLogger } from "../utils/logger";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 

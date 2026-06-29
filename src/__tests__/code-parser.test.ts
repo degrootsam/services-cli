@@ -1,6 +1,6 @@
-import { createCodeParser } from "../src/utils/code-parser";
-import { createLogger } from "../src/utils/logger";
-import { FunctionInfo } from "../src/utils/functions/types";
+import { createCodeParser } from "../utils/code-parser";
+import { createLogger } from "../utils/logger";
+import { FunctionInfo } from "../utils/functions/types";
 
 const logger = createLogger({ verbose: false });
 

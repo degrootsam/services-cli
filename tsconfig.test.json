@@ -11,7 +11,7 @@
     "baseUrl": "." // make relative imports resolve locally
   },
   "paths": {
-    "@utils/*": ["../src/utils/*"]
+    "@utils/*": ["src/utils/*"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["codegen-templates/"]

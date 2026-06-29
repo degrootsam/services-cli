@@ -12,9 +12,9 @@ vi.mock("@inquirer/prompts", () => ({
 }));
 
 import * as inquirer from "@inquirer/prompts";
-import { createLogger } from "../src/utils/logger";
-import { createPrompter } from "../src/utils/prompter";
-import { prompter } from "../src/utils/index";
+import { createLogger } from "../utils/logger";
+import { createPrompter } from "../utils/prompter";
+import { prompter } from "../utils/index";
 
 const mockedInput = vi.mocked(inquirer.input);
 const mockedPassword = vi.mocked(inquirer.password);
