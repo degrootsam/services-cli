@@ -19,7 +19,7 @@ import {
   getBuildPath,
   functionIsExportedAsDefault,
 } from "./functions";
-import GraphQLAPI from "./gql-api";
+import { createGraphQLAPI } from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
 import { createLogger } from "./logger/index";
 import { createPrompter } from "./prompter";
@@ -122,7 +122,7 @@ export {
   getFunctionsJSON,
   getToken,
   getValidFunctions,
-  GraphQLAPI,
+  createGraphQLAPI,
   createGit,
   compareVersions,
   isErrorWithCode,

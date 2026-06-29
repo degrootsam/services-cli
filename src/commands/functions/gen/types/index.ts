@@ -6,7 +6,8 @@ import {
   director,
   prompter,
   spinner,
-  GraphQLAPI,
+  createGraphQLAPI,
+  deps,
   logger,
 } from "../../../../utils";
 import { GraphQLAccessToken } from "../../../../utils/gql-api/types";
@@ -95,7 +96,7 @@ const genTypes = new Command("types")
       };
       director.writeFile("package.json", JSON.stringify(packageJSONContent));
 
-      const gqlAPI = new GraphQLAPI();
+      const gqlAPI = createGraphQLAPI(deps);
       let tokens: GraphQLAccessToken = {
         jwtToken: String(),
         refreshToken: String(),
