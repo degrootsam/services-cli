@@ -3,7 +3,7 @@ import path from "path";
 import { spawn, SpawnOptions } from "child_process";
 import archiver from "archiver";
 import os from "os";
-import { isErrorWithMessage } from "..";
+import { isErrorWithMessage } from "../errors";
 import type { LoggerAPI } from "../logger";
 
 export type DirectorAPI = {

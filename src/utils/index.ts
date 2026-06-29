@@ -38,6 +38,7 @@ import {
 import { downloadTemplate, copyTemplateFromLocal } from "./scaffolder";
 import { createGit, compareVersions } from "./git";
 import { createCodeParser } from "./code-parser";
+import { isErrorWithMessage } from "./errors";
 import type { AppDeps } from "./types";
 
 const opts = process.argv;
@@ -102,15 +103,8 @@ function deepMerge(
   return target;
 }
 
-function isErrorWithMessage(error: unknown): error is { message: string } {
-  return typeof error === "object" && error !== null && "message" in error;
-}
-
-function isErrorWithCode(error: unknown): error is { code: string } {
-  return typeof error === "object" && error !== null && "code" in error;
-}
-
 export type { AppDeps, SpinnerAPI } from "./types";
+export { isErrorWithMessage, isErrorWithCode } from "./errors";
 
 export {
   buildFunctions,
@@ -144,8 +138,6 @@ export {
   createGraphQLAPI,
   createGit,
   compareVersions,
-  isErrorWithCode,
-  isErrorWithMessage,
   logUploadedFunction,
   logValidatedFunctions,
   logger,

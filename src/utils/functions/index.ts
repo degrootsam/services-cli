@@ -67,6 +67,10 @@ export async function buildFunctions(
       break;
   }
 
+  const packageSourcePath = path.resolve(process.cwd(), "package.json");
+  const packageTargetPath = path.resolve(appDir, "package.json");
+  fs.copyFileSync(packageSourcePath, packageTargetPath);
+
   deps.spinner.success("Functions built successfully");
   return appDir;
 }

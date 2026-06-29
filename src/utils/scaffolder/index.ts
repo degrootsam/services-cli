@@ -2,7 +2,7 @@ import { cp, rm, stat } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import degit from "degit";
-import { isErrorWithCode } from "..";
+import { isErrorWithCode } from "../errors";
 import type { AppDeps } from "../types";
 
 export async function copyTemplateFromLocal(
