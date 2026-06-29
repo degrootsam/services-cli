@@ -5,10 +5,6 @@ import archiver from "archiver";
 import os from "os";
 import { isErrorWithMessage } from "..";
 import type { LoggerAPI } from "../logger";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export type DirectorAPI = {
   resolveCLIPath: () => string;
@@ -99,7 +95,7 @@ export function createDirector(logger: LoggerAPI): DirectorAPI {
       return new Promise((resolve, reject) => {
         output.on("close", () => {
           logger.debug(`ZIP created successfully: ${archive.pointer()} bytes`);
-          resolve(true as any);
+          resolve();
         });
         archive.on("error", reject);
         output.on("error", reject);
