@@ -18,6 +18,12 @@ export default {
   },
   testEnvironment: "node",
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
-  testPathIgnorePatterns: ["/node_modules/", "/dist/", "/coverage/"],
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/dist/",
+    "/coverage/",
+    "/codegen-templates/",
+  ],
+  transformIgnorePatterns: ["node_modules/(?!(node-fetch)/)"],
   collectCoverage: true,
 };
