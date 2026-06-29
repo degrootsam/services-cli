@@ -1,5 +1,5 @@
 import { createSpinner } from "nanospinner";
-import { ConfigManager } from "./config";
+import { createConfig } from "./config";
 import { createDirector } from "./director";
 import FunctionsUtils from "./functions";
 import GraphQLAPI from "./gql-api";
@@ -20,7 +20,10 @@ const logger = createLogger({
 const prompter = createPrompter(logger);
 const director = createDirector(logger);
 const spinner = createSpinner();
-const config = new ConfigManager({ force: forceArg && forceArg.length > 0 });
+const config = createConfig(
+  { force: !!(forceArg && forceArg.length > 0) },
+  { director, logger, prompter },
+);
 
 // Wrapper function to catch errors
 function withErrorHandling(fn: (...args: any[]) => Promise<void>) {

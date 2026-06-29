@@ -3,7 +3,6 @@ import esbuild from "esbuild";
 import * as fs from "fs";
 import path from "path";
 import { config, director, logger, spinner, CodeParser } from "..";
-import { ConfigManager } from "../config";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
 import { FunctionInfo, Functions } from "../functions/types";
