@@ -1,133 +1,220 @@
-# Betty Blocks - Services CLI (Proof of Concept)
+# BBS CLI — Betty Blocks Services CLI
 
-- [Jest](https://jestjs.io/docs/getting-started)
-- [Babel](https://babeljs.io/docs/usage)
-- [Commander.js](https://github.com/tj/commander.js)
-- [Inquirer](https://github.com/SBoudrias/Inquirer.js)
-- [Ora](https://github.com/sindresorhus/ora)
-- [Chalk](https://github.com/chalk/chalk)
-- [FusionAuth](https://fusionauth.io/docs/sdks/typescript)
-- [CodeGen for GraphQL Schema](https://the-guild.dev/graphql/codegen/plugins/typescript/typescript)
-- [Keytar](https://github.com/atom/node-keytar)
-- [Degit](https://github.com/Rich-Harris/degit)
-- [Execa](https://github.com/sindresorhus/execa)
-- [jtd: JSON Validation for JavaScript](https://github.com/jsontypedef/json-typedef-js)
+A command-line tool for developing, building, and publishing Betty Blocks functions and components.
 
-# 🛠 BBS CLI Maintainers Guide
+## Tech Stack
 
-Welcome, maintainer! This guide provides everything you need to know to build, test, version, and release the BBS CLI.
-
----
-
-## 📦 Project Overview
-
-- **Name:** `bbs-cli`
-- **Description:** A CLI for the Betty Blocks Platform
-- **Author:** Sam de Groot
-- **Language:** TypeScript (compiled to CommonJS)
+| Tool                                                                                               | Purpose                  |
+| -------------------------------------------------------------------------------------------------- | ------------------------ |
+| [Commander.js](https://github.com/tj/commander.js)                                                 | CLI framework            |
+| [@inquirer/prompts](https://github.com/SBoudrias/Inquirer.js)                                      | Interactive prompts      |
+| [nanospinner](https://github.com/usmanyunusov/nanospinner)                                         | Spinner                  |
+| [Chalk](https://github.com/chalk/chalk)                                                            | Terminal colors          |
+| [esbuild](https://esbuild.github.io/)                                                              | Function bundler         |
+| [@graphql-codegen/typescript](https://the-guild.dev/graphql/codegen/plugins/typescript/typescript) | GraphQL type generation  |
+| [Keytar](https://github.com/atom/node-keytar)                                                      | Credential storage       |
+| [Degit](https://github.com/Rich-Harris/degit)                                                      | Template cloning         |
+| [jtd](https://github.com/jsontypedef/json-typedef-js)                                              | JSON Schema validation   |
+| [Vitest](https://vitest.dev/)                                                                      | Test runner              |
+| TypeScript → CommonJS                                                                              | Language / output format |
 
 ---
 
-## 📁 Structure
+## Getting Started
 
-- `src/` – Source files
-- `dist/` – Compiled CLI output (entry: `dist/index.js`)
-- `scripts/` – Custom automation scripts
-- `tests/` – Unit tests (run with Jest)
-
----
-
-## 🚀 Getting Started
-
-### Install dependencies:
+### Install dependencies
 
 ```bash
 npm install
 ```
 
-### Build the CLI:
+### Build
 
 ```bash
 npm run build
+npm link  # exposes 'bbs' globally via symlink
 ```
 
-> This compiles TypeScript and adds execute permissions to `dist/index.js`
-
-### Run the CLI:
+### Run
 
 ```bash
 ./dist/index.js
-# or globally
-npx bbs
+# or after npm link:
+bbs
 ```
 
 ---
 
-## 🧪 Testing
+## Configuration
 
-Run all unit tests:
+A `config.json` file at the project root is required. Minimal structure:
+
+```json
+{
+  "app": {
+    "uuid": "<app-uuid>",
+    "identifier": "<app-identifier>",
+    "zone": "<zone>"
+  }
+}
+```
+
+Optional overrides (all have defaults):
+
+```json
+{
+  "scaffolder": {
+    "templates": {
+      "versions": {
+        "templates": "^0.0.1",
+        "functions": { "ts": "^1.0.0", "js": "^1.0.0" }
+      }
+    }
+  }
+}
+```
+
+---
+
+## Commands
+
+### `bbs login`
+
+Authenticate with the Betty Blocks platform.
+
+---
+
+### `bbs update`
+
+| Subcommand           | Description                         |
+| -------------------- | ----------------------------------- |
+| `bbs update check`   | Check for CLI and submodule updates |
+| `bbs update install` | Pull and apply latest updates       |
+
+---
+
+### `bbs functions`
+
+#### `bbs functions init <name>`
+
+Scaffold a new functions project, install dependencies.
+
+| Flag                 | Description                                         |
+| -------------------- | --------------------------------------------------- |
+| `--javascript`, `-j` | Scaffold a JavaScript project instead of TypeScript |
+| `--force`, `-f`      | Overwrite if project already exists                 |
+
+#### `bbs functions new <name>`
+
+Add a new function to an existing project.
+
+| Flag            | Description                          |
+| --------------- | ------------------------------------ |
+| `--force`, `-f` | Overwrite if function already exists |
+
+#### `bbs functions build`
+
+Compile and bundle all functions via esbuild.
+
+| Flag                         | Description                              |
+| ---------------------------- | ---------------------------------------- |
+| `--destination <path>`, `-d` | Custom output path                       |
+| `--debug`                    | Output non-minified bundle for debugging |
+
+#### `bbs functions validate`
+
+Validate all functions against the Betty Blocks JSON schema.
+
+#### `bbs functions publish`
+
+Validate, build, zip, and upload functions to the platform.
+
+#### `bbs functions bump`
+
+Create a new version for a function (interactive).
+
+#### `bbs functions gen types`
+
+Generate a TypeScript types file from the Betty Blocks application's GraphQL schema.
+
+Prompts for project setup if no `package.json` is found in the current directory.
+
+#### `bbs functions gen test`
+
+Generate test scaffolding for a selected function.
+
+| Flag            | Description                  |
+| --------------- | ---------------------------- |
+| `--force`, `-f` | Overwrite existing test file |
+
+---
+
+### `bbs components`
+
+#### `bbs components init <name>`
+
+Scaffold a new components project.
+
+| Flag            | Description                         |
+| --------------- | ----------------------------------- |
+| `--force`, `-f` | Overwrite if project already exists |
+
+#### `bbs components new <name>`
+
+Add a new component to an existing project.
+
+---
+
+## Testing
 
 ```bash
-npm test
+npm test          # run once
+npm run test:watch  # watch mode
 ```
 
-Jest is used alongside `ts-jest` for testing TypeScript.
+Tests live in `__tests__/`. Powered by Vitest with `globals: true` (no imports needed for `describe`, `it`, `expect`, `vi`).
 
 ---
 
-## 🔄 Syncing the Repo
+## Project Structure
 
-To pull the latest changes and auto-commit any unstaged work:
+```
+src/
+  commands/         # CLI command definitions
+    functions/      # bbs functions *
+    components/     # bbs components *
+    update/         # bbs update *
+  utils/
+    code-parser/    # AST parsing via @babel/parser + @babel/traverse
+    config/         # Config loading and merging
+    director/       # Filesystem, process, and zip utilities
+    functions/      # Function discovery and build orchestration
+    fusion-auth/    # Authentication
+    git/            # Git helpers
+    gql-api/        # GraphQL API client
+    json-schema/    # Schema validation
+    keychain/       # Credential storage
+    logger/         # Winston logger wrapper
+    prompter/       # @inquirer/prompts wrapper
+    scaffolder/     # Project and function scaffolding
+    update/         # CLI self-update logic
+__tests__/          # Vitest test suites
+codegen-templates/  # Git submodule — scaffolding templates
+scripts/            # Automation scripts
+```
+
+---
+
+## Releasing
 
 ```bash
-npm run sync
+npm run release v1.2.3
 ```
 
----
-
-## 📦 Dev Dependencies Overview
-
-| Tool                                       | Purpose                            |
-| ------------------------------------------ | ---------------------------------- |
-| `typescript`                               | Main compiler for CLI source       |
-| `jest` / `ts-jest`                         | Testing suite                      |
-| `commitizen` + `cz-conventional-changelog` | Standardizes commit messages       |
-| `ts-node`                                  | Run TypeScript scripts directly    |
-| `@types/*`                                 | Type support for Node and packages |
+Creates and pushes a `v1.2.3` git tag. The version argument must be a valid semver string.
 
 ---
 
-## 🚢 Releasing a New Version
+## License
 
-> **TODO**: [ ] Add `npm run release` script
-
-1. Bump the version in `package.json`
-2. Build the CLI:
-
-```bash
-npm run build
-```
-
-3. Tag and push the release:
-
-```bash
-git tag vX.Y.Z -m "Release vX.Y.Z"
-git push origin vX.Y.Z
-```
-
-Once the `release` script is in place, this process will be automated.
-
----
-
-## ✅ TODO
-
-- [x] Create a `npm run release` script to tag and push versions
-- [x] Configure Trunk actions to manage and validate Git submodules
-- [ ] Document supported CLI commands
-- [ ] Add CLI usage examples to README
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
+MIT
