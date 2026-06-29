@@ -4,7 +4,7 @@ import Director from "./director";
 import FunctionsUtils from "./functions";
 import GraphQLAPI from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
-import Logger from "./logger/index";
+import { createLogger } from "./logger/index";
 import Prompter from "./prompter";
 import ComponentsScaffolder from "./scaffolder/components";
 import FunctionsScaffolder from "./scaffolder/functions";
@@ -14,7 +14,9 @@ import CodeParser from "./code-parser";
 const opts = process.argv;
 const verboseArg = opts.find((v) => v === "-v" || v === "--verbose");
 const forceArg = opts.find((v) => v === "-f" || v === "--force");
-const logger = new Logger({ verbose: verboseArg && verboseArg.length > 0 });
+const logger = createLogger({
+  verbose: !!(verboseArg && verboseArg.length > 0),
+});
 const prompter = new Prompter();
 const director = new Director();
 const spinner = createSpinner();

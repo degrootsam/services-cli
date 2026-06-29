@@ -128,7 +128,8 @@ export default class Git {
         cwd: this.repoPath,
       });
 
-      logger.success(`${this.name} is now at ${parsedTag}.`);
+      // TODO(Task 11): Migrate success call sites
+      // logger.success(`${this.name} is now at ${parsedTag}.`);
     } catch (err) {
       logger.error(`[${this.name}] Failed to checkout ${parsedTag}:`, err);
     }

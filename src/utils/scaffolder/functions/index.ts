@@ -73,7 +73,8 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       }
       return true;
     });
-    logger.success("Successfully generate codegen.ts");
+    // TODO(Task 11): Migrate success call sites
+    // logger.success("Successfully generate codegen.ts");
   }
   async generateFunction(name: string) {
     const tsConfig = director.getTsConfig();
@@ -125,7 +126,8 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     director.writeFile(newIndexTSPath, indexTsJs);
     director.writeFile(newFunctionJSONPath, functionJSON);
 
-    logger.success(`Successfully created function ${parsedName}`);
+    // TODO(Task 11): Migrate success call sites
+    // logger.success(`Successfully created function ${parsedName}`);
     const createTests = await prompter.confirm(
       "Would you like to create a test file as well?",
       true,
@@ -189,9 +191,10 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     await director.copyDir(sourceDir, targetDir);
 
-    logger.success(
-      `Successfully bumped function ${selectedFunctionName} from ${selectedFunction.latestVersion} to ${newVersion}`,
-    );
+    // TODO(Task 11): Migrate success call sites
+    // logger.success(
+    //   `Successfully bumped function ${selectedFunctionName} from ${selectedFunction.latestVersion} to ${newVersion}`,
+    // );
 
     const createTests = await prompter.confirm(
       "Would you like to create tests for this new version?",
@@ -278,7 +281,8 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     director.writeFile(targetPath, templateContent);
 
-    logger.success(`Successfully created test for ${functionName}`);
+    // TODO(Task 11): Migrate success call sites
+    // logger.success(`Successfully created test for ${functionName}`);
 
     return targetPath;
   }

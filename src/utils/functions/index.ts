@@ -136,9 +136,10 @@ export default class FunctionsUtils {
       case 409:
         const { created, updated, deleted, message } =
           (await response.json()) as PublishResponse;
-        created.forEach((result) => logger.uploadedFunction(result));
-        updated.forEach((result) => logger.uploadedFunction(result));
-        deleted.forEach((result) => logger.uploadedFunction(result));
+      // TODO(Task 8): Migrate uploadedFunction call sites
+      // created.forEach((result) => logger.uploadedFunction(result));
+      // updated.forEach((result) => logger.uploadedFunction(result));
+      // deleted.forEach((result) => logger.uploadedFunction(result));
     }
   }
 
@@ -297,7 +298,8 @@ export default class FunctionsUtils {
       validatedFunctions[currentFunctionName] = validatedFunction;
     }
     spinner.success("Functions validated:");
-    logger.validatedFunctions(validatedFunctions);
+    // TODO(Task 9): Migrate validatedFunctions call sites
+    // logger.validatedFunctions(validatedFunctions);
 
     return validatedFunctions;
   }
