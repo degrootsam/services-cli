@@ -2,7 +2,8 @@ import { Command } from "commander";
 import {
   config,
   withErrorHandling,
-  FunctionsScaffolder,
+  generateFunctionsProject,
+  generateCodeGenFile,
   director,
   prompter,
   spinner,
@@ -16,7 +17,6 @@ const genTypes = new Command("types")
   .description("Generate a typescript file based on a Betty Blocks application")
   .action(
     withErrorHandling(async () => {
-      const functionsScaffolder = new FunctionsScaffolder();
       let packageJSONContent = director.getPackageJSON();
       if (!packageJSONContent) {
         const choice = (await prompter.select(
@@ -33,7 +33,7 @@ const genTypes = new Command("types")
               "Please provide a name for the project",
               true,
             );
-            await functionsScaffolder.generateProject(name, true);
+            await generateFunctionsProject(deps, name, true);
 
             director.changeDir(name);
             break;
@@ -129,7 +129,7 @@ const genTypes = new Command("types")
 
       const apiURL = await config.getApiURL();
 
-      await functionsScaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
+      await generateCodeGenFile(deps, apiURL, tokens.jwtToken!);
       spinner.update("Generating types...");
       spinner.start();
       await director.runCommand("npm", ["run", "generate-types"]);

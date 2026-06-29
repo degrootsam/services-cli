@@ -1,5 +1,5 @@
 import { Command } from "commander";
-import { withErrorHandling, FunctionsScaffolder } from "../../../utils";
+import { withErrorHandling, generateFunction, deps } from "../../../utils";
 
 const newFunction = new Command("new")
   .arguments("<name>")
@@ -9,9 +9,8 @@ const newFunction = new Command("new")
     "Overwrites function if it already exists. Use with caution!",
   )
   .action(
-    withErrorHandling(async (name, options) => {
-      const functionsScaffolder = new FunctionsScaffolder();
-      await functionsScaffolder.generateFunction(name);
+    withErrorHandling(async (name) => {
+      await generateFunction(deps, name);
     }),
   );
 

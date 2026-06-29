@@ -2,34 +2,31 @@ import { Command } from "commander";
 import path from "path";
 import {
   config,
+  deps,
   director,
-  FunctionsScaffolder,
-  FunctionsUtils,
+  generateFunctionsBarrel,
+  getFunctions,
+  validateFunctions,
+  buildFunctions,
   withErrorHandling,
 } from "../../../utils";
 
-const buildFunctions = new Command("build")
+const buildFunctionsCmd = new Command("build")
   .description("Build your functions")
   .option("-d, --destination <path>")
   .option("--debug", "Outputs a non minified version for debugging purposes")
   .action(
     withErrorHandling(async (options) => {
       const tsConfig = director.getTsConfig();
-      const functionsUtils = new FunctionsUtils();
 
       const appDir = path.resolve(config.buildDir, "app");
-      const functionsScaffolder = new FunctionsScaffolder();
-      const functions = functionsUtils.getFunctions();
-      const validatedFunctions =
-        await functionsUtils.validateFunctions(functions);
+      const functions = getFunctions(deps);
+      const validatedFunctions = await validateFunctions(deps, functions);
 
-      functionsScaffolder.generateFunctionsBarrelFile(
-        appDir,
-        validatedFunctions,
-        "js",
-      );
+      generateFunctionsBarrel(deps, appDir, validatedFunctions, "js");
 
-      await functionsUtils.buildFunctions(
+      await buildFunctions(
+        deps,
         tsConfig ? "ts" : "js",
         options.destination,
         options.debug,
@@ -37,4 +34,4 @@ const buildFunctions = new Command("build")
     }),
   );
 
-export default buildFunctions;
+export default buildFunctionsCmd;

@@ -1,11 +1,6 @@
 import { Command } from "commander";
 import path from "path";
-import {
-  config,
-  withErrorHandling,
-  FunctionsScaffolder,
-  director,
-} from "../utils";
+import { config, withErrorHandling, director } from "../utils";
 import FusionAuth from "../utils/fusion-auth";
 import update from "./update";
 import components from "./components";

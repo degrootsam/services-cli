@@ -23,8 +23,19 @@ import { createGraphQLAPI } from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
 import { createLogger } from "./logger/index";
 import { createPrompter } from "./prompter";
-import ComponentsScaffolder from "./scaffolder/components";
-import FunctionsScaffolder from "./scaffolder/functions";
+import {
+  generateProject as generateFunctionsProject,
+  generateFunction,
+  generateCodeGenFile,
+  generateFunctionsBarrelFile as generateFunctionsBarrel,
+  generateTest,
+  bumpFunction,
+} from "./scaffolder/functions";
+import {
+  generateProject as generateComponentsProject,
+  generateComponent,
+} from "./scaffolder/components";
+import { downloadTemplate, copyTemplateFromLocal } from "./scaffolder";
 import { createGit, compareVersions } from "./git";
 import { createCodeParser } from "./code-parser";
 import type { AppDeps } from "./types";
@@ -103,18 +114,26 @@ export type { AppDeps, SpinnerAPI } from "./types";
 
 export {
   buildFunctions,
+  bumpFunction,
+  copyTemplateFromLocal,
   createCodeParser,
   clearToken,
-  ComponentsScaffolder,
   config,
   deepMerge,
   deps,
   director,
+  downloadTemplate,
   functionIsExportedAsDefault,
-  FunctionsScaffolder,
   generateBarrelFunctionDeclaration,
   generateBarrelImportDeclarations,
+  generateCodeGenFile,
+  generateComponent,
+  generateComponentsProject,
+  generateFunction,
+  generateFunctionsBarrel,
   generateFunctionsBarrelFile,
+  generateFunctionsProject,
+  generateTest,
   getBuildPath,
   getFunctionFilePath,
   getFunctionJsonFilePath,

@@ -1,7 +1,8 @@
 import { Command } from "commander";
 import {
   withErrorHandling,
-  FunctionsScaffolder,
+  generateFunctionsProject,
+  deps,
   director,
   spinner,
   logger,
@@ -18,8 +19,7 @@ const initFunction = new Command("init")
   .action(
     withErrorHandling(async (name, options) => {
       // bbs functions init <name>
-      const functionsScaffolder = new FunctionsScaffolder();
-      await functionsScaffolder.generateProject(name, options.javascript);
+      await generateFunctionsProject(deps, name, options.javascript);
       director.changeDir(name);
       spinner.start("Installing dependencies...");
       await director.runCommand("npm", ["i"], { stdio: "ignore" });

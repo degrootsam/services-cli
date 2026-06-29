@@ -1,25 +1,27 @@
-import BaseScaffolder from "..";
-import { config, logger } from "../..";
+import { downloadTemplate } from "..";
+import type { AppDeps } from "../..";
 
-// Scaffolder for components projects and individual components
-export default class ComponentsScaffolder extends BaseScaffolder {
-  async generateProject(name: string, force: boolean) {
-    const templateUrl = config.scaffolder.templates.components.project.url;
-    await this.downloadTemplate(templateUrl, name, force);
-
-    logger.info(
-      `Components project "${name}" created!
+export async function generateProject(
+  deps: AppDeps,
+  name: string,
+  force: boolean,
+): Promise<void> {
+  const templateUrl = deps.config.scaffolder.templates.components.project.url;
+  await downloadTemplate(deps, templateUrl, name, force);
+  deps.logger.info(
+    `Components project "${name}" created!
 
   To start developing:
   - cd ${name}
   - npm install
   - npm run dev
     `,
-    );
-  }
+  );
+}
 
-  async generateComponent(name: string) {
-    logger.info(`Creating a new component: ${name}`);
-    // Implement component generation logic here
-  }
+export async function generateComponent(
+  deps: AppDeps,
+  name: string,
+): Promise<void> {
+  deps.logger.info(`Creating a new component: ${name}`);
 }

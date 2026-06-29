@@ -1,5 +1,9 @@
 import { Command } from "commander";
-import { withErrorHandling, ComponentsScaffolder } from "../../../utils";
+import {
+  withErrorHandling,
+  generateComponentsProject,
+  deps,
+} from "../../../utils";
 
 const initComponent = new Command("init <name>")
   .description("Initialize a new components project")
@@ -9,8 +13,7 @@ const initComponent = new Command("init <name>")
   )
   .action(
     withErrorHandling(async (name, options) => {
-      const componentsScaffolder = new ComponentsScaffolder();
-      await componentsScaffolder.generateProject(name, options.force);
+      await generateComponentsProject(deps, name, options.force);
     }),
   );
 

@@ -1,343 +1,318 @@
 import fs from "fs";
 import path from "path";
-import BaseScaffolder from "..";
+import { downloadTemplate, copyTemplateFromLocal } from "..";
+import type { AppDeps } from "../../types";
 import {
-  config,
-  deps,
-  director,
   getFunctions,
   getValidFunctions,
-  logger,
   parseName,
-  prompter,
-  spinner,
-} from "../..";
-import { FunctionInfo, Functions } from "../../functions/types";
+  generateBarrelImportDeclarations,
+  generateBarrelFunctionDeclaration,
+} from "../../functions";
+import type { FunctionInfo, Functions } from "../../functions/types";
 
-// Scaffolder for functions projects and individual functions
-//
-export default class FunctionsScaffolder extends BaseScaffolder {
-  async generateProject(name: string, javascript: boolean = false) {
-    const functionTemplateURLs = config.scaffolder.templates.functions.project;
-    let templateUrl = functionTemplateURLs.ts.url;
+export async function generateProject(
+  deps: AppDeps,
+  name: string,
+  javascript: boolean = false,
+): Promise<void> {
+  const functionTemplateURLs =
+    deps.config.scaffolder.templates.functions.project;
+  let templateUrl = functionTemplateURLs.ts.url;
 
-    if (javascript) {
-      templateUrl = functionTemplateURLs.js.url;
-    }
-
-    await this.downloadTemplate(templateUrl, name, config.force);
-  }
-  async generateCodeGenFile(graphqlURL: string, accessToken: string) {
-    if (!graphqlURL || !accessToken) {
-      logger.debug({ graphqlURL, accessToken });
-      throw new Error(
-        "Unable to generate codegen.ts! Graphql URL or accessToken are empty",
-      );
-    }
-    const { templates, cacheDir } = config.scaffolder;
-
-    const targetDir = process.cwd();
-    const tempTemplatePath = path.resolve(cacheDir, "codegen");
-
-    logger.debug({ outputDir: targetDir, tempDir: tempTemplatePath });
-
-    const templatePath = path.resolve(
-      director.resolveCLITemplatePath(config.scaffolder.templates.path),
-      templates.functions.typegen,
-    );
-
-    let templateContent = director.readFile(templatePath);
-
-    if (!templateContent) {
-      throw new Error(
-        `The codegen template yielded no content! Please try again`,
-      );
-    }
-
-    logger.debug("Replacing template content");
-
-    templateContent = templateContent
-      .replace("{{ graphqlURL }}", graphqlURL)
-      .replace("{{ accessToken }}", accessToken);
-
-    logger.debug(templateContent);
-
-    const outputPath = path.join(targetDir, "codegen.ts");
-
-    logger.debug(`Writing template file to ${outputPath}`);
-
-    director.writeFile(outputPath, templateContent);
-
-    logger.debug(`Cleaning temp files  at ${cacheDir}`);
-
-    fs.rm(cacheDir, { recursive: true, force: true }, (err) => {
-      if (err) {
-        logger.error(err);
-      }
-      return true;
-    });
-    // TODO(Task 11): Migrate success call sites
-    // logger.success("Successfully generate codegen.ts");
-  }
-  async generateFunction(name: string) {
-    const tsConfig = director.getTsConfig();
-
-    const targetFileType = tsConfig ? "ts" : "js";
-    const targetFileName = tsConfig
-      ? `index.${targetFileType}`
-      : `index.${targetFileType}`;
-
-    const functions = getFunctions(deps);
-
-    const existingFunctionNames = Object.keys(functions);
-
-    if (existingFunctionNames.includes(name) && !config.force) {
-      throw new Error(`Function ${name} already exists!`);
-    }
-
-    const newFunctionTemplateDir = path.resolve(
-      director.resolveCLITemplatePath(config.scaffolder.templates.path),
-      config.scaffolder.templates.functions.new,
-    );
-
-    let indexTsJs = director.readFile(
-      path.resolve(newFunctionTemplateDir, targetFileName),
-    );
-    let functionJSON = director.readFile(
-      path.resolve(newFunctionTemplateDir, "function.json"),
-    );
-
-    if (!indexTsJs || !functionJSON) {
-      logger.debug({ indexTsJs, functionJSON });
-      throw new Error("The template file(s) yielded no content");
-    }
-
-    const parsedName = parseName(name);
-
-    indexTsJs = indexTsJs.replace("functionName", parsedName);
-    functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
-    const functionDir = path.resolve(config.srcDir, name);
-
-    const targetDir = path.resolve(functionDir, "1.0");
-
-    director.createDir(targetDir);
-
-    const newIndexTSPath = path.resolve(targetDir, targetFileName);
-    const newFunctionJSONPath = path.resolve(targetDir, "function.json");
-
-    director.writeFile(newIndexTSPath, indexTsJs);
-    director.writeFile(newFunctionJSONPath, functionJSON);
-
-    // TODO(Task 11): Migrate success call sites
-    // logger.success(`Successfully created function ${parsedName}`);
-    const createTests = await prompter.confirm(
-      "Would you like to create a test file as well?",
-      true,
-    );
-
-    if (createTests) {
-      const newFunction: Partial<FunctionInfo> = {
-        fileType: targetFileType,
-        latestVersion: "1.0",
-        path: functionDir,
-        versions: new Set(["1.0"]),
-      };
-      await this.generateTestFiles(newFunction as FunctionInfo);
-    }
+  if (javascript) {
+    templateUrl = functionTemplateURLs.js.url;
   }
 
-  async bumpFunction() {
-    const functions = getFunctions(deps);
-    const functionNames = Object.keys(functions);
+  await downloadTemplate(deps, templateUrl, name, deps.config.force);
+}
 
-    const selectedFunctionName = await prompter.select(
-      functionNames.map((func) => ({
-        value: func,
-        name: func,
-      })),
-      "Please choose a function to bump",
+export async function generateCodeGenFile(
+  deps: AppDeps,
+  graphqlURL: string,
+  accessToken: string,
+): Promise<void> {
+  if (!graphqlURL || !accessToken) {
+    deps.logger.debug({ graphqlURL, accessToken });
+    throw new Error(
+      "Unable to generate codegen.ts! Graphql URL or accessToken are empty",
     );
+  }
+  const { templates, cacheDir } = deps.config.scaffolder;
 
-    const selectedFunction = functions[selectedFunctionName];
-    const [currentMajorVersion, currentMinorVersion] =
-      selectedFunction.latestVersion.split(".").map(Number);
+  const targetDir = process.cwd();
+  const tempTemplatePath = path.resolve(cacheDir, "codegen");
 
-    const newMajorVersion = Number(currentMajorVersion) + 1;
-    const newMinorVersion = Number(currentMinorVersion) + 1;
+  deps.logger.debug({ outputDir: targetDir, tempDir: tempTemplatePath });
 
-    const newMajorVersionOption = {
-      name: newMajorVersion.toString() + ".0",
-      value: newMajorVersion.toString() + ".0",
-      description: "Major version",
+  const templatePath = path.resolve(
+    deps.director.resolveCLITemplatePath(deps.config.scaffolder.templates.path),
+    templates.functions.typegen,
+  );
+
+  let templateContent = deps.director.readFile(templatePath);
+
+  if (!templateContent) {
+    throw new Error(
+      `The codegen template yielded no content! Please try again`,
+    );
+  }
+
+  deps.logger.debug("Replacing template content");
+
+  templateContent = templateContent
+    .replace("{{ graphqlURL }}", graphqlURL)
+    .replace("{{ accessToken }}", accessToken);
+
+  deps.logger.debug(templateContent);
+
+  const outputPath = path.join(targetDir, "codegen.ts");
+
+  deps.logger.debug(`Writing template file to ${outputPath}`);
+
+  deps.director.writeFile(outputPath, templateContent);
+
+  deps.logger.debug(`Cleaning temp files at ${cacheDir}`);
+
+  fs.rm(cacheDir, { recursive: true, force: true }, (err) => {
+    if (err) {
+      deps.logger.error(err);
+    }
+    return true;
+  });
+
+  deps.spinner.success("Successfully generated codegen.ts");
+}
+
+export async function generateFunction(
+  deps: AppDeps,
+  name: string,
+): Promise<void> {
+  const tsConfig = deps.director.getTsConfig();
+
+  const targetFileType = tsConfig ? "ts" : "js";
+  const targetFileName = `index.${targetFileType}`;
+
+  const functions = getFunctions(deps);
+
+  const existingFunctionNames = Object.keys(functions);
+
+  if (existingFunctionNames.includes(name) && !deps.config.force) {
+    throw new Error(`Function ${name} already exists!`);
+  }
+
+  const newFunctionTemplateDir = path.resolve(
+    deps.director.resolveCLITemplatePath(deps.config.scaffolder.templates.path),
+    deps.config.scaffolder.templates.functions.new,
+  );
+
+  let indexTsJs = deps.director.readFile(
+    path.resolve(newFunctionTemplateDir, targetFileName),
+  );
+  let functionJSON = deps.director.readFile(
+    path.resolve(newFunctionTemplateDir, "function.json"),
+  );
+
+  if (!indexTsJs || !functionJSON) {
+    deps.logger.debug({ indexTsJs, functionJSON });
+    throw new Error("The template file(s) yielded no content");
+  }
+
+  const parsedName = parseName(name);
+
+  indexTsJs = indexTsJs.replace("functionName", parsedName);
+  functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
+  const functionDir = path.resolve(deps.config.srcDir, name);
+
+  const targetDir = path.resolve(functionDir, "1.0");
+
+  deps.director.createDir(targetDir);
+
+  const newIndexTSPath = path.resolve(targetDir, targetFileName);
+  const newFunctionJSONPath = path.resolve(targetDir, "function.json");
+
+  deps.director.writeFile(newIndexTSPath, indexTsJs);
+  deps.director.writeFile(newFunctionJSONPath, functionJSON);
+
+  deps.spinner.success(`Successfully created function ${parsedName}`);
+
+  const createTests = await deps.prompter.confirm(
+    "Would you like to create a test file as well?",
+    true,
+  );
+
+  if (createTests) {
+    const newFunction: Partial<FunctionInfo> = {
+      fileType: targetFileType,
+      latestVersion: "1.0",
+      path: functionDir,
+      versions: new Set(["1.0"]),
     };
-
-    const newMinorVersionOption = {
-      name: `${currentMajorVersion}.${newMinorVersion}`,
-      value: `${currentMajorVersion}.${newMinorVersion}`,
-      description: "Minor version",
-    };
-
-    const newVersion = await prompter.select(
-      [newMinorVersionOption, newMajorVersionOption],
-      "Please choose a new version",
-      newMinorVersion.toString(),
-    );
-
-    const sourceDir = path.resolve(
-      selectedFunction.path,
-      selectedFunction.latestVersion,
-    );
-
-    const targetDir = path.resolve(selectedFunction.path, newVersion);
-
-    await director.copyDir(sourceDir, targetDir);
-
-    // TODO(Task 11): Migrate success call sites
-    // logger.success(
-    //   `Successfully bumped function ${selectedFunctionName} from ${selectedFunction.latestVersion} to ${newVersion}`,
-    // );
-
-    const createTests = await prompter.confirm(
-      "Would you like to create tests for this new version?",
-      true,
-    );
-
-    if (createTests) {
-      await this.generateTestFiles(selectedFunction);
-    }
+    await generateTest(deps, newFunction as FunctionInfo);
   }
+}
 
-  async generateTestFiles(
-    func?: FunctionInfo,
-    force?: boolean,
-  ): Promise<string> {
-    let parsedFunction: FunctionInfo = func as FunctionInfo;
-    const tsConfig = director.getTsConfig();
-    if (!parsedFunction) {
-      const functions = getFunctions(deps);
-      const functionNames = Object.keys(functions);
-      const choices = functionNames.map((name) => ({
-        name,
-        value: name,
-      }));
-      const selectedFunction = await prompter.select(choices);
-      parsedFunction = functions[selectedFunction];
-    }
+export async function bumpFunction(deps: AppDeps): Promise<void> {
+  const functions = getFunctions(deps);
+  const functionNames = Object.keys(functions);
 
-    const { path: functionDir, latestVersion } = parsedFunction;
+  const selectedFunctionName = await deps.prompter.select(
+    functionNames.map((func) => ({
+      value: func,
+      name: func,
+    })),
+    "Please choose a function to bump",
+  );
 
-    const functionName = path.basename(functionDir);
-    const parsedFunctionName = parseName(functionName);
+  const selectedFunction = functions[selectedFunctionName];
+  const [currentMajorVersion, currentMinorVersion] =
+    selectedFunction.latestVersion.split(".").map(Number);
 
-    const extension = tsConfig ? "ts" : "js";
+  const newMajorVersion = Number(currentMajorVersion) + 1;
+  const newMinorVersion = Number(currentMinorVersion) + 1;
 
-    const targetFile = `index.${extension}`;
+  const newMajorVersionOption = {
+    name: newMajorVersion.toString() + ".0",
+    value: newMajorVersion.toString() + ".0",
+    description: "Major version",
+  };
 
-    const targetDir = path.resolve(
-      process.cwd(),
-      config.scaffolder.tests.directory,
-      functionName,
-      latestVersion,
-    );
-    const targetPath = path.resolve(targetDir, targetFile);
+  const newMinorVersionOption = {
+    name: `${currentMajorVersion}.${newMinorVersion}`,
+    value: `${currentMajorVersion}.${newMinorVersion}`,
+    description: "Minor version",
+  };
 
-    if (director.exists(targetPath) && !force) {
-      throw new Error(
-        `A test for ${parsedFunctionName}/${latestVersion} already exists! Use --force to overwrite`,
-      );
-    }
-    director.createDir(targetDir);
+  const newVersion = await deps.prompter.select(
+    [newMinorVersionOption, newMajorVersionOption],
+    "Please choose a new version",
+    newMinorVersion.toString(),
+  );
 
-    const templatePath = path.resolve(
-      director.resolveCLITemplatePath(config.scaffolder.templates.path),
-      config.scaffolder.templates.functions.test,
-      targetFile,
-    );
+  const sourceDir = path.resolve(
+    selectedFunction.path,
+    selectedFunction.latestVersion,
+  );
 
-    let templateContent = director.readFile(templatePath);
+  const targetDir = path.resolve(selectedFunction.path, newVersion);
 
-    const importDir = path.resolve(functionDir, latestVersion);
-    const relativePath = path.relative(targetDir, importDir);
+  await deps.director.copyDir(sourceDir, targetDir);
 
-    templateContent = templateContent.replaceAll(
-      "// $importFunction",
-      `import {{ functionName }} from "${relativePath}"`,
-    );
+  deps.spinner.success(
+    `Successfully bumped function ${selectedFunctionName} from ${selectedFunction.latestVersion} to ${newVersion}`,
+  );
 
-    templateContent = templateContent.replaceAll(
-      "{{ functionName }}",
-      parsedFunctionName,
-    );
+  const createTests = await deps.prompter.confirm(
+    "Would you like to create tests for this new version?",
+    true,
+  );
 
-    templateContent = templateContent.replaceAll(
-      "{{ functionVersion }}",
-      latestVersion,
-    );
-
-    templateContent = templateContent.replaceAll(
-      "// $callFunction",
-      `await ${parsedFunctionName}()`,
-    );
-
-    director.writeFile(targetPath, templateContent);
-
-    // TODO(Task 11): Migrate success call sites
-    // logger.success(`Successfully created test for ${functionName}`);
-
-    return targetPath;
+  if (createTests) {
+    await generateTest(deps, selectedFunction);
   }
+}
 
-  generateBarrelFunctionDeclaration(functions: Functions) {
-    let result = "const fn = {\r\n";
+export async function generateTest(
+  deps: AppDeps,
+  func?: FunctionInfo,
+  force?: boolean,
+): Promise<string> {
+  let parsedFunction: FunctionInfo = func as FunctionInfo;
+  const tsConfig = deps.director.getTsConfig();
+  if (!parsedFunction) {
+    const functions = getFunctions(deps);
     const functionNames = Object.keys(functions);
-    functionNames.forEach((name) => {
-      const currentFunction = functions[name];
-      const { latestVersion } = currentFunction;
-      const functionName = parseName(name);
-      const key = `\t"${functionName} ${latestVersion}"`;
-      const value = `${functionName}_${latestVersion.replace(".", "_")}`;
-      result += `${key}: ${value},\r\n`;
-    });
-
-    result += "};\r\n";
-    return result;
+    const choices = functionNames.map((name) => ({
+      name,
+      value: name,
+    }));
+    const selectedFunction = await deps.prompter.select(choices);
+    parsedFunction = functions[selectedFunction];
   }
 
-  generateBarrelImportDeclarations(functions: Functions) {
-    let result = "";
-    const functionNames = Object.keys(functions);
-    functionNames.forEach((name) => {
-      const currentFunction = functions[name];
-      const { latestVersion } = currentFunction;
-      const relativePath = `.${currentFunction.path.replace(process.cwd(), "")}/${latestVersion}`;
-      const functionName = parseName(name);
-      result += `import { default as ${functionName}_${latestVersion.replace(".", "_")} } from "${relativePath}";\r\n`;
-    });
+  const { path: functionDir, latestVersion } = parsedFunction;
 
-    return result;
+  const functionName = path.basename(functionDir);
+  const parsedFunctionName = parseName(functionName);
+
+  const extension = tsConfig ? "ts" : "js";
+
+  const targetFile = `index.${extension}`;
+
+  const targetDir = path.resolve(
+    process.cwd(),
+    deps.config.scaffolder.tests.directory,
+    functionName,
+    latestVersion,
+  );
+  const targetPath = path.resolve(targetDir, targetFile);
+
+  if (deps.director.exists(targetPath) && !force) {
+    throw new Error(
+      `A test for ${parsedFunctionName}/${latestVersion} already exists! Use --force to overwrite`,
+    );
   }
+  deps.director.createDir(targetDir);
 
-  generateFunctionsBarrelFile(
-    outputDir: string,
-    functions: Functions,
-    fileType: "js" | "ts" = "ts",
-  ) {
-    const validFunctions = getValidFunctions(functions);
+  const templatePath = path.resolve(
+    deps.director.resolveCLITemplatePath(deps.config.scaffolder.templates.path),
+    deps.config.scaffolder.templates.functions.test,
+    targetFile,
+  );
 
-    let barrelContent = "";
+  let templateContent = deps.director.readFile(templatePath);
 
-    barrelContent += this.generateBarrelImportDeclarations(validFunctions);
+  const importDir = path.resolve(functionDir, latestVersion);
+  const relativePath = path.relative(targetDir, importDir);
 
-    barrelContent += "\r\n";
+  templateContent = templateContent.replaceAll(
+    "// $importFunction",
+    `import {{ functionName }} from "${relativePath}"`,
+  );
 
-    barrelContent += this.generateBarrelFunctionDeclaration(validFunctions);
+  templateContent = templateContent.replaceAll(
+    "{{ functionName }}",
+    parsedFunctionName,
+  );
 
-    barrelContent += "\r\n";
+  templateContent = templateContent.replaceAll(
+    "{{ functionVersion }}",
+    latestVersion,
+  );
 
-    barrelContent += "export default fn;";
+  templateContent = templateContent.replaceAll(
+    "// $callFunction",
+    `await ${parsedFunctionName}()`,
+  );
 
-    const outputPath = path.resolve(outputDir, `index.${fileType}`);
+  deps.director.writeFile(targetPath, templateContent);
 
-    director.writeFile(outputPath, barrelContent);
-  }
+  deps.spinner.success(`Successfully created test for ${functionName}`);
+
+  return targetPath;
+}
+
+export function generateFunctionsBarrelFile(
+  deps: AppDeps,
+  outputDir: string,
+  functions: Functions,
+  fileType: "js" | "ts" = "ts",
+): void {
+  const validFunctions = getValidFunctions(functions);
+
+  let barrelContent = "";
+
+  barrelContent += generateBarrelImportDeclarations(validFunctions);
+
+  barrelContent += "\r\n";
+
+  barrelContent += generateBarrelFunctionDeclaration(validFunctions);
+
+  barrelContent += "\r\n";
+
+  barrelContent += "export default fn;";
+
+  const outputPath = path.resolve(outputDir, `index.${fileType}`);
+
+  deps.director.writeFile(outputPath, barrelContent);
 }

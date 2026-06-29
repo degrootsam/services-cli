@@ -1,5 +1,4 @@
 import { program } from "commander";
-import { withErrorHandling, ComponentsScaffolder } from "../../utils";
 import initComponent from "./init";
 import newComponent from "./new";
 

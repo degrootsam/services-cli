@@ -1,13 +1,12 @@
 import { Command } from "commander";
-import { withErrorHandling, FunctionsScaffolder } from "../../../utils";
+import { withErrorHandling, bumpFunction, deps } from "../../../utils";
 
-const bumpFunction = new Command("bump")
+const bumpFunctionCmd = new Command("bump")
   .description("Create a new version for a function")
   .action(
     withErrorHandling(async () => {
-      const functionsScaffolder = new FunctionsScaffolder();
-      await functionsScaffolder.bumpFunction();
+      await bumpFunction(deps);
     }),
   );
 
-export default bumpFunction;
+export default bumpFunctionCmd;
