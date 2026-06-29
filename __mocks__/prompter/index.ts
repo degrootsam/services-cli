@@ -1,14 +1,17 @@
-import { confirm, editor } from "@inquirer/prompts";
 import { jest } from "@jest/globals";
-import { autoMock } from "../utils";
-const { input, password, select } = await import("@inquirer/prompts");
+import type {
+  input,
+  password,
+  select,
+  confirm,
+  editor,
+} from "@inquirer/prompts";
 
-const inquirer = await import("@inquirer/prompts");
-
-jest.unstable_mockModule("@inquirer/prompts", () => inquirer);
-
-const mockedInput = input as jest.MockedFunction<typeof input>;
-const mockedPassword = password as jest.MockedFunction<typeof password>;
-const mockedSelect = select as jest.MockedFunction<typeof select>;
-
-export { mockedInput, mockedPassword, mockedSelect };
+// Exported jest mock functions. The test file is responsible for registering
+// these with jest.unstable_mockModule BEFORE importing any module that uses
+// @inquirer/prompts, so that Node.js ESM loads the mocked version.
+export const mockedInput = jest.fn() as jest.MockedFunction<typeof input>;
+export const mockedPassword = jest.fn() as jest.MockedFunction<typeof password>;
+export const mockedSelect = jest.fn() as jest.MockedFunction<typeof select>;
+export const mockedConfirm = jest.fn() as jest.MockedFunction<typeof confirm>;
+export const mockedEditor = jest.fn() as jest.MockedFunction<typeof editor>;

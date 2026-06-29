@@ -1,24 +1,42 @@
 // __tests__/prompter.test.ts
+//
+// ESM mock setup must happen before any module that transitively imports
+// @inquirer/prompts is loaded. We:
+//   1. Statically import only @jest/globals and our mock-function helpers
+//      (neither pulls in @inquirer/prompts at runtime).
+//   2. Call jest.unstable_mockModule in the module body (runs before any
+//      top-level await).
+//   3. Dynamically import everything else so Node.js ESM uses the registered
+//      mock when it resolves @inquirer/prompts.
 
 import { jest } from "@jest/globals";
-import { createPrompter } from "../src/utils/prompter";
-import { createLogger } from "../src/utils/logger";
 import {
   mockedInput,
   mockedPassword,
   mockedSelect,
+  mockedConfirm,
+  mockedEditor,
 } from "../__mocks__/prompter";
 
-// Note: use dynamic (await import) so the mocks are picked up.
+jest.unstable_mockModule("@inquirer/prompts", () => ({
+  input: mockedInput,
+  password: mockedPassword,
+  select: mockedSelect,
+  confirm: mockedConfirm,
+  editor: mockedEditor,
+}));
+
+const { createLogger } = await import("../src/utils/logger");
+const { createPrompter } = await import("../src/utils/prompter");
 const { prompter } = await import("../src/utils/index");
 
 describe("createPrompter", () => {
   it("returns an object with prompt methods", () => {
     const logger = createLogger({ verbose: false });
-    const prompter = createPrompter(logger);
-    expect(typeof prompter.input).toBe("function");
-    expect(typeof prompter.confirm).toBe("function");
-    expect(typeof prompter.select).toBe("function");
+    const p = createPrompter(logger);
+    expect(typeof p.input).toBe("function");
+    expect(typeof p.confirm).toBe("function");
+    expect(typeof p.select).toBe("function");
   });
 });
 
@@ -28,7 +46,7 @@ describe("Prompter", () => {
   });
 
   it("should return the provided username", async () => {
-    // Now, when Prompter.getUsername calls input, it hits the mocked version.
+    mockedInput.mockResolvedValue("Alice");
 
     const username = await prompter.getUsername();
     expect(username).toBe("Alice");

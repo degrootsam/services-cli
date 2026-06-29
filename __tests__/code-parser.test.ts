@@ -24,8 +24,9 @@ describe("createCodeParser", () => {
       const expected: FunctionInfo = {
         ...functionInfo,
         validation: {
-          info: { isAsync: true, isDefaultExport: false, matchesName: false },
-          valid: false,
+          // export default async function helloWorld() → isDefaultExport & matchesName are both true
+          info: { isAsync: true, isDefaultExport: true, matchesName: true },
+          valid: true,
         },
       };
 
