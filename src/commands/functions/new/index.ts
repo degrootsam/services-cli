@@ -1,5 +1,6 @@
 import { Command } from "commander";
-import { withErrorHandling, generateFunction, deps } from "../../../utils";
+import { withErrorHandling, deps } from "../../../utils";
+import { generateFunction } from "../../../utils/scaffolder/functions";
 
 const newFunction = new Command("new")
   .arguments("<name>")

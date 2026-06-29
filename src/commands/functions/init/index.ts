@@ -1,12 +1,6 @@
 import { Command } from "commander";
-import {
-  withErrorHandling,
-  generateFunctionsProject,
-  deps,
-  director,
-  spinner,
-  logger,
-} from "../../../utils";
+import { withErrorHandling, deps } from "../../../utils";
+import { generateProject } from "../../../utils/scaffolder/functions";
 
 const initFunction = new Command("init")
   .arguments("<name>")
@@ -18,19 +12,13 @@ const initFunction = new Command("init")
   )
   .action(
     withErrorHandling(async (name, options) => {
-      // bbs functions init <name>
-      await generateFunctionsProject(deps, name, options.javascript);
-      director.changeDir(name);
-      spinner.start("Installing dependencies...");
-      await director.runCommand("npm", ["i"], { stdio: "ignore" });
-      spinner.success("Dependencies installed");
-      logger.info(
-        `Functions project "${name}" created!
-
-  To start developing:
-  - cd ${name}
-  - bbs functions publish
-    `,
+      await generateProject(deps, name, options.javascript);
+      deps.director.changeDir(name);
+      deps.spinner.start("Installing dependencies...");
+      await deps.director.runCommand("npm", ["i"], { stdio: "ignore" });
+      deps.spinner.success("Dependencies installed");
+      deps.logger.info(
+        `Functions project "${name}" created!\n\n  To start developing:\n  - cd ${name}\n  - bbs functions publish\n    `,
       );
     }),
   );

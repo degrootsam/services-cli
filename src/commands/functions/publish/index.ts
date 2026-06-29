@@ -1,14 +1,12 @@
 import { Command } from "commander";
 import path from "path";
 import {
-  config,
   deps,
   withErrorHandling,
-  director,
   getFunctions,
   validateFunctions,
   getValidFunctions,
-  generateFunctionsBarrel,
+  generateFunctionsBarrelFile,
   buildFunctions,
   uploadFunctions,
 } from "../../../utils";
@@ -17,22 +15,30 @@ const publishFunction = new Command("publish")
   .description("Publish your functions")
   .action(
     withErrorHandling(async () => {
-      const tsConfig = director.getTsConfig();
-      const appDir = path.resolve(config.buildDir, "app");
+      const appDir = path.resolve(deps.config.buildDir, "app");
 
       const functions = getFunctions(deps);
-      const validatedFunctions = await validateFunctions(deps, functions);
+      const validatedFunctions = await validateFunctions(
+        deps,
+        functions,
+        deps.config.isTypescript ? "ts" : "js",
+      );
       const validFunctions = getValidFunctions(validatedFunctions);
 
-      generateFunctionsBarrel(deps, appDir, validFunctions, "js");
+      generateFunctionsBarrelFile(deps, appDir, validFunctions, "js");
 
-      await buildFunctions(deps, tsConfig ? "ts" : "js", undefined, true);
+      await buildFunctions(
+        deps,
+        deps.config.isTypescript ? "ts" : "js",
+        undefined,
+        true,
+      );
 
-      const outputZipPath = path.resolve(config.buildDir, "app.zip");
+      const outputZipPath = path.resolve(deps.config.buildDir, "app.zip");
 
-      await director.zipDir(appDir, outputZipPath);
+      await deps.director.zipDir(appDir, outputZipPath);
 
-      director.removeDir(appDir);
+      deps.director.removeDir(appDir);
 
       await uploadFunctions(deps, outputZipPath, validFunctions);
     }),

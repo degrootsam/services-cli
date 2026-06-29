@@ -1,5 +1,6 @@
 import { Command } from "commander";
-import { withErrorHandling, generateComponent, deps } from "../../../utils";
+import { withErrorHandling, deps } from "../../../utils";
+import { generateComponent } from "../../../utils/scaffolder/components";
 
 const newComponent = new Command("new <name>")
   .description("Initialize a new component")

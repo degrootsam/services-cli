@@ -1,10 +1,8 @@
 import { Command } from "commander";
 import path from "path";
 import {
-  config,
   deps,
-  director,
-  generateFunctionsBarrel,
+  generateFunctionsBarrelFile,
   getFunctions,
   validateFunctions,
   buildFunctions,
@@ -17,17 +15,19 @@ const buildFunctionsCmd = new Command("build")
   .option("--debug", "Outputs a non minified version for debugging purposes")
   .action(
     withErrorHandling(async (options) => {
-      const tsConfig = director.getTsConfig();
-
-      const appDir = path.resolve(config.buildDir, "app");
+      const appDir = path.resolve(deps.config.buildDir, "app");
       const functions = getFunctions(deps);
-      const validatedFunctions = await validateFunctions(deps, functions);
+      const validatedFunctions = await validateFunctions(
+        deps,
+        functions,
+        deps.config.isTypescript ? "ts" : "js",
+      );
 
-      generateFunctionsBarrel(deps, appDir, validatedFunctions, "js");
+      generateFunctionsBarrelFile(deps, appDir, validatedFunctions, "js");
 
       await buildFunctions(
         deps,
-        tsConfig ? "ts" : "js",
+        deps.config.isTypescript ? "ts" : "js",
         options.destination,
         options.debug,
       );

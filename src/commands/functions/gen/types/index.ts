@@ -1,25 +1,20 @@
 import { Command } from "commander";
 import {
-  config,
   withErrorHandling,
-  generateFunctionsProject,
   generateCodeGenFile,
-  director,
-  prompter,
-  spinner,
   createGraphQLAPI,
   deps,
-  logger,
 } from "../../../../utils";
+import { generateProject } from "../../../../utils/scaffolder/functions";
 import { GraphQLAccessToken } from "../../../../utils/gql-api/types";
 
 const genTypes = new Command("types")
   .description("Generate a typescript file based on a Betty Blocks application")
   .action(
     withErrorHandling(async () => {
-      let packageJSONContent = director.getPackageJSON();
+      let packageJSONContent = deps.director.getPackageJSON();
       if (!packageJSONContent) {
-        const choice = (await prompter.select(
+        const choice = (await deps.prompter.select(
           [
             { name: "Initialize functions project", value: "functions" },
             { name: "Initialize empty npm project (npm init)", value: "npm" },
@@ -29,27 +24,29 @@ const genTypes = new Command("types")
 
         switch (choice) {
           case "functions":
-            const name = await prompter.input(
+            const name = await deps.prompter.input(
               "Please provide a name for the project",
               true,
             );
-            await generateFunctionsProject(deps, name, true);
+            await generateProject(deps, name, true);
 
-            director.changeDir(name);
+            deps.director.changeDir(name);
             break;
           case "npm":
-            const createNewDirectory = await prompter.confirm(
+            const createNewDirectory = await deps.prompter.confirm(
               "Do you want to create a new directory?",
             );
             if (createNewDirectory) {
-              const newDirectoryName = await prompter.input(
+              const newDirectoryName = await deps.prompter.input(
                 "Please enter a name for the direcory",
                 true,
               );
-              director.createDir(newDirectoryName);
-              director.changeDir(newDirectoryName);
+              deps.director.createDir(newDirectoryName);
+              deps.director.changeDir(newDirectoryName);
             }
-            await director.runCommand("npm", ["init"], { stdio: "inherit" });
+            await deps.director.runCommand("npm", ["init"], {
+              stdio: "inherit",
+            });
             break;
         }
       }
@@ -62,7 +59,7 @@ const genTypes = new Command("types")
         "-D @graphql-codegen/introspection",
         "graphql",
       ];
-      spinner.start("Installing dependencies...");
+      deps.spinner.start("Installing dependencies...");
       for (let i = 0; i < dependencies.length; i++) {
         try {
           const dependency = dependencies[i].replace("-D ", "");
@@ -74,12 +71,12 @@ const genTypes = new Command("types")
         }
         const dependency = dependencies[i];
         const command = `npm i ${dependency}`;
-        await director.runCommand(command, undefined, { shell: true });
+        await deps.director.runCommand(command, undefined, { shell: true });
       }
-      spinner.success("Dependencies installed");
+      deps.spinner.success("Dependencies installed");
 
       // Reload the packageJSON with the new dependencies
-      packageJSONContent = director.getPackageJSON();
+      packageJSONContent = deps.director.getPackageJSON();
 
       if (!packageJSONContent) {
         throw new Error(
@@ -94,7 +91,10 @@ const genTypes = new Command("types")
           "generate-types": "graphql-codegen --config codegen.ts",
         },
       };
-      director.writeFile("package.json", JSON.stringify(packageJSONContent));
+      deps.director.writeFile(
+        "package.json",
+        JSON.stringify(packageJSONContent),
+      );
 
       const gqlAPI = createGraphQLAPI(deps);
       let tokens: GraphQLAccessToken = {
@@ -121,19 +121,19 @@ const genTypes = new Command("types")
       }
 
       if (!tokens.jwtToken) {
-        logger.error(
+        deps.logger.error(
           "Unable to generate types! Unable to get a valid access token. Turn on verbose logging with --verbose for more information",
         );
         return;
       }
 
-      const apiURL = await config.getApiURL();
+      const apiURL = await deps.config.getApiURL();
 
       await generateCodeGenFile(deps, apiURL, tokens.jwtToken!);
-      spinner.update("Generating types...");
-      spinner.start();
-      await director.runCommand("npm", ["run", "generate-types"]);
-      spinner.success("Types generated in generated/graphql.ts");
+      deps.spinner.update("Generating types...");
+      deps.spinner.start();
+      await deps.director.runCommand("npm", ["run", "generate-types"]);
+      deps.spinner.success("Types generated in generated/graphql.ts");
     }),
   );
 

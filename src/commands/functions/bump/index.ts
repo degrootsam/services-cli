@@ -1,5 +1,6 @@
 import { Command } from "commander";
-import { withErrorHandling, bumpFunction, deps } from "../../../utils";
+import { withErrorHandling, deps } from "../../../utils";
+import { bumpFunction } from "../../../utils/scaffolder/functions";
 
 const bumpFunctionCmd = new Command("bump")
   .description("Create a new version for a function")
