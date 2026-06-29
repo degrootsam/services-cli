@@ -1,5 +1,6 @@
 import { Command } from "commander";
-import { FunctionsScaffolder, withErrorHandling } from "../../../../utils";
+import { withErrorHandling, deps } from "../../../../utils";
+import { generateTest } from "../../../../utils/scaffolder/functions";
 
 const genTest = new Command("test")
   .option(
@@ -9,8 +10,7 @@ const genTest = new Command("test")
   .description("Generate test files for a selected function")
   .action(
     withErrorHandling(async (options) => {
-      const functionsScaffolder = new FunctionsScaffolder();
-      await functionsScaffolder.generateTestFiles(undefined, options.force);
+      await generateTest(deps, undefined, options.force);
     }),
   );
 export default genTest;

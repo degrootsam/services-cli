@@ -1,5 +1,6 @@
-import { Command, program } from "commander";
-import { withErrorHandling, director } from "../../utils";
+import { Command } from "commander";
+import { withErrorHandling, deps } from "../../utils";
+import { checkSubmodulesForUpdate, updateSubmodules } from "../../utils/update";
 
 const update = new Command("update");
 
@@ -8,7 +9,7 @@ update
   .description("Update the CLI and it's submodules")
   .action(
     withErrorHandling(async () => {
-      await director.updateSubmodules();
+      await updateSubmodules(deps);
     }),
   );
 
@@ -17,7 +18,7 @@ update
   .description("Check for new updates for the CLI and it's submodules")
   .action(
     withErrorHandling(async () => {
-      await director.checkSubmodulesForUpdate();
+      await checkSubmodulesForUpdate(deps);
     }),
   );
 

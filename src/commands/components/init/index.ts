@@ -1,16 +1,14 @@
 import { Command } from "commander";
-import { withErrorHandling, ComponentsScaffolder } from "../../../utils";
+import { withErrorHandling, deps } from "../../../utils";
+import { generateProject } from "../../../utils/scaffolder/components";
 
-const initComponent = new Command("init <name>")
+const initComponent = new Command("init")
+  .arguments("<name>")
   .description("Initialize a new components project")
-  .option(
-    "-f, --force",
-    "Overwrites directory if it already exists. Use with caution!",
-  )
+  .option("-f, --force", "Overwrites project if it already exists.")
   .action(
     withErrorHandling(async (name, options) => {
-      const componentsScaffolder = new ComponentsScaffolder();
-      await componentsScaffolder.generateProject(name, options.force);
+      await generateProject(deps, name, options.force ?? false);
     }),
   );
 

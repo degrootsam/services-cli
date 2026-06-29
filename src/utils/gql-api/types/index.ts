@@ -60,3 +60,8 @@ export type GraphQLAccessToken = {
   refreshToken?: AuthenticationTokenPayload["refreshToken"];
   accessExpiresAt?: Maybe<Scalars["Int"]["output"]>;
 };
+
+export interface GraphQLResponse<D> {
+  data?: D;
+  error?: { message: string };
+}

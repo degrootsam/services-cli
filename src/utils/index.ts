@@ -1,21 +1,61 @@
 import { createSpinner } from "nanospinner";
-import { ConfigManager } from "./config";
-import Director from "./director";
-import FunctionsUtils from "./functions";
-import GraphQLAPI from "./gql-api";
+import { createConfig } from "./config";
+import { createDirector } from "./director";
+import {
+  buildFunctions,
+  getFunctions,
+  validateFunctions,
+  parseName,
+  uploadFunctions,
+  getFunctionsJSON,
+  getValidFunctions,
+  logValidatedFunctions,
+  logUploadedFunction,
+  generateFunctionsBarrelFile,
+  generateBarrelImportDeclarations,
+  generateBarrelFunctionDeclaration,
+  getFunctionFilePath,
+  getFunctionJsonFilePath,
+  getBuildPath,
+  functionIsExportedAsDefault,
+} from "./functions";
+import { createGraphQLAPI } from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
-import Logger from "./logger/index";
-import Prompter from "./prompter";
-import ComponentsScaffolder from "./scaffolder/components";
-import FunctionsScaffolder from "./scaffolder/functions";
-import Git from "./git";
+import { createLogger } from "./logger/index";
+import { createPrompter } from "./prompter";
+import {
+  generateProject as generateFunctionsProject,
+  generateFunction,
+  generateCodeGenFile,
+  generateFunctionsBarrelFile as generateFunctionsBarrel,
+  generateTest,
+  bumpFunction,
+} from "./scaffolder/functions";
+import {
+  generateProject as generateComponentsProject,
+  generateComponent,
+} from "./scaffolder/components";
+import { downloadTemplate, copyTemplateFromLocal } from "./scaffolder";
+import { createGit, compareVersions } from "./git";
+import { createCodeParser } from "./code-parser";
+import { isErrorWithMessage } from "./errors";
+import type { AppDeps } from "./types";
 
-const opts = process.argv.find((v) => v === "--v" || v === "--verbose");
-const logger = new Logger(opts && opts.length > 0);
-const prompter = new Prompter();
-const director = new Director();
+const opts = process.argv;
+const verboseArg = opts.find((v) => v === "-v" || v === "--verbose");
+const forceArg = opts.find((v) => v === "-f" || v === "--force");
+const logger = createLogger({
+  verbose: !!(verboseArg && verboseArg.length > 0),
+});
+const prompter = createPrompter(logger);
+const director = createDirector(logger);
 const spinner = createSpinner();
-const config = new ConfigManager();
+const config = createConfig(
+  { force: !!(forceArg && forceArg.length > 0) },
+  { director, logger, prompter },
+);
+
+const deps: AppDeps = { logger, director, prompter, config, spinner };
 
 // Wrapper function to catch errors
 function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
@@ -63,30 +103,49 @@ function deepMerge(
   return target;
 }
 
-function isErrorWithMessage(error: unknown): error is { message: string } {
-  return typeof error === "object" && error !== null && "message" in error;
-}
-
-function isErrorWithCode(error: unknown): error is { code: string } {
-  return typeof error === "object" && error !== null && "code" in error;
-}
+export type { AppDeps, SpinnerAPI } from "./types";
+export { isErrorWithMessage, isErrorWithCode } from "./errors";
 
 export {
+  buildFunctions,
+  bumpFunction,
+  copyTemplateFromLocal,
+  createCodeParser,
   clearToken,
-  ComponentsScaffolder,
   config,
   deepMerge,
+  deps,
   director,
-  FunctionsScaffolder,
-  FunctionsUtils,
+  downloadTemplate,
+  functionIsExportedAsDefault,
+  generateBarrelFunctionDeclaration,
+  generateBarrelImportDeclarations,
+  generateCodeGenFile,
+  generateComponent,
+  generateComponentsProject,
+  generateFunction,
+  generateFunctionsBarrel,
+  generateFunctionsBarrelFile,
+  generateFunctionsProject,
+  generateTest,
+  getBuildPath,
+  getFunctionFilePath,
+  getFunctionJsonFilePath,
+  getFunctions,
+  getFunctionsJSON,
   getToken,
-  GraphQLAPI,
-  Git,
-  isErrorWithCode,
-  isErrorWithMessage,
+  getValidFunctions,
+  createGraphQLAPI,
+  createGit,
+  compareVersions,
+  logUploadedFunction,
+  logValidatedFunctions,
   logger,
+  parseName,
   prompter,
   saveToken,
   spinner,
+  uploadFunctions,
+  validateFunctions,
   withErrorHandling,
 };

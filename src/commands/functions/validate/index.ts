@@ -1,15 +1,22 @@
 import { Command } from "commander";
-import { withErrorHandling, director, FunctionsUtils } from "../../../utils";
+import {
+  withErrorHandling,
+  getFunctions,
+  validateFunctions,
+  deps,
+} from "../../../utils";
 
-const validateFunctions = new Command("validate")
+const validateFunctionsCmd = new Command("validate")
   .description("Validate your functions")
   .action(
     withErrorHandling(async () => {
-      const tsConfig = director.getTsConfig();
-      const functionsUtils = new FunctionsUtils();
-      const functions = functionsUtils.getFunctions();
-      functionsUtils.validateFunctions(functions, tsConfig ? "ts" : "js");
+      const functions = getFunctions(deps);
+      await validateFunctions(
+        deps,
+        functions,
+        deps.config.isTypescript ? "ts" : "js",
+      );
     }),
   );
 
-export default validateFunctions;
+export default validateFunctionsCmd;

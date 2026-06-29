@@ -1,5 +1,4 @@
 import { Command } from "commander";
-import { withErrorHandling, FunctionsScaffolder } from "../../../utils";
 import genTest from "./test";
 import genTypes from "./types";
 

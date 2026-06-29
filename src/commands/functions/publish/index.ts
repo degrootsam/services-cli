@@ -1,48 +1,46 @@
 import { Command } from "commander";
 import path from "path";
 import {
-  config,
+  deps,
   withErrorHandling,
-  director,
-  FunctionsUtils,
-  FunctionsScaffolder,
+  getFunctions,
+  validateFunctions,
+  getValidFunctions,
+  generateFunctionsBarrelFile,
+  buildFunctions,
+  uploadFunctions,
 } from "../../../utils";
 
 const publishFunction = new Command("publish")
   .description("Publish your functions")
   .action(
     withErrorHandling(async () => {
-      const tsConfig = director.getTsConfig();
-      const appDir = path.resolve(config.buildDir, "app");
-      const functionsUtils = new FunctionsUtils();
+      const appDir = path.resolve(deps.config.buildDir, "app");
 
-      const functions = functionsUtils.getFunctions();
-      const validatedFunctions =
-        await functionsUtils.validateFunctions(functions);
-      const validFunctions =
-        functionsUtils.getValidFunctions(validatedFunctions);
-
-      const functionsScaffolder = new FunctionsScaffolder();
-
-      functionsScaffolder.generateFunctionsBarrelFile(
-        appDir,
-        validFunctions,
-        "js",
+      const functions = getFunctions(deps);
+      const validatedFunctions = await validateFunctions(
+        deps,
+        functions,
+        deps.config.isTypescript ? "ts" : "js",
       );
+      const validFunctions = getValidFunctions(validatedFunctions);
 
-      await functionsUtils.buildFunctions(
-        tsConfig ? "ts" : "js",
+      generateFunctionsBarrelFile(deps, appDir, validFunctions, "js");
+
+      await buildFunctions(
+        deps,
+        deps.config.isTypescript ? "ts" : "js",
         undefined,
         true,
       );
 
-      const outputZipPath = path.resolve(config.buildDir, "app.zip");
+      const outputZipPath = path.resolve(deps.config.buildDir, "app.zip");
 
-      await director.zipDir(appDir, outputZipPath);
+      await deps.director.zipDir(appDir, outputZipPath);
 
-      director.removeDir(appDir);
+      deps.director.removeDir(appDir);
 
-      await functionsUtils.uploadFunctions(outputZipPath, validFunctions);
+      await uploadFunctions(deps, outputZipPath, validFunctions);
     }),
   );
 

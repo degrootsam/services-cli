@@ -14,6 +14,7 @@ export type ProjectVariants = {
 };
 
 export type ScaffolderConfig = {
+  cacheDir: string;
   templates: {
     name: string;
     functions: {
@@ -49,10 +50,12 @@ export type BuildSettings = {
 };
 
 export type Config = {
-  buildOptions: {
-    js: BuildSettings;
-    ts: BuildSettings;
-  };
+  buildOptions:
+    | {
+        js?: BuildSettings;
+        ts?: BuildSettings;
+      }
+    | undefined;
   scaffolder: ScaffolderConfig;
   app: {
     uuid: string;
