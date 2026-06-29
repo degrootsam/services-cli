@@ -3,9 +3,12 @@ import path from "path";
 import BaseScaffolder from "..";
 import {
   config,
+  deps,
   director,
-  FunctionsUtils,
+  getFunctions,
+  getValidFunctions,
   logger,
+  parseName,
   prompter,
   spinner,
 } from "../..";
@@ -84,8 +87,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       ? `index.${targetFileType}`
       : `index.${targetFileType}`;
 
-    const functionUtils = new FunctionsUtils();
-    const functions = functionUtils.getFunctions();
+    const functions = getFunctions(deps);
 
     const existingFunctionNames = Object.keys(functions);
 
@@ -110,7 +112,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       throw new Error("The template file(s) yielded no content");
     }
 
-    const parsedName = functionUtils.parseName(name);
+    const parsedName = parseName(name);
 
     indexTsJs = indexTsJs.replace("functionName", parsedName);
     functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
@@ -145,8 +147,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
   }
 
   async bumpFunction() {
-    const functionsUtils = new FunctionsUtils();
-    const functions = functionsUtils.getFunctions();
+    const functions = getFunctions(deps);
     const functionNames = Object.keys(functions);
 
     const selectedFunctionName = await prompter.select(
@@ -211,10 +212,9 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     force?: boolean,
   ): Promise<string> {
     let parsedFunction: FunctionInfo = func as FunctionInfo;
-    const functionsUtils = new FunctionsUtils();
     const tsConfig = director.getTsConfig();
     if (!parsedFunction) {
-      const functions = functionsUtils.getFunctions();
+      const functions = getFunctions(deps);
       const functionNames = Object.keys(functions);
       const choices = functionNames.map((name) => ({
         name,
@@ -227,7 +227,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     const { path: functionDir, latestVersion } = parsedFunction;
 
     const functionName = path.basename(functionDir);
-    const parsedFunctionName = functionsUtils.parseName(functionName);
+    const parsedFunctionName = parseName(functionName);
 
     const extension = tsConfig ? "ts" : "js";
 
@@ -288,13 +288,12 @@ export default class FunctionsScaffolder extends BaseScaffolder {
   }
 
   generateBarrelFunctionDeclaration(functions: Functions) {
-    const functionsUtils = new FunctionsUtils();
     let result = "const fn = {\r\n";
     const functionNames = Object.keys(functions);
-    functionNames.forEach((name, index) => {
+    functionNames.forEach((name) => {
       const currentFunction = functions[name];
       const { latestVersion } = currentFunction;
-      const functionName = functionsUtils.parseName(name);
+      const functionName = parseName(name);
       const key = `\t"${functionName} ${latestVersion}"`;
       const value = `${functionName}_${latestVersion.replace(".", "_")}`;
       result += `${key}: ${value},\r\n`;
@@ -305,14 +304,13 @@ export default class FunctionsScaffolder extends BaseScaffolder {
   }
 
   generateBarrelImportDeclarations(functions: Functions) {
-    const functionsUtils = new FunctionsUtils();
     let result = "";
     const functionNames = Object.keys(functions);
     functionNames.forEach((name) => {
       const currentFunction = functions[name];
       const { latestVersion } = currentFunction;
       const relativePath = `.${currentFunction.path.replace(process.cwd(), "")}/${latestVersion}`;
-      const functionName = functionsUtils.parseName(name);
+      const functionName = parseName(name);
       result += `import { default as ${functionName}_${latestVersion.replace(".", "_")} } from "${relativePath}";\r\n`;
     });
 
@@ -324,8 +322,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     functions: Functions,
     fileType: "js" | "ts" = "ts",
   ) {
-    const functionsUtils = new FunctionsUtils();
-    const validFunctions = functionsUtils.getValidFunctions(functions);
+    const validFunctions = getValidFunctions(functions);
 
     let barrelContent = "";
 

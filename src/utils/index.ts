@@ -1,7 +1,24 @@
 import { createSpinner } from "nanospinner";
 import { createConfig } from "./config";
 import { createDirector } from "./director";
-import FunctionsUtils from "./functions";
+import {
+  buildFunctions,
+  getFunctions,
+  validateFunctions,
+  parseName,
+  uploadFunctions,
+  getFunctionsJSON,
+  getValidFunctions,
+  logValidatedFunctions,
+  logUploadedFunction,
+  generateFunctionsBarrelFile,
+  generateBarrelImportDeclarations,
+  generateBarrelFunctionDeclaration,
+  getFunctionFilePath,
+  getFunctionJsonFilePath,
+  getBuildPath,
+  functionIsExportedAsDefault,
+} from "./functions";
 import GraphQLAPI from "./gql-api";
 import { clearToken, getToken, saveToken } from "./keychain";
 import { createLogger } from "./logger/index";
@@ -85,6 +102,7 @@ function isErrorWithCode(error: unknown): error is { code: string } {
 export type { AppDeps, SpinnerAPI } from "./types";
 
 export {
+  buildFunctions,
   createCodeParser,
   clearToken,
   ComponentsScaffolder,
@@ -92,16 +110,30 @@ export {
   deepMerge,
   deps,
   director,
+  functionIsExportedAsDefault,
   FunctionsScaffolder,
-  FunctionsUtils,
+  generateBarrelFunctionDeclaration,
+  generateBarrelImportDeclarations,
+  generateFunctionsBarrelFile,
+  getBuildPath,
+  getFunctionFilePath,
+  getFunctionJsonFilePath,
+  getFunctions,
+  getFunctionsJSON,
   getToken,
+  getValidFunctions,
   GraphQLAPI,
   Git,
   isErrorWithCode,
   isErrorWithMessage,
+  logUploadedFunction,
+  logValidatedFunctions,
   logger,
+  parseName,
   prompter,
   saveToken,
   spinner,
+  uploadFunctions,
+  validateFunctions,
   withErrorHandling,
 };

@@ -5,7 +5,6 @@ import {
   withErrorHandling,
   FunctionsScaffolder,
   director,
-  FunctionsUtils,
 } from "../utils";
 import FusionAuth from "../utils/fusion-auth";
 import update from "./update";
