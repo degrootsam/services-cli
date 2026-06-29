@@ -39,7 +39,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     logger.debug({ outputDir: targetDir, tempDir: tempTemplatePath });
 
     const templatePath = path.resolve(
-      director.resolveCLITemplatePath(),
+      director.resolveCLITemplatePath(config.scaffolder.templates.path),
       templates.functions.typegen,
     );
 
@@ -94,7 +94,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     }
 
     const newFunctionTemplateDir = path.resolve(
-      director.resolveCLITemplatePath(),
+      director.resolveCLITemplatePath(config.scaffolder.templates.path),
       config.scaffolder.templates.functions.new,
     );
 
@@ -249,7 +249,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     director.createDir(targetDir);
 
     const templatePath = path.resolve(
-      director.resolveCLITemplatePath(),
+      director.resolveCLITemplatePath(config.scaffolder.templates.path),
       config.scaffolder.templates.functions.test,
       targetFile,
     );
