@@ -28,6 +28,7 @@ const buildFunctions = new Command("build")
         validatedFunctions,
         "js",
       );
+
       await functionsUtils.buildFunctions(
         tsConfig ? "ts" : "js",
         options.destination,

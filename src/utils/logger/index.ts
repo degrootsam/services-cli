@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { FunctionsUtils } from "..";
+import { FunctionsUtils, spinner } from "..";
 import { Functions, FunctionResult } from "../functions/types";
 
 export const DEBUG_PREFIX = chalk.bgWhite(chalk.black("DEBUG:"));
@@ -15,7 +15,7 @@ export default class Logger {
   public successColor = chalk.greenBright;
   public warningColor = chalk.yellowBright;
 
-  constructor(verbose?: boolean) {
+  constructor({ verbose }: { verbose?: boolean }) {
     this.verbose = verbose ?? false;
   }
 
@@ -45,11 +45,8 @@ export default class Logger {
     return state ? this.successColor : this.errorColor;
   }
 
-  success(...message: any) {
-    const color = this.getValidationColor(true);
-    const prefix = this.getValidationPrefix(true);
-
-    console.log(color(`${prefix} ${message}`));
+  success(message: string) {
+    spinner.success(message);
   }
 
   warn(...message: any) {

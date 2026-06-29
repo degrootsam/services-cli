@@ -1,5 +1,5 @@
 import { parse } from "@babel/parser";
-import traverse, { NodePath } from "@babel/traverse";
+import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import { logger } from "..";
 import { FunctionInfo } from "../functions/types";
@@ -7,7 +7,7 @@ import { FunctionInfo } from "../functions/types";
 export default class CodeParser {
   private type: string = "js";
 
-  constructor(type: string) {
+  constructor(type: "js" | "ts") {
     this.type = type;
   }
 

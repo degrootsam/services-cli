@@ -14,11 +14,7 @@ import { FunctionInfo, Functions } from "../../functions/types";
 // Scaffolder for functions projects and individual functions
 //
 export default class FunctionsScaffolder extends BaseScaffolder {
-  async generateProject(
-    name: string,
-    force: boolean = false,
-    javascript: boolean = false,
-  ) {
+  async generateProject(name: string, javascript: boolean = false) {
     const functionTemplateURLs = config.scaffolder.templates.functions.project;
     let templateUrl = functionTemplateURLs.ts.url;
 
@@ -26,7 +22,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       templateUrl = functionTemplateURLs.js.url;
     }
 
-    await this.downloadTemplate(templateUrl, name, force);
+    await this.downloadTemplate(templateUrl, name, config.force);
   }
   async generateCodeGenFile(graphqlURL: string, accessToken: string) {
     if (!graphqlURL || !accessToken) {
@@ -34,35 +30,24 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       throw new Error(
         "Unable to generate codegen.ts! Graphql URL or accessToken are empty",
       );
-      return;
     }
+    const { templates, cacheDir } = config.scaffolder;
 
     const targetDir = process.cwd();
-    const tempDir = path.resolve(process.cwd(), "temp");
+    const tempTemplatePath = path.resolve(cacheDir, "codegen");
 
-    logger.debug({ outputDir: targetDir, tempDir });
+    logger.debug({ outputDir: targetDir, tempDir: tempTemplatePath });
 
-    const tempOutputDir = await this.copyTemplateFromLocal(
-      config.scaffolder.templates.functions.typegen,
-      tempDir,
-      true,
+    const templatePath = path.resolve(
+      director.resolveCLITemplatePath(),
+      templates.functions.typegen,
     );
 
-    if (!tempOutputDir) {
-      throw new Error(
-        `Something went wrong while downloading the template. Cannot find the template at ${tempDir}`,
-      );
-    }
-
-    const templateFile = path.join(tempOutputDir, "codegen.template.ts");
-
-    logger.debug(`Opening template file from ${templateFile}`);
-
-    let templateContent = director.readFile(templateFile);
+    let templateContent = director.readFile(templatePath);
 
     if (!templateContent) {
       throw new Error(
-        `The codegen template yielded no content! Please check if the file at ${tempOutputDir} exists and if it contains any content`,
+        `The codegen template yielded no content! Please try again`,
       );
     }
 
@@ -80,17 +65,17 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     director.writeFile(outputPath, templateContent);
 
-    logger.debug(`Cleaning temp files  at ${tempOutputDir}`);
+    logger.debug(`Cleaning temp files  at ${cacheDir}`);
 
-    fs.rm(tempOutputDir, { recursive: true, force: true }, (err) => {
+    fs.rm(cacheDir, { recursive: true, force: true }, (err) => {
       if (err) {
         logger.error(err);
       }
       return true;
     });
+    logger.success("Successfully generate codegen.ts");
   }
   async generateFunction(name: string) {
-    spinner.start(`Creating a new function: ${name}`);
     const tsConfig = director.getTsConfig();
 
     const targetFileType = tsConfig ? "ts" : "js";
@@ -103,12 +88,14 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     const existingFunctionNames = Object.keys(functions);
 
-    if (existingFunctionNames.includes(name)) {
+    if (existingFunctionNames.includes(name) && !config.force) {
       throw new Error(`Function ${name} already exists!`);
     }
 
-    const newFunctionTemplateDir =
-      config.scaffolder.templates.functions.typegen;
+    const newFunctionTemplateDir = path.resolve(
+      director.resolveCLITemplatePath(),
+      config.scaffolder.templates.functions.new,
+    );
 
     let indexTsJs = director.readFile(
       path.resolve(newFunctionTemplateDir, targetFileName),
@@ -138,8 +125,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     director.writeFile(newIndexTSPath, indexTsJs);
     director.writeFile(newFunctionJSONPath, functionJSON);
 
-    spinner.success(`Successfully created function ${name}`);
-
+    logger.success(`Successfully created function ${parsedName}`);
     const createTests = await prompter.confirm(
       "Would you like to create a test file as well?",
       true,
@@ -201,10 +187,10 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     const targetDir = path.resolve(selectedFunction.path, newVersion);
 
-    spinner.start("Copying files...");
     await director.copyDir(sourceDir, targetDir);
-    spinner.success(
-      `${selectedFunctionName} successfully bumped to version ${newVersion}`,
+
+    logger.success(
+      `Successfully bumped function ${selectedFunctionName} from ${selectedFunction.latestVersion} to ${newVersion}`,
     );
 
     const createTests = await prompter.confirm(
@@ -246,7 +232,7 @@ export default class FunctionsScaffolder extends BaseScaffolder {
 
     const targetDir = path.resolve(
       process.cwd(),
-      config.tests.directory,
+      config.scaffolder.tests.directory,
       functionName,
       latestVersion,
     );
@@ -268,10 +254,11 @@ export default class FunctionsScaffolder extends BaseScaffolder {
     let templateContent = director.readFile(templatePath);
 
     const importDir = path.resolve(functionDir, latestVersion);
+    const relativePath = path.relative(targetDir, importDir);
 
     templateContent = templateContent.replaceAll(
       "// $importFunction",
-      `import {{ functionName }} from "${importDir}"`,
+      `import {{ functionName }} from "${relativePath}"`,
     );
 
     templateContent = templateContent.replaceAll(
@@ -284,11 +271,14 @@ export default class FunctionsScaffolder extends BaseScaffolder {
       latestVersion,
     );
 
+    templateContent = templateContent.replaceAll(
+      "// $callFunction",
+      `await ${parsedFunctionName}()`,
+    );
+
     director.writeFile(targetPath, templateContent);
 
-    logger.success(
-      `Successfully created test for ${functionName}/${latestVersion}`,
-    );
+    logger.success(`Successfully created test for ${functionName}`);
 
     return targetPath;
   }

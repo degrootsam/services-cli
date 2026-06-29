@@ -3,8 +3,11 @@ import {
   GraphQLErrorPayload,
   AuthenticationSuccessPayload,
   GraphQLAccessToken,
+  AuthenticationTokenPayload,
+  GraphQLResponse,
 } from "./types/index";
 import { getToken, saveToken } from "../keychain/index";
+import { ActionObject, AllowedActionInputTypes } from "../types";
 
 export default class GraphQLAPI {
   private jwtToken: string = "";
@@ -34,6 +37,17 @@ export default class GraphQLAPI {
       }
 
     `;
+  }
+
+  private makeQuery(mutation: string, variables: ActionObject) {
+    return {
+      query: mutation,
+      variables: {
+        input: {
+          ...variables,
+        },
+      },
+    };
   }
 
   async getTokensFromKeychain(): Promise<GraphQLAccessToken | undefined> {
@@ -79,17 +93,41 @@ export default class GraphQLAPI {
     return result;
   };
 
-  async login(
-    currentChoice?: string,
-    currentAPIURL?: string,
-    currentAuthProfileUuid?: string,
-  ): Promise<GraphQLAccessToken | void> {
+  private async parseLoginResult(loginResponse: AuthenticationTokenPayload) {
+    const { jwtToken, refreshToken, accessExpiresIn } = loginResponse;
+
+    this.jwtToken = jwtToken!;
+    this.refreshToken = refreshToken!;
+
+    const currentTime = new Date();
+    const accessExpiresAt = currentTime.setTime(
+      currentTime.getTime() + ((accessExpiresIn ?? 7200) - 600) * 1000,
+    );
+
+    this.accessTokenExpiresAt = accessExpiresAt;
+
+    await saveToken("gqlAccessToken", jwtToken!);
+    await saveToken("gqlRefreshToken", refreshToken!);
+    await saveToken("gqlAccessTokenExpiresAt", accessExpiresAt.toString());
+
+    return {
+      jwtToken,
+      refreshToken,
+      accessExpiresAt,
+    };
+  }
+
+  async login(options?: {
+    option: "query" | "action";
+    apiURL: string;
+    authProfileUUID?: string;
+  }): Promise<GraphQLAccessToken | void> {
     if (this.validateAccessToken()) {
       logger.debug("Token is still valid, skipping login...");
       return;
     }
 
-    const options = [
+    const possibleChoices = [
       {
         name: "Login Query",
         value: "query",
@@ -104,63 +142,50 @@ export default class GraphQLAPI {
       },
     ];
     const choice =
-      currentChoice ??
+      options?.option ??
       (await prompter.select(
-        options,
+        possibleChoices,
         "You need to login to the GraphQL API. Please choose your preferred method",
       ));
 
-    const apiURL = currentAPIURL ?? (await config.getApiURL());
+    const parsedAPIURL = options?.apiURL ?? (await config.getApiURL());
 
     switch (choice) {
       case "query":
         const authProfileUuid =
-          currentAuthProfileUuid ?? (await prompter.getAuthProfileUUID());
+          options?.authProfileUUID ?? (await prompter.getAuthProfileUUID());
         const username = await prompter.getUsername();
         const password = await prompter.getPassword();
         const loginQuery = this.loginQuery(username, password, authProfileUuid);
-        const { data, error } =
+        const { data: loginQueryData, error: loginQueryError } =
           await this.request<AuthenticationSuccessPayload>(
             { query: loginQuery },
-            apiURL,
+            parsedAPIURL,
           );
-        if (error) {
-          logger.error(error.message);
+
+        if (loginQueryError) {
+          logger.error(loginQueryError.message);
           if (
-            error.message === "A valid authentication profile must be provided"
+            loginQueryError.message ===
+            "A valid authentication profile must be provided"
           ) {
-            return await this.login(choice, apiURL);
+            return await this.login({ option: choice, apiURL: parsedAPIURL });
           }
-          if (error.message === "Wrong credentials, please try again") {
-            return await this.login(choice, apiURL, authProfileUuid);
+          if (
+            loginQueryError.message === "Wrong credentials, please try again"
+          ) {
+            return await this.login({
+              option: choice,
+              apiURL: parsedAPIURL,
+              authProfileUUID: options?.authProfileUUID,
+            });
           }
           return;
         }
 
-        if (!data) {
-          return;
-        }
+        if (!loginQueryData) return;
 
-        const { jwtToken, refreshToken, accessExpiresIn } = data.login;
-
-        this.jwtToken = jwtToken!;
-        this.refreshToken = refreshToken!;
-
-        const currentTime = new Date();
-        const accessExpiresAt = currentTime.setTime(
-          currentTime.getTime() + ((accessExpiresIn ?? 7200) - 600) * 1000,
-        );
-
-        this.accessTokenExpiresAt = accessExpiresAt;
-
-        await saveToken("gqlAccessToken", jwtToken!);
-        await saveToken("gqlRefreshToken", refreshToken!);
-        await saveToken("gqlAccessTokenExpiresAt", accessExpiresAt.toString());
-        return {
-          jwtToken,
-          refreshToken,
-          accessExpiresAt,
-        };
+        return this.parseLoginResult(loginQueryData.login);
 
       case "action":
         const mutation = await prompter.editor(
@@ -178,9 +203,75 @@ export default class GraphQLAPI {
           },
         );
 
-        const parsedInput = JSON.parse(input);
+        let parsedInput = JSON.parse(input);
+        if (typeof parsedInput !== "object") {
+          throw new Error("Please provide a valid JSON object");
+        }
 
-        break;
+        if ("input" in parsedInput && Object.keys(parsedInput).length === 1) {
+          parsedInput = parsedInput.input;
+        }
+
+        let actionInput: AllowedActionInputTypes = {};
+        const keys = Object.keys(parsedInput);
+
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          const valueType = parsedInput[key];
+          let v;
+          const prompt = `Please enter the value for ${key}`;
+
+          if (valueType === "Object") {
+            v = await prompter.editor(prompt, (value) => {
+              if (valueType === "Object") {
+                try {
+                  JSON.parse(value);
+                  return true;
+                } catch (err) {
+                  return "Please enter valid JSON";
+                }
+              }
+              return true;
+            });
+          } else {
+            v = await prompter.input(prompt);
+          }
+          actionInput[key] = v.trim();
+        }
+
+        const query = this.makeQuery(mutation, actionInput);
+        if (!parsedAPIURL) throw new Error("Invalid API URL");
+        const { data: loginMutationData, error: loginMutationError } =
+          await this.request<{
+            action: { results: AuthenticationTokenPayload };
+          }>(query, parsedAPIURL);
+
+        if (loginMutationError) {
+          logger.error(loginMutationError.message);
+          if (
+            loginMutationError.message ===
+            "A valid authentication profile must be provided"
+          ) {
+            return await this.login({
+              option: choice,
+              apiURL: parsedAPIURL,
+            });
+          }
+          if (
+            loginMutationError.message === "Wrong credentials, please try again"
+          ) {
+            return await this.login({
+              option: choice,
+              apiURL: parsedAPIURL,
+              authProfileUUID: options?.authProfileUUID,
+            });
+          }
+          return;
+        }
+
+        if (!loginMutationData) return;
+        console.log({ loginMutationData });
+        return await this.parseLoginResult(loginMutationData?.action.results);
     }
   }
 
@@ -188,7 +279,7 @@ export default class GraphQLAPI {
     body: Record<string, any>,
     url: string,
     headers?: Record<string, string>,
-  ): Promise<{ data?: D; error?: { message: string } }> {
+  ): Promise<GraphQLResponse<D>> {
     logger.debug(`Preparing POST request to ${url}`);
     logger.debug({ body, headers });
     const apiURL = await config.getApiURL();

@@ -5,3 +5,16 @@ export type DeepPartial<T> = {
       ? DeepPartial<T[P]>
       : T[P];
 };
+
+export type ActionInputTypes = string | number;
+
+export interface ActionObject {
+  [key: string]: ActionInputTypes | ActionObject;
+}
+
+export type ActionCollection = Array<ActionInputTypes | ActionObject>;
+
+export type AllowedActionInputTypes =
+  | ActionInputTypes
+  | ActionObject
+  | ActionCollection;

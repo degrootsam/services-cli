@@ -61,22 +61,16 @@ const genTypes = new Command("types")
         "-D @graphql-codegen/introspection",
         "graphql",
       ];
-      spinner.update(`Installing dependencies (0/${dependencies.length})`);
-      spinner.loop();
+      spinner.start("Installing dependencies...");
       for (let i = 0; i < dependencies.length; i++) {
         try {
           const dependency = dependencies[i].replace("-D ", "");
           // Try to resolve the package
           require.resolve(dependency);
-          spinner.success(`${dependency} is already installed. Skipping.`);
-          spinner.start();
           continue; // Skip installation if the module exists
         } catch (error) {
           // Module is not found, proceed with installation
         }
-        spinner.update(
-          `Installing dependencies (${i + 1}/${dependencies.length})`,
-        );
         const dependency = dependencies[i];
         const command = `npm i ${dependency}`;
         await director.runCommand(command, undefined, { shell: true });
@@ -85,6 +79,7 @@ const genTypes = new Command("types")
 
       // Reload the packageJSON with the new dependencies
       packageJSONContent = director.getPackageJSON();
+
       if (!packageJSONContent) {
         throw new Error(
           "Unable to generate types. Cannot load package.json! Please make sure you are inside a functions project",
@@ -133,9 +128,9 @@ const genTypes = new Command("types")
 
       const apiURL = await config.getApiURL();
 
+      await functionsScaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
       spinner.update("Generating types...");
       spinner.start();
-      await functionsScaffolder.generateCodeGenFile(apiURL, tokens.jwtToken!);
       await director.runCommand("npm", ["run", "generate-types"]);
       spinner.success("Types generated in generated/graphql.ts");
     }),

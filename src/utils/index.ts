@@ -9,13 +9,16 @@ import Prompter from "./prompter";
 import ComponentsScaffolder from "./scaffolder/components";
 import FunctionsScaffolder from "./scaffolder/functions";
 import Git from "./git";
+import CodeParser from "./code-parser";
 
-const opts = process.argv.find((v) => v === "--v" || v === "--verbose");
-const logger = new Logger(opts && opts.length > 0);
+const opts = process.argv;
+const verboseArg = opts.find((v) => v === "-v" || v === "--verbose");
+const forceArg = opts.find((v) => v === "-f" || v === "--force");
+const logger = new Logger({ verbose: verboseArg && verboseArg.length > 0 });
 const prompter = new Prompter();
 const director = new Director();
 const spinner = createSpinner();
-const config = new ConfigManager();
+const config = new ConfigManager({ force: forceArg && forceArg.length > 0 });
 
 // Wrapper function to catch errors
 function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
@@ -72,6 +75,7 @@ function isErrorWithCode(error: unknown): error is { code: string } {
 }
 
 export {
+  CodeParser,
   clearToken,
   ComponentsScaffolder,
   config,

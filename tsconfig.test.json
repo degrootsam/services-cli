@@ -1,0 +1,18 @@
+{
+  "extends": "/Users/samdegroot/dev/services-cli/tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ES2020",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["jest"],
+    "rootDir": ".", // allow relative imports in this test folder
+    "baseUrl": "." // make relative imports resolve locally
+  },
+  "paths": {
+    "@utils/*": ["../src/utils/*"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["codegen-templates/"]
+}

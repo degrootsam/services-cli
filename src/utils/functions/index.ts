@@ -2,8 +2,7 @@ import chalk from "chalk";
 import esbuild from "esbuild";
 import * as fs from "fs";
 import path from "path";
-import { config, director, logger, spinner } from "..";
-import CodeParser from "../code-parser";
+import { config, director, logger, spinner, CodeParser } from "..";
 import { ConfigManager } from "../config";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
@@ -110,7 +109,6 @@ export default class FunctionsUtils {
   }
 
   async uploadFunctions(zipPath: string, functions: Functions) {
-    const config = new ConfigManager();
     const appUUID = await config.getAppUUID();
 
     const form = new FormData();
@@ -131,6 +129,8 @@ export default class FunctionsUtils {
         Authorization: `Bearer ${token}`,
       },
     );
+
+    console.log(response.status);
 
     switch (response.status) {
       case 409:
@@ -154,7 +154,7 @@ export default class FunctionsUtils {
   }
 
   getFunctions(): Functions {
-    const srcDir = config.buildOptions.srcDir;
+    const srcDir = config.srcDir;
     const srcDirectory = director.readDir(srcDir, true);
 
     const functionPaths: string[] = srcDirectory

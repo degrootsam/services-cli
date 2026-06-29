@@ -130,7 +130,7 @@ export default class Director {
         logger.error(error.message);
         return "";
       } else {
-        throw new Error(error as any);
+        throw error;
       }
     }
   }

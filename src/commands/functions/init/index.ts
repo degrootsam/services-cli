@@ -7,22 +7,19 @@ import {
   logger,
 } from "../../../utils";
 
-const initFunction = new Command("init <name>")
+const initFunction = new Command("init")
+  .arguments("<name>")
   .option("--j, --javascript", "Use vanilla JavaScript")
   .description("Initialize a new TypeScript functions project")
   .option(
     "-f, --force",
-    "Overwrites directory if it already exists. Use with caution!",
+    "Overwrites project if it already exists. Use with caution!",
   )
   .action(
     withErrorHandling(async (name, options) => {
       // bbs functions init <name>
       const functionsScaffolder = new FunctionsScaffolder();
-      await functionsScaffolder.generateProject(
-        name,
-        options.force,
-        options.javascript,
-      );
+      await functionsScaffolder.generateProject(name, options.javascript);
       director.changeDir(name);
       spinner.start("Installing dependencies...");
       await director.runCommand("npm", ["i"], { stdio: "ignore" });

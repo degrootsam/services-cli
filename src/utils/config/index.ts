@@ -7,14 +7,11 @@ import { DeepPartial } from "../types";
 
 const DEFAULT_CONFIG: Config = {
   buildOptions: {
-    js: {
-      srcDir: "",
-    },
-    ts: {
-      srcDir: "src",
-    },
+    js: undefined,
+    ts: undefined,
   },
   scaffolder: {
+    cacheDir: ".tmp",
     templates: {
       name: "codegen-templates",
       functions: {
@@ -80,10 +77,13 @@ export class ConfigManager {
   private configUpdated: boolean = false;
   private isTypescript: boolean = true;
 
-  constructor() {
+  public force: boolean = false;
+
+  constructor({ force }: { force?: boolean }) {
     this.config = this.loadConfig();
     const tsConfig = director.getTsConfig();
     this.isTypescript = tsConfig ? true : false;
+    this.force = force ?? false;
   }
 
   private loadConfig(): Config {
@@ -169,17 +169,19 @@ export class ConfigManager {
   }
 
   get buildOptions() {
-    return this.isTypescript
-      ? this.config.buildOptions.ts
-      : this.config.buildOptions.js;
+    const buildOption = this.isTypescript
+      ? this.config.buildOptions?.ts
+      : this.config.buildOptions?.js;
+
+    return buildOption;
   }
 
   get srcDir() {
-    return this.buildOptions.srcDir;
+    return this.buildOptions?.srcDir || "functions";
   }
 
   get buildDir() {
-    return this.buildOptions.buildPath || ".tmp";
+    return this.buildOptions?.buildPath || ".tmp";
   }
 
   get projectExtension() {
@@ -188,10 +190,6 @@ export class ConfigManager {
 
   get scaffolder() {
     return this.config.scaffolder;
-  }
-
-  get tests() {
-    return this.scaffolder.tests;
   }
 
   get options() {
@@ -218,10 +216,6 @@ export class ConfigManager {
     return this.config.options.functionSchemaPath;
   }
 
-  get cacheDir() {
-    return this.config.options.cacheDir;
-  }
-
   get fusionAuthURL() {
     return this.config.options.fusionAuthURL.replace("{ENVPOSTFIX}", this.env);
   }
@@ -242,10 +236,6 @@ export class ConfigManager {
 
   get domain() {
     return this.config.options.domain;
-  }
-
-  get agentOptions() {
-    return this.config.options.agentOptions;
   }
 
   get skipCompile() {

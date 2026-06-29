@@ -1,9 +1,10 @@
+import { jest } from "@jest/globals";
 import { logger } from "../src/utils/index";
 import { DEBUG_PREFIX, ERROR_PREFIX } from "../src/utils/logger";
 
 describe("Logger", () => {
-  let debugSpy: jest.SpyInstance;
-  let errorSpy: jest.SpyInstance;
+  let debugSpy: jest.SpiedFunction<typeof console.debug>;
+  let errorSpy: jest.SpiedFunction<typeof console.error>;
 
   beforeEach(() => {
     debugSpy = jest.spyOn(console, "debug").mockImplementation(() => {});
