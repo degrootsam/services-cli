@@ -9,7 +9,7 @@ import { createPrompter } from "./prompter";
 import ComponentsScaffolder from "./scaffolder/components";
 import FunctionsScaffolder from "./scaffolder/functions";
 import Git from "./git";
-import CodeParser from "./code-parser";
+import { createCodeParser } from "./code-parser";
 import type { AppDeps } from "./types";
 
 const opts = process.argv;
@@ -85,7 +85,7 @@ function isErrorWithCode(error: unknown): error is { code: string } {
 export type { AppDeps, SpinnerAPI } from "./types";
 
 export {
-  CodeParser,
+  createCodeParser,
   clearToken,
   ComponentsScaffolder,
   config,

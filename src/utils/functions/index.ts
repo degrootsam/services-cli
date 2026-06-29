@@ -2,7 +2,7 @@ import chalk from "chalk";
 import esbuild from "esbuild";
 import * as fs from "fs";
 import path from "path";
-import { config, director, logger, spinner, CodeParser } from "..";
+import { config, director, logger, spinner, createCodeParser } from "..";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
 import { FunctionInfo, Functions } from "../functions/types";
@@ -269,7 +269,7 @@ export default class FunctionsUtils {
     let validatedFunctions: Functions = {};
 
     spinner.start("Validating functions...");
-    const parser = new CodeParser(type);
+    const parser = createCodeParser(type, logger);
     const jsonSchema = new JsonSchema();
     for (let i = 0; i < functionNames.length; i++) {
       const currentFunctionName = functionNames[i];
