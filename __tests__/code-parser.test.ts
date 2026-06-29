@@ -1,4 +1,3 @@
-import { jest } from "@jest/globals";
 import { createCodeParser } from "../src/utils/code-parser";
 import { createLogger } from "../src/utils/logger";
 import { FunctionInfo } from "../src/utils/functions/types";

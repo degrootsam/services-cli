@@ -36,7 +36,6 @@ export function createCodeParser(
           );
           for (const exportDeclaration of exportDeclarations) {
             logger.debug({ exportDeclarations });
-            if (!exportDeclarations) return;
             const { specifiers } = exportDeclaration;
             if (specifiers.length > 0) {
               logger.debug("NamedExportDeclaration", specifiers);
