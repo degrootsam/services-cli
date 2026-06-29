@@ -1,4 +1,3 @@
-import { jest } from "@jest/globals";
 import { createDirector } from "../src/utils/director";
 import { createLogger } from "../src/utils/logger";
 import { fileURLToPath } from "url";
