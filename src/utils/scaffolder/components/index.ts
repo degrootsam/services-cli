@@ -1,5 +1,5 @@
 import { downloadTemplate } from "..";
-import type { AppDeps } from "../..";
+import type { AppDeps } from "../../types";
 
 export async function generateProject(
   deps: AppDeps,
