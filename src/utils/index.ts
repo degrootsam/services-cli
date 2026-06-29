@@ -10,6 +10,7 @@ import ComponentsScaffolder from "./scaffolder/components";
 import FunctionsScaffolder from "./scaffolder/functions";
 import Git from "./git";
 import CodeParser from "./code-parser";
+import type { AppDeps } from "./types";
 
 const opts = process.argv;
 const verboseArg = opts.find((v) => v === "-v" || v === "--verbose");
@@ -24,6 +25,8 @@ const config = createConfig(
   { force: !!(forceArg && forceArg.length > 0) },
   { director, logger, prompter },
 );
+
+const deps: AppDeps = { logger, director, prompter, config, spinner };
 
 // Wrapper function to catch errors
 function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
@@ -79,12 +82,15 @@ function isErrorWithCode(error: unknown): error is { code: string } {
   return typeof error === "object" && error !== null && "code" in error;
 }
 
+export type { AppDeps, SpinnerAPI } from "./types";
+
 export {
   CodeParser,
   clearToken,
   ComponentsScaffolder,
   config,
   deepMerge,
+  deps,
   director,
   FunctionsScaffolder,
   FunctionsUtils,
