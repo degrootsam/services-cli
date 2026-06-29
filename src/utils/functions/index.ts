@@ -6,7 +6,6 @@ import { config, director, logger, spinner, createCodeParser } from "..";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
 import { FunctionInfo, Functions } from "../functions/types";
-import JsonSchema from "../json-schema";
 import FormData from "form-data";
 import { PublishResponse } from "./types";
 
@@ -270,7 +269,6 @@ export default class FunctionsUtils {
 
     spinner.start("Validating functions...");
     const parser = createCodeParser(type, logger);
-    const jsonSchema = new JsonSchema();
     for (let i = 0; i < functionNames.length; i++) {
       const currentFunctionName = functionNames[i];
       const currentFunction = functions[currentFunctionName];
