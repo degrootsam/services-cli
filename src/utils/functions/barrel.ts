@@ -13,7 +13,7 @@ export function generateBarrelImportDeclarations({
   Object.keys(functions).forEach((name) => {
     const currentFunction = functions[name];
     const { latestVersion } = currentFunction;
-    const relativePath = `.${currentFunction.path.replace(process.cwd(), "")}/${latestVersion}`;
+    const relativePath = `./functions/${name}/${latestVersion}`;
     const functionName = parseName({ name });
     result += `import { default as ${functionName}_${latestVersion.replace(".", "_")} } from "${relativePath}";\r\n`;
   });
