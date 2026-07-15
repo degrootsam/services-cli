@@ -4,6 +4,7 @@ import { DeepPartial } from "../types";
 import type { LoggerAPI } from "../logger";
 import type { DirectorAPI } from "../director";
 import type { PrompterAPI } from "../prompter";
+import type { StateAPI } from "../state";
 
 function deepMerge(
   target: Record<string, any>,
@@ -88,10 +89,21 @@ const DEFAULT_CONFIG: Config = {
   },
 };
 
+export type BbsUserConfig = {
+  app?: Partial<Config["app"]>;
+  options?: DeepPartial<Config["options"]>;
+  buildOptions?: Config["buildOptions"];
+};
+
+export function createConfig(config: BbsUserConfig): BbsUserConfig {
+  return config;
+}
+
 export type ConfigDeps = {
   director: DirectorAPI;
   logger: LoggerAPI;
   prompter: PrompterAPI;
+  state: StateAPI;
 };
 
 export type ConfigAPI = {
@@ -117,40 +129,70 @@ export type ConfigAPI = {
   skipCompile: boolean;
   getConfig: () => Config;
   updateConfig: (newConfig: DeepPartial<Config>) => void;
-  saveConfig: (
-    newConfig?: DeepPartial<Config>,
-    full?: boolean,
-    force?: boolean,
-  ) => void;
+  loadUserConfig: () => Promise<void>;
   getAppUUID: () => Promise<string>;
   getAppIdentifier: () => Promise<string>;
   getApiURL: () => Promise<string>;
   builderAPIURL: () => Promise<string>;
 };
 
-export function createConfig(
-  opts: { force?: boolean },
-  deps: ConfigDeps,
-): ConfigAPI {
-  const CONFIG_PATH = path.resolve(process.cwd(), "config.json");
-  let _data: Config = loadConfig(deps);
-  let _updated = false;
+export function bootstrapConfig({
+  opts,
+  deps,
+}: {
+  opts: { force?: boolean };
+  deps: ConfigDeps;
+}): ConfigAPI {
+  const LEGACY_CONFIG_PATH = path.resolve(process.cwd(), "config.json");
+  const USER_CONFIG_PATH = path.resolve(process.cwd(), "bbs.config.ts");
   const _isTs = deps.director.getTsConfig() !== null;
   const _force = opts.force ?? false;
+  let _data: Config = loadConfig();
 
-  function loadConfig({ director, logger }: ConfigDeps): Config {
-    if (director.exists(CONFIG_PATH)) {
+  function loadConfig(): Config {
+    let merged = deepMerge(
+      JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
+      deps.state.getState(),
+    ) as Config;
+
+    if (deps.director.exists(LEGACY_CONFIG_PATH)) {
       try {
-        const userConfig = JSON.parse(director.readFile(CONFIG_PATH) ?? "");
-        return deepMerge(DEFAULT_CONFIG, { ...userConfig }) as Config;
-      } catch (err) {
-        logger.error(
-          "Unable to parse config.json! Falling back to default config.",
+        const legacyConfig = JSON.parse(
+          deps.director.readFile(LEGACY_CONFIG_PATH) ?? "",
         );
-        logger.debug(err);
+        merged = deepMerge(merged, legacyConfig) as Config;
+      } catch (err) {
+        deps.logger.error(
+          "Unable to parse config.json! Skipping legacy config file.",
+        );
+        deps.logger.debug(err);
       }
     }
-    return { ...DEFAULT_CONFIG };
+
+    return merged;
+  }
+
+  async function importUserConfig(): Promise<BbsUserConfig | undefined> {
+    if (!deps.director.exists(USER_CONFIG_PATH)) {
+      return undefined;
+    }
+
+    let mod: any;
+    try {
+      mod = await import(USER_CONFIG_PATH);
+    } catch (err) {
+      throw new Error(
+        `Failed to load bbs.config.ts: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
+    if (!mod?.default || typeof mod.default !== "object") {
+      throw new Error(
+        "bbs.config.ts must have a default export from createConfig(...)",
+      );
+    }
+
+    return mod.default as BbsUserConfig;
   }
 
   const api: ConfigAPI = {
@@ -225,25 +267,12 @@ export function createConfig(
     updateConfig(newConfig = {}) {
       deps.logger.debug("Storing new config value", newConfig);
       _data = deepMerge(_data, newConfig) as Config;
-      _updated = true;
     },
 
-    saveConfig(newConfig = {}, full = false, force = false) {
-      deps.logger.debug("Saving new config to config.json");
-      deps.logger.debug({ newConfig });
-      if (_updated || newConfig || force) {
-        api.updateConfig(newConfig);
-        const content = full
-          ? _data
-          : ({
-              app: _data.app,
-              scaffolder: {
-                templates: {
-                  versions: { ..._data.scaffolder.templates.versions },
-                },
-              },
-            } as DeepPartial<Config>);
-        deps.director.writeFile(CONFIG_PATH, JSON.stringify(content, null, 2));
+    async loadUserConfig() {
+      const userConfig = await importUserConfig();
+      if (userConfig) {
+        api.updateConfig(userConfig as DeepPartial<Config>);
       }
     },
 
@@ -251,6 +280,7 @@ export function createConfig(
       if (!_data.app.uuid) {
         const uuid = await deps.prompter.input("Please enter your app UUID");
         api.updateConfig({ app: { ..._data.app, uuid } });
+        deps.state.updateState({ app: { uuid } });
       }
       return _data.app.uuid;
     },
@@ -261,6 +291,7 @@ export function createConfig(
           "Please enter your app identifier",
         );
         api.updateConfig({ app: { ..._data.app, identifier } });
+        deps.state.updateState({ app: { identifier } });
       }
       return _data.app.identifier;
     },

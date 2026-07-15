@@ -2,6 +2,7 @@ import type { LoggerAPI } from "./logger";
 import type { DirectorAPI } from "./director";
 import type { PrompterAPI } from "./prompter";
 import type { ConfigAPI } from "./config";
+import type { StateAPI } from "./state";
 import type { createSpinner } from "nanospinner";
 
 export type DeepPartial<T> = {
@@ -32,5 +33,6 @@ export type AppDeps = {
   director: DirectorAPI;
   prompter: PrompterAPI;
   config: ConfigAPI;
+  state: StateAPI;
   spinner: SpinnerAPI;
 };
