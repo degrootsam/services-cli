@@ -1,3 +1,4 @@
+import { Build } from "bun";
 import { TransformOptions } from "esbuild";
 import { AgentOptions } from "http";
 
@@ -50,12 +51,7 @@ export type BuildSettings = {
 };
 
 export type Config = {
-  buildOptions:
-    | {
-        js?: BuildSettings;
-        ts?: BuildSettings;
-      }
-    | undefined;
+  buildOptions: BuildSettings | undefined;
   scaffolder: ScaffolderConfig;
   app: {
     uuid: string;
