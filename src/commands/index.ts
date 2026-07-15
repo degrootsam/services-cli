@@ -1,12 +1,19 @@
 import { Command } from "commander";
 import path from "path";
-import { config, withErrorHandling, director } from "../utils";
+import { config, withErrorHandling, director, logger } from "../utils";
 import FusionAuth from "../utils/fusion-auth";
 import update from "./update";
 import components from "./components";
 import functions from "./functions";
 
 const runCLI = async () => {
+  try {
+    await config.loadUserConfig();
+  } catch (error) {
+    logger.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
+
   const program = new Command();
 
   program

@@ -1,5 +1,6 @@
 import { createSpinner } from "nanospinner";
-import { createConfig } from "./config";
+import { bootstrapConfig } from "./config";
+import { createState } from "./state";
 import { createDirector } from "./director";
 import {
   buildFunctions,
@@ -38,7 +39,7 @@ import {
 import { downloadTemplate, copyTemplateFromLocal } from "./scaffolder";
 import { createGit, compareVersions } from "./git";
 import { createCodeParser } from "./code-parser";
-import { isErrorWithMessage } from "./errors";
+import { isErrorWithMessage, isErrorWithCode } from "./errors";
 import type { AppDeps } from "./types";
 
 const opts = process.argv;
@@ -47,22 +48,23 @@ const forceArg = opts.find((v) => v === "-f" || v === "--force");
 const logger = createLogger({
   verbose: !!(verboseArg && verboseArg.length > 0),
 });
-const prompter = createPrompter(logger);
-const director = createDirector(logger);
+const prompter = createPrompter({ logger });
+const director = createDirector({ logger });
 const spinner = createSpinner();
-const config = createConfig(
-  { force: !!(forceArg && forceArg.length > 0) },
-  { director, logger, prompter },
-);
+const state = createState({ deps: { director, logger } });
+const config = bootstrapConfig({
+  opts: { force: !!(forceArg && forceArg.length > 0) },
+  deps: { director, logger, prompter, state },
+});
 
-const deps: AppDeps = { logger, director, prompter, config, spinner };
+const deps: AppDeps = { logger, director, prompter, config, state, spinner };
 
 // Wrapper function to catch errors
 function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
   return async (...args: any[]) => {
     try {
       await fn(...args);
-      config.saveConfig();
+      state.saveState();
     } catch (error) {
       logger.debug(error);
       if (isErrorWithMessage(error)) {
@@ -116,6 +118,7 @@ export {
   deepMerge,
   deps,
   director,
+  state,
   downloadTemplate,
   functionIsExportedAsDefault,
   generateBarrelFunctionDeclaration,
