@@ -25,10 +25,7 @@ function deepMerge(
 }
 
 const DEFAULT_CONFIG: Config = {
-  buildOptions: {
-    js: undefined,
-    ts: undefined,
-  },
+  buildOptions: undefined,
   scaffolder: {
     cacheDir: ".tmp",
     templates: {
@@ -110,9 +107,7 @@ export type ConfigAPI = {
   force: boolean;
   isTypescript: boolean;
   app: Config["app"];
-  buildOptions:
-    | NonNullable<Config["buildOptions"]>["ts"]
-    | NonNullable<Config["buildOptions"]>["js"];
+  buildOptions: Config["buildOptions"];
   srcDir: string;
   buildDir: string;
   projectExtension: string;
@@ -203,18 +198,14 @@ export function bootstrapConfig({
       return _data.app;
     },
     get buildOptions() {
-      return _isTs ? _data.buildOptions?.ts : _data.buildOptions?.js;
+      return _data.buildOptions;
     },
     get srcDir() {
-      const buildOption = _isTs
-        ? _data.buildOptions?.ts
-        : _data.buildOptions?.js;
+      const buildOption = _data.buildOptions;
       return buildOption?.srcDir || "functions";
     },
     get buildDir() {
-      const buildOption = _isTs
-        ? _data.buildOptions?.ts
-        : _data.buildOptions?.js;
+      const buildOption = _data.buildOptions;
       return buildOption?.buildPath || ".tmp";
     },
     get projectExtension() {
