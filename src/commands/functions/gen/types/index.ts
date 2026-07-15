@@ -17,7 +17,7 @@ const genTypes = new Command("types")
         const choice = (await deps.prompter.select(
           [
             { name: "Initialize functions project", value: "functions" },
-            { name: "Initialize empty npm project (npm init)", value: "npm" },
+            { name: "Initialize empty project (bun init)", value: "npm" },
           ],
           "The current working directory has no package.json (required). Please make a choice:",
         )) as "functions" | "npm";
@@ -44,7 +44,7 @@ const genTypes = new Command("types")
               deps.director.createDir(newDirectoryName);
               deps.director.changeDir(newDirectoryName);
             }
-            await deps.director.runCommand("npm", ["init"], {
+            await deps.director.runCommand("bun", ["init", "-y"], {
               stdio: "inherit",
             });
             break;
@@ -52,17 +52,17 @@ const genTypes = new Command("types")
       }
 
       const dependencies = [
-        "-D @graphql-codegen/typescript",
-        "-D typescript",
-        "-D @graphql-codegen/cli",
-        "-D @graphql-codegen/typescript-document-nodes",
-        "-D @graphql-codegen/introspection",
+        "-d @graphql-codegen/typescript",
+        "-d typescript",
+        "-d @graphql-codegen/cli",
+        "-d @graphql-codegen/typescript-document-nodes",
+        "-d @graphql-codegen/introspection",
         "graphql",
       ];
       deps.spinner.start("Installing dependencies...");
       for (let i = 0; i < dependencies.length; i++) {
         try {
-          const dependency = dependencies[i].replace("-D ", "");
+          const dependency = dependencies[i].replace("-d ", "");
           // Try to resolve the package
           require.resolve(dependency);
           continue; // Skip installation if the module exists
@@ -70,7 +70,7 @@ const genTypes = new Command("types")
           // Module is not found, proceed with installation
         }
         const dependency = dependencies[i];
-        const command = `npm i ${dependency}`;
+        const command = `bun add ${dependency}`;
         await deps.director.runCommand(command, undefined, { shell: true });
       }
       deps.spinner.success("Dependencies installed");
@@ -136,7 +136,7 @@ const genTypes = new Command("types")
       });
       deps.spinner.update("Generating types...");
       deps.spinner.start();
-      await deps.director.runCommand("npm", ["run", "generate-types"]);
+      await deps.director.runCommand("bun", ["run", "generate-types"]);
       deps.spinner.success("Types generated in generated/graphql.ts");
     }),
   );

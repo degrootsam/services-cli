@@ -1,5 +1,4 @@
 import { Build } from "bun";
-import { TransformOptions } from "esbuild";
 import { AgentOptions } from "http";
 
 export type TemplateConfig = {
@@ -42,7 +41,7 @@ export type ScaffolderConfig = {
       };
     };
   };
-  tests: { directory: string; transform?: TransformOptions };
+  tests: { directory: string };
 };
 
 export type BuildSettings = {

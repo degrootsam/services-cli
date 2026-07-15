@@ -25,21 +25,21 @@ A command-line tool for developing, building, and publishing Betty Blocks functi
 ### Install dependencies
 
 ```bash
-npm install
+bun install
 ```
 
 ### Build
 
 ```bash
-npm run build
-npm link  # exposes 'bbs' globally via symlink
+bun run build
+bun link  # exposes 'bbs' globally via symlink
 ```
 
 ### Run
 
 ```bash
 ./dist/index.js
-# or after npm link:
+# or after bun link:
 bbs
 ```
 
@@ -166,8 +166,8 @@ Add a new component to an existing project.
 ## Testing
 
 ```bash
-npm test          # run once
-npm run test:watch  # watch mode
+bun test          # run once
+bun run test:watch  # watch mode
 ```
 
 Tests live in `__tests__/`. Powered by Vitest with `globals: true` (no imports needed for `describe`, `it`, `expect`, `vi`).
@@ -206,7 +206,7 @@ scripts/            # Automation scripts
 ## Releasing
 
 ```bash
-npm run release v1.2.3
+bun run release v1.2.3
 ```
 
 Creates and pushes a `v1.2.3` git tag. The version argument must be a valid semver string.

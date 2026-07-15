@@ -17,7 +17,7 @@ const initFunction = new Command("init")
       generateBbsConfigFile({ deps, targetDir: name });
       deps.director.changeDir(name);
       deps.spinner.start("Installing dependencies...");
-      await deps.director.runCommand("npm", ["i"], { stdio: "ignore" });
+      await deps.director.runCommand("bun", ["install"], { stdio: "ignore" });
       deps.spinner.success("Dependencies installed");
       deps.logger.info(
         `Functions project "${name}" created!\n\n  To start developing:\n  - cd ${name}\n  - bbs functions publish\n    `,
