@@ -32,10 +32,13 @@ export type DirectorAPI = {
   ) => Promise<string>;
 };
 
-export function createDirector(
-  logger: LoggerAPI,
-  dirPath?: string,
-): DirectorAPI {
+export function createDirector({
+  logger,
+  dirPath,
+}: {
+  logger: LoggerAPI;
+  dirPath?: string;
+}): DirectorAPI {
   const resolvedDirPath =
     dirPath ?? (typeof __dirname !== "undefined" ? __dirname : process.cwd());
   return {
@@ -112,7 +115,7 @@ export function createDirector(
 
     removeDir(dirPath) {
       logger.debug(`Removing directory at ${dirPath}`);
-      fs.rmdirSync(dirPath, { recursive: true });
+      fs.rmSync(dirPath, { force: true, recursive: true });
     },
 
     writeFile(outputPath, content, encoding = "utf-8") {

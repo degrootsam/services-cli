@@ -32,7 +32,7 @@ export type PrompterAPI = {
   confirm: (message: string, def?: boolean) => Promise<boolean>;
 };
 
-export function createPrompter(logger: LoggerAPI): PrompterAPI {
+export function createPrompter({ logger }: { logger: LoggerAPI }): PrompterAPI {
   return {
     async input(message, required, validate) {
       const answer = await input({ message, required, validate });
