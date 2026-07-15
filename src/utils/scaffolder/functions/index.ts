@@ -238,7 +238,6 @@ export async function generateTest({
   force?: boolean;
 }): Promise<string> {
   let parsedFunction: FunctionInfo = func as FunctionInfo;
-  const tsConfig = deps.director.getTsConfig();
   if (!parsedFunction) {
     const functions = getFunctions({ deps });
     const functionNames = Object.keys(functions);
@@ -255,12 +254,12 @@ export async function generateTest({
   const functionName = path.basename(functionDir);
   const parsedFunctionName = parseName({ name: functionName });
 
-  const extension = tsConfig ? "ts" : "js";
+  const extension = deps.config.projectExtension;
 
-  const targetFile = `index.${extension}`;
+  const targetFile = `index${extension}`;
 
   const targetDir = path.resolve(
-    process.cwd(),
+    deps.config.srcDir,
     deps.config.scaffolder.tests.directory,
     functionName,
     latestVersion,
@@ -272,6 +271,7 @@ export async function generateTest({
       `A test for ${parsedFunctionName}/${latestVersion} already exists! Use --force to overwrite`,
     );
   }
+
   deps.director.createDir(targetDir);
 
   const templatePath = path.resolve(
