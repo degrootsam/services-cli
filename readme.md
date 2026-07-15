@@ -47,32 +47,30 @@ bbs
 
 ## Configuration
 
-A `config.json` file at the project root is required. Minimal structure:
+Create a `bbs.config.ts` at the project root that exports a config via `createConfig`:
 
-```json
-{
-  "app": {
-    "uuid": "<app-uuid>",
-    "identifier": "<app-identifier>",
-    "zone": "<zone>"
-  }
-}
+```ts
+import { createConfig } from "bbs-cli";
+
+export default createConfig({
+  app: {
+    uuid: "<app-uuid>",
+    identifier: "<app-identifier>",
+    zone: "<zone>",
+  },
+  options: {
+    env: "production",
+  },
+});
 ```
 
-Optional overrides (all have defaults):
+`bbs functions init` and `bbs components init` scaffold a starter `bbs.config.ts` for you.
 
-```json
-{
-  "scaffolder": {
-    "templates": {
-      "versions": {
-        "templates": "^0.0.1",
-        "functions": { "ts": "^1.0.0", "js": "^1.0.0" }
-      }
-    }
-  }
-}
-```
+`bbs.config.ts` is optional and always wins over any other config source. If your project
+has a legacy `config.json` (from an earlier version of this CLI), its values are still read
+as a fallback — but it is never written to again. The CLI's own bookkeeping (resolved app
+identity, template version pins) lives in `.bbs/state.json`, which the CLI manages fully —
+you shouldn't need to edit it.
 
 ---
 
