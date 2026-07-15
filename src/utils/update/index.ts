@@ -3,7 +3,11 @@ import chalk from "chalk";
 import { createGit, compareVersions } from "../git";
 import type { AppDeps } from "../types";
 
-export async function checkSubmodulesForUpdate(deps: AppDeps): Promise<void> {
+export async function checkSubmodulesForUpdate({
+  deps,
+}: {
+  deps: AppDeps;
+}): Promise<void> {
   const logUpdate = (
     name: string,
     currentVersion: string = "none",
@@ -22,20 +26,23 @@ export async function checkSubmodulesForUpdate(deps: AppDeps): Promise<void> {
     deps.config.scaffolder.templates.versions?.templates;
   const codegenTemplatesName = deps.config.scaffolder.templates.name;
 
-  const codegenTemplates = createGit(deps, {
-    name: codegenTemplatesName,
-    path: codegenTemplatesPath,
-    version: codegenTemplatesVersion,
+  const codegenTemplates = createGit({
+    deps,
+    cfg: {
+      name: codegenTemplatesName,
+      path: codegenTemplatesPath,
+      version: codegenTemplatesVersion,
+    },
   });
 
   const newCodegenTemplatesVersion =
     await codegenTemplates.checkForNewVersion();
 
   if (
-    compareVersions(
-      newCodegenTemplatesVersion,
-      codegenTemplatesVersion ?? "0.0.0",
-    ) === 1
+    compareVersions({
+      a: newCodegenTemplatesVersion,
+      b: codegenTemplatesVersion ?? "0.0.0",
+    }) === 1
   ) {
     logUpdate(
       codegenTemplatesName,
@@ -52,28 +59,44 @@ export async function checkSubmodulesForUpdate(deps: AppDeps): Promise<void> {
     deps.config.scaffolder.templates.functions.project;
   const functionVersions = deps.config.scaffolder.templates.versions?.functions;
 
-  const tsGit = createGit(deps, {
-    name: tsProject.name,
-    path: path.resolve(codegenTemplatesPath, tsProject.path),
-    version: functionVersions?.ts,
+  const tsGit = createGit({
+    deps,
+    cfg: {
+      name: tsProject.name,
+      path: path.resolve(codegenTemplatesPath, tsProject.path),
+      version: functionVersions?.ts,
+    },
   });
   const newTsVersion = await tsGit.checkForNewVersion();
-  if (compareVersions(newTsVersion, functionVersions?.ts ?? "0.0.0") === 1) {
+  if (
+    compareVersions({ a: newTsVersion, b: functionVersions?.ts ?? "0.0.0" }) ===
+    1
+  ) {
     logUpdate(tsProject.name, functionVersions?.ts, newTsVersion);
   }
 
-  const jsGit = createGit(deps, {
-    name: jsProject.name,
-    path: path.resolve(codegenTemplatesPath, jsProject.path),
-    version: functionVersions?.js,
+  const jsGit = createGit({
+    deps,
+    cfg: {
+      name: jsProject.name,
+      path: path.resolve(codegenTemplatesPath, jsProject.path),
+      version: functionVersions?.js,
+    },
   });
   const newJsVersion = await jsGit.checkForNewVersion();
-  if (compareVersions(newJsVersion, functionVersions?.js ?? "0.0.0") === 1) {
+  if (
+    compareVersions({ a: newJsVersion, b: functionVersions?.js ?? "0.0.0" }) ===
+    1
+  ) {
     logUpdate(jsProject.name, functionVersions?.js, newJsVersion);
   }
 }
 
-export async function updateSubmodules(deps: AppDeps): Promise<void> {
+export async function updateSubmodules({
+  deps,
+}: {
+  deps: AppDeps;
+}): Promise<void> {
   const cliPath = deps.director.resolveCLIPath();
   const codegenTemplatesPath = path.resolve(
     cliPath,
@@ -83,16 +106,24 @@ export async function updateSubmodules(deps: AppDeps): Promise<void> {
     deps.config.scaffolder.templates.versions?.templates;
   const codegenTemplateName = deps.config.scaffolder.templates.name;
 
-  const codegenGit = createGit(deps, {
-    name: codegenTemplateName,
-    path: codegenTemplatesPath,
-    version: codegenTemplateVersion,
+  const codegenGit = createGit({
+    deps,
+    cfg: {
+      name: codegenTemplateName,
+      path: codegenTemplatesPath,
+      version: codegenTemplateVersion,
+    },
   });
   const newCodegenVersion = await codegenGit.handleUpdate();
 
   if (newCodegenVersion) {
     if (codegenTemplateVersion !== newCodegenVersion) {
       deps.config.updateConfig({
+        scaffolder: {
+          templates: { versions: { templates: newCodegenVersion } },
+        },
+      });
+      deps.state.updateState({
         scaffolder: {
           templates: { versions: { templates: newCodegenVersion } },
         },
@@ -112,16 +143,24 @@ export async function updateSubmodules(deps: AppDeps): Promise<void> {
     deps.config.scaffolder.templates.functions.project;
   const functionVersions = deps.config.scaffolder.templates.versions?.functions;
 
-  const tsGit = createGit(deps, {
-    name: tsProject.name,
-    path: path.resolve(codegenTemplatesPath, tsProject.path),
-    version: functionVersions?.ts,
+  const tsGit = createGit({
+    deps,
+    cfg: {
+      name: tsProject.name,
+      path: path.resolve(codegenTemplatesPath, tsProject.path),
+      version: functionVersions?.ts,
+    },
   });
   const newTsVersion = await tsGit.handleUpdate();
 
   if (newTsVersion) {
     if (newTsVersion !== functionVersions?.ts) {
       deps.config.updateConfig({
+        scaffolder: {
+          templates: { versions: { functions: { ts: newTsVersion } } },
+        },
+      });
+      deps.state.updateState({
         scaffolder: {
           templates: { versions: { functions: { ts: newTsVersion } } },
         },
@@ -133,16 +172,24 @@ export async function updateSubmodules(deps: AppDeps): Promise<void> {
     );
   }
 
-  const jsGit = createGit(deps, {
-    name: jsProject.name,
-    path: path.resolve(codegenTemplatesPath, jsProject.path),
-    version: functionVersions?.js,
+  const jsGit = createGit({
+    deps,
+    cfg: {
+      name: jsProject.name,
+      path: path.resolve(codegenTemplatesPath, jsProject.path),
+      version: functionVersions?.js,
+    },
   });
   const newJsVersion = await jsGit.handleUpdate();
 
   if (newJsVersion) {
     if (newJsVersion !== functionVersions?.js) {
       deps.config.updateConfig({
+        scaffolder: {
+          templates: { versions: { functions: { js: newJsVersion } } },
+        },
+      });
+      deps.state.updateState({
         scaffolder: {
           templates: { versions: { functions: { js: newJsVersion } } },
         },
@@ -154,5 +201,5 @@ export async function updateSubmodules(deps: AppDeps): Promise<void> {
     );
   }
 
-  deps.config.saveConfig();
+  deps.state.saveState();
 }
