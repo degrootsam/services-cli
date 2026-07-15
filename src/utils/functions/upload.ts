@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import FormData from "form-data";
 import { logUploadedFunction } from "./log";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
