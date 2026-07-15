@@ -5,12 +5,17 @@ import degit from "degit";
 import { isErrorWithCode } from "../errors";
 import type { AppDeps } from "../types";
 
-export async function copyTemplateFromLocal(
-  deps: AppDeps,
-  templatePath: string,
-  destinationPath: string,
-  force: boolean,
-): Promise<string | undefined> {
+export async function copyTemplateFromLocal({
+  deps,
+  templatePath,
+  destinationPath,
+  force,
+}: {
+  deps: AppDeps;
+  templatePath: string;
+  destinationPath: string;
+  force: boolean;
+}): Promise<string | undefined> {
   deps.logger.debug(
     `Copying template from ${templatePath} to ${destinationPath}`,
   );
@@ -44,12 +49,17 @@ export async function copyTemplateFromLocal(
   return destinationPath;
 }
 
-export async function downloadTemplate(
-  deps: AppDeps,
-  url: string,
-  cloneLocation: string,
-  force: boolean,
-): Promise<string | undefined> {
+export async function downloadTemplate({
+  deps,
+  url,
+  cloneLocation,
+  force,
+}: {
+  deps: AppDeps;
+  url: string;
+  cloneLocation: string;
+  force: boolean;
+}): Promise<string | undefined> {
   deps.logger.debug(`Downloading template at ${url}`);
   const downloader = degit(url, { force });
   deps.spinner.update(`Downloading template at ${url}`);
@@ -76,4 +86,25 @@ export async function downloadTemplate(
 
   deps.spinner.success("Template downloaded successfully");
   return cloneLocation;
+}
+
+export function generateBbsConfigFile({
+  deps,
+  targetDir,
+}: {
+  deps: AppDeps;
+  targetDir: string;
+}): void {
+  const content = `import { createConfig } from "bbs-cli";
+
+export default createConfig({
+  app: {
+    uuid: "",
+    identifier: "",
+    zone: "",
+  },
+});
+`;
+  const outputPath = path.resolve(targetDir, "bbs.config.ts");
+  deps.director.writeFile(outputPath, content);
 }

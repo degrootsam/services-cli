@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { withErrorHandling, deps } from "../../../utils";
 import { generateProject } from "../../../utils/scaffolder/functions";
+import { generateBbsConfigFile } from "../../../utils/scaffolder";
 
 const initFunction = new Command("init")
   .arguments("<name>")
@@ -12,7 +13,8 @@ const initFunction = new Command("init")
   )
   .action(
     withErrorHandling(async (name, options) => {
-      await generateProject(deps, name, options.javascript);
+      await generateProject({ deps, name, javascript: options.javascript });
+      generateBbsConfigFile({ deps, targetDir: name });
       deps.director.changeDir(name);
       deps.spinner.start("Installing dependencies...");
       await deps.director.runCommand("npm", ["i"], { stdio: "ignore" });
