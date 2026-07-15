@@ -1,5 +1,4 @@
-import * as fs from "fs";
-import FormData from "form-data";
+import { fileFromSync, FormData } from "node-fetch";
 import { logUploadedFunction } from "./log";
 import FusionAuth from "../fusion-auth";
 import { RequestHandler } from "../request-handler";
@@ -21,7 +20,7 @@ export async function uploadFunctions({
   const functionsJson = getFunctionsJSON({ deps, functions });
   form.append("functions", JSON.stringify(functionsJson));
   form.append("options", JSON.stringify({ compile: !deps.config.skipCompile }));
-  form.append("file", fs.createReadStream(zipPath));
+  form.append("file", fileFromSync(zipPath));
   const builderAPIURL = await deps.config.builderAPIURL();
   const request = new RequestHandler(builderAPIURL);
   const fusionAuth = new FusionAuth();
@@ -31,7 +30,6 @@ export async function uploadFunctions({
     form,
     { Authorization: `Bearer ${token}` },
   );
-  console.log(response.status);
   if (response.status === 409) {
     const { created, updated, deleted } =
       (await response.json()) as PublishResponse;
@@ -43,6 +41,10 @@ export async function uploadFunctions({
     );
     deleted.forEach((result) =>
       logUploadedFunction({ deps, functionResult: result }),
+    );
+  } else {
+    throw new Error(
+      `Uploading functions failed: Expected status 409 but received ${response.status}`,
     );
   }
 }
