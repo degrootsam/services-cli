@@ -1,7 +1,7 @@
+import { Glob } from "bun";
 import * as fs from "fs";
 import path from "path";
 import { AppDeps } from "../types";
-import esbuild from "esbuild";
 
 export async function buildFunctions({
   deps,
@@ -20,39 +20,29 @@ export async function buildFunctions({
   deps.spinner.start("Building functions...");
   const appDir = path.resolve(outdir, "app");
   const functionsOutputDir = path.resolve(appDir, "functions");
-  const srcDir = deps.config.srcDir;
-  const srcEntryPoint = `${srcDir}/**/*${deps.config.projectExtension}`;
 
-  switch (mode) {
-    case "ts":
-      await esbuild.build({
-        entryPoints: [srcEntryPoint],
-        outdir: functionsOutputDir,
-        platform: "node",
-        format: "esm",
-        target: "es2022",
-        minify: !debug,
-      });
-      fs.cpSync(srcDir, functionsOutputDir, {
-        recursive: true,
-        filter: (src) => !src.endsWith(".ts"),
-      });
-      break;
-    case "js":
-      await esbuild.build({
-        entryPoints: [srcEntryPoint],
-        outdir: functionsOutputDir,
-        platform: "node",
-        format: "esm",
-        target: "es2022",
-        minify: !debug,
-      });
-      fs.cpSync(srcDir, functionsOutputDir, {
-        recursive: true,
-        filter: (src) => !src.endsWith(".js"),
-      });
-      break;
+  const srcDir = deps.config.srcDir;
+  const extension = deps.config.projectExtension;
+  const glob = new Glob(`**/*${extension}`);
+  const entrypoints = [];
+
+  for (const file of glob.scanSync(srcDir)) {
+    if (!file.includes("__tests__")) {
+      entrypoints.push(path.join(srcDir, file));
+    }
   }
+  await Bun.build({
+    entrypoints,
+    outdir: functionsOutputDir,
+    format: "esm",
+    target: "node",
+    minify: !debug,
+  });
+
+  fs.cpSync(srcDir, functionsOutputDir, {
+    recursive: true,
+    filter: (src) => !src.endsWith(extension),
+  });
 
   const packageSourcePath = path.resolve(process.cwd(), "package.json");
   const packageTargetPath = path.resolve(appDir, "package.json");
