@@ -30,7 +30,7 @@ export async function uploadFunctions({
     form,
     { Authorization: `Bearer ${token}` },
   );
-  if (response.status === 409) {
+  if (response.status === 201) {
     const { created, updated, deleted } =
       (await response.json()) as PublishResponse;
     created.forEach((result) =>
@@ -44,7 +44,7 @@ export async function uploadFunctions({
     );
   } else {
     throw new Error(
-      `Uploading functions failed: Expected status 409 but received ${response.status}`,
+      `Uploading functions failed: Expected status 201 but received ${response.status}`,
     );
   }
 }
