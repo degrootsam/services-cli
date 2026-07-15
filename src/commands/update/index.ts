@@ -9,7 +9,7 @@ update
   .description("Update the CLI and it's submodules")
   .action(
     withErrorHandling(async () => {
-      await updateSubmodules(deps);
+      await updateSubmodules({ deps });
     }),
   );
 
@@ -18,7 +18,7 @@ update
   .description("Check for new updates for the CLI and it's submodules")
   .action(
     withErrorHandling(async () => {
-      await checkSubmodulesForUpdate(deps);
+      await checkSubmodulesForUpdate({ deps });
     }),
   );
 

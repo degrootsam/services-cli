@@ -11,11 +11,15 @@ import {
 } from "../../functions";
 import type { FunctionInfo, Functions } from "../../functions/types";
 
-export async function generateProject(
-  deps: AppDeps,
-  name: string,
-  javascript: boolean = false,
-): Promise<void> {
+export async function generateProject({
+  deps,
+  name,
+  javascript = false,
+}: {
+  deps: AppDeps;
+  name: string;
+  javascript?: boolean;
+}): Promise<void> {
   const functionTemplateURLs =
     deps.config.scaffolder.templates.functions.project;
   let templateUrl = functionTemplateURLs.ts.url;
@@ -24,14 +28,23 @@ export async function generateProject(
     templateUrl = functionTemplateURLs.js.url;
   }
 
-  await downloadTemplate(deps, templateUrl, name, deps.config.force);
+  await downloadTemplate({
+    deps,
+    url: templateUrl,
+    cloneLocation: name,
+    force: deps.config.force,
+  });
 }
 
-export async function generateCodeGenFile(
-  deps: AppDeps,
-  graphqlURL: string,
-  accessToken: string,
-): Promise<void> {
+export async function generateCodeGenFile({
+  deps,
+  graphqlURL,
+  accessToken,
+}: {
+  deps: AppDeps;
+  graphqlURL: string;
+  accessToken: string;
+}): Promise<void> {
   if (!graphqlURL || !accessToken) {
     deps.logger.debug({ graphqlURL, accessToken });
     throw new Error(
@@ -84,16 +97,19 @@ export async function generateCodeGenFile(
   deps.spinner.success("Successfully generated codegen.ts");
 }
 
-export async function generateFunction(
-  deps: AppDeps,
-  name: string,
-): Promise<void> {
+export async function generateFunction({
+  deps,
+  name,
+}: {
+  deps: AppDeps;
+  name: string;
+}): Promise<void> {
   const tsConfig = deps.director.getTsConfig();
 
   const targetFileType = tsConfig ? "ts" : "js";
   const targetFileName = `index.${targetFileType}`;
 
-  const functions = getFunctions(deps);
+  const functions = getFunctions({ deps });
 
   const existingFunctionNames = Object.keys(functions);
 
@@ -118,7 +134,7 @@ export async function generateFunction(
     throw new Error("The template file(s) yielded no content");
   }
 
-  const parsedName = parseName(name);
+  const parsedName = parseName({ name });
 
   indexTsJs = indexTsJs.replace("functionName", parsedName);
   functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
@@ -148,12 +164,12 @@ export async function generateFunction(
       path: functionDir,
       versions: new Set(["1.0"]),
     };
-    await generateTest(deps, newFunction as FunctionInfo);
+    await generateTest({ deps, func: newFunction as FunctionInfo });
   }
 }
 
-export async function bumpFunction(deps: AppDeps): Promise<void> {
-  const functions = getFunctions(deps);
+export async function bumpFunction({ deps }: { deps: AppDeps }): Promise<void> {
+  const functions = getFunctions({ deps });
   const functionNames = Object.keys(functions);
 
   const selectedFunctionName = await deps.prompter.select(
@@ -208,19 +224,23 @@ export async function bumpFunction(deps: AppDeps): Promise<void> {
   );
 
   if (createTests) {
-    await generateTest(deps, selectedFunction);
+    await generateTest({ deps, func: selectedFunction });
   }
 }
 
-export async function generateTest(
-  deps: AppDeps,
-  func?: FunctionInfo,
-  force?: boolean,
-): Promise<string> {
+export async function generateTest({
+  deps,
+  func,
+  force,
+}: {
+  deps: AppDeps;
+  func?: FunctionInfo;
+  force?: boolean;
+}): Promise<string> {
   let parsedFunction: FunctionInfo = func as FunctionInfo;
   const tsConfig = deps.director.getTsConfig();
   if (!parsedFunction) {
-    const functions = getFunctions(deps);
+    const functions = getFunctions({ deps });
     const functionNames = Object.keys(functions);
     const choices = functionNames.map((name) => ({
       name,
@@ -233,7 +253,7 @@ export async function generateTest(
   const { path: functionDir, latestVersion } = parsedFunction;
 
   const functionName = path.basename(functionDir);
-  const parsedFunctionName = parseName(functionName);
+  const parsedFunctionName = parseName({ name: functionName });
 
   const extension = tsConfig ? "ts" : "js";
 
@@ -292,21 +312,30 @@ export async function generateTest(
   return targetPath;
 }
 
-export function generateFunctionsBarrelFile(
-  deps: AppDeps,
-  outputDir: string,
-  functions: Functions,
-  fileType: "js" | "ts" = "ts",
-): void {
-  const validFunctions = getValidFunctions(functions);
+export function generateFunctionsBarrelFile({
+  deps,
+  outputDir,
+  functions,
+  fileType = "ts",
+}: {
+  deps: AppDeps;
+  outputDir: string;
+  functions: Functions;
+  fileType?: "js" | "ts";
+}): void {
+  const validFunctions = getValidFunctions({ functions });
 
   let barrelContent = "";
 
-  barrelContent += generateBarrelImportDeclarations(validFunctions);
+  barrelContent += generateBarrelImportDeclarations({
+    functions: validFunctions,
+  });
 
   barrelContent += "\r\n";
 
-  barrelContent += generateBarrelFunctionDeclaration(validFunctions);
+  barrelContent += generateBarrelFunctionDeclaration({
+    functions: validFunctions,
+  });
 
   barrelContent += "\r\n";
 

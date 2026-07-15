@@ -1,3 +1,4 @@
+import { describe, it, expect } from "bun:test";
 import { createCodeParser } from "../utils/code-parser";
 import { createLogger } from "../utils/logger";
 import { FunctionInfo } from "../utils/functions/types";
@@ -18,7 +19,7 @@ describe("createCodeParser", () => {
     };
 
     it("validates as async", () => {
-      const codeParser = createCodeParser("js", logger);
+      const codeParser = createCodeParser({ type: "js", logger });
       const code = `export default async function helloWorld(){ return null; }`;
 
       const expected: FunctionInfo = {
@@ -36,7 +37,7 @@ describe("createCodeParser", () => {
     });
 
     it("validates as default export", () => {
-      const codeParser = createCodeParser("js", logger);
+      const codeParser = createCodeParser({ type: "js", logger });
       const code = `async function helloWorld(){ return null; } export default helloWorld;`;
 
       const result = codeParser.validateFunction(

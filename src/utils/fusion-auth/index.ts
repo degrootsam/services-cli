@@ -26,7 +26,10 @@ export default class FusionAuth {
       token,
       expiresAt,
     };
-    await saveToken("fusionAuthToken", JSON.stringify(fusionAuthToken));
+    await saveToken({
+      account_name: "fusionAuthToken",
+      token: JSON.stringify(fusionAuthToken),
+    });
     return fusionAuthToken;
   }
 
@@ -43,7 +46,7 @@ export default class FusionAuth {
 
   async getStoredToken(): Promise<StoredFusionAuthToken | undefined> {
     if (!this.token) {
-      const token = await getToken("fusionAuthToken");
+      const token = await getToken({ account_name: "fusionAuthToken" });
       if (token) {
         try {
           this.token = JSON.parse(token);

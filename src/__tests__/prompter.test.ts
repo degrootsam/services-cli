@@ -1,24 +1,13 @@
-// __tests__/prompter.test.ts
-//
-// vi.mock is hoisted by vitest before imports execute, so static imports of
-// @inquirer/prompts (and anything that loads it) receive the mocked version.
-
-vi.mock("@inquirer/prompts", () => ({
-  input: vi.fn(),
-  password: vi.fn(),
-  select: vi.fn(),
-  confirm: vi.fn(),
-  editor: vi.fn(),
-}));
-
+import { mock, describe, it, expect, beforeEach } from "bun:test";
 import * as inquirer from "@inquirer/prompts";
 import { createLogger } from "../utils/logger";
 import { createPrompter } from "../utils/prompter";
 import { prompter } from "../utils/index";
 
-const mockedInput = vi.mocked(inquirer.input);
-const mockedPassword = vi.mocked(inquirer.password);
-const mockedSelect = vi.mocked(inquirer.select);
+// @inquirer/prompts is mocked via setup.ts preload — cast to access mock methods
+const mockedInput = inquirer.input as ReturnType<typeof mock>;
+const mockedPassword = inquirer.password as ReturnType<typeof mock>;
+const mockedSelect = inquirer.select as ReturnType<typeof mock>;
 
 describe("createPrompter", () => {
   it("returns an object with prompt methods", () => {
@@ -32,7 +21,9 @@ describe("createPrompter", () => {
 
 describe("Prompter", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockedInput.mockClear();
+    mockedPassword.mockClear();
+    mockedSelect.mockClear();
   });
 
   it("should return the provided username", async () => {

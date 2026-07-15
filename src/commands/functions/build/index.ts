@@ -16,21 +16,28 @@ const buildFunctionsCmd = new Command("build")
   .action(
     withErrorHandling(async (options) => {
       const appDir = path.resolve(deps.config.buildDir, "app");
-      const functions = getFunctions(deps);
-      const validatedFunctions = await validateFunctions(
+
+      const functions = getFunctions({ deps });
+
+      const validatedFunctions = await validateFunctions({
         deps,
         functions,
-        deps.config.isTypescript ? "ts" : "js",
-      );
+        type: deps.config.isTypescript ? "ts" : "js",
+      });
 
-      generateFunctionsBarrelFile(deps, appDir, validatedFunctions, "js");
-
-      await buildFunctions(
+      generateFunctionsBarrelFile({
         deps,
-        deps.config.isTypescript ? "ts" : "js",
-        options.destination,
-        options.debug,
-      );
+        outputDir: appDir,
+        functions: validatedFunctions,
+        fileType: "js",
+      });
+
+      await buildFunctions({
+        deps,
+        mode: deps.config.isTypescript ? "ts" : "js",
+        outdir: options.destination,
+        debug: options.debug,
+      });
     }),
   );
 

@@ -1,13 +1,14 @@
+import { describe, it, expect } from "bun:test";
 import { parseName, getValidFunctions } from "../utils/functions";
 import type { Functions } from "../utils/functions/types";
 
 describe("parseName", () => {
   it("converts kebab-case function name to camelCase", () => {
-    expect(parseName("hello-world")).toBe("helloWorld");
+    expect(parseName({ name: "hello-world" })).toBe("helloWorld");
   });
 
   it("leaves camelCase unchanged", () => {
-    expect(parseName("helloWorld")).toBe("helloWorld");
+    expect(parseName({ name: "helloWorld" })).toBe("helloWorld");
   });
 });
 
@@ -36,7 +37,7 @@ describe("getValidFunctions", () => {
   };
 
   it("returns only valid functions", () => {
-    const result = getValidFunctions(functions);
+    const result = getValidFunctions({ functions });
     expect(Object.keys(result)).toEqual(["fn-a"]);
   });
 });

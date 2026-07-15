@@ -17,10 +17,13 @@ export type CodeParserAPI = {
   ) => FunctionInfo;
 };
 
-export function createCodeParser(
-  type: "js" | "ts",
-  logger: LoggerAPI,
-): CodeParserAPI {
+export function createCodeParser({
+  type,
+  logger,
+}: {
+  type: "js" | "ts";
+  logger: LoggerAPI;
+}): CodeParserAPI {
   function makeAst(code: string) {
     return parse(code, {
       sourceType: "module",

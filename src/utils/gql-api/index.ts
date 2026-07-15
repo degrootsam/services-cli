@@ -25,7 +25,7 @@ export type GqlAPI = {
   ) => Promise<GraphQLResponse<D>>;
 };
 
-export function createGraphQLAPI(deps: AppDeps): GqlAPI {
+export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
   const { config, logger, prompter } = deps;
 
   let _jwt = "";
@@ -77,9 +77,12 @@ export function createGraphQLAPI(deps: AppDeps): GqlAPI {
 
     _expiresAt = accessExpiresAt;
 
-    await saveToken("gqlAccessToken", jwtToken!);
-    await saveToken("gqlRefreshToken", refreshToken!);
-    await saveToken("gqlAccessTokenExpiresAt", accessExpiresAt.toString());
+    await saveToken({ account_name: "gqlAccessToken", token: jwtToken! });
+    await saveToken({ account_name: "gqlRefreshToken", token: refreshToken! });
+    await saveToken({
+      account_name: "gqlAccessTokenExpiresAt",
+      token: accessExpiresAt.toString(),
+    });
 
     return {
       jwtToken,
@@ -96,10 +99,12 @@ export function createGraphQLAPI(deps: AppDeps): GqlAPI {
     async getTokensFromKeychain(): Promise<GraphQLAccessToken | undefined> {
       logger.debug("Checking tokens in keychain");
 
-      _jwt = (await getToken("gqlAccessToken")) ?? "";
-      _refresh = (await getToken("gqlRefreshToken")) ?? "";
+      _jwt = (await getToken({ account_name: "gqlAccessToken" })) ?? "";
+      _refresh = (await getToken({ account_name: "gqlRefreshToken" })) ?? "";
 
-      const accessTokenExpiresAt = await getToken("gqlAccessTokenExpiresAt");
+      const accessTokenExpiresAt = await getToken({
+        account_name: "gqlAccessTokenExpiresAt",
+      });
       _expiresAt = accessTokenExpiresAt ? Number(accessTokenExpiresAt) : null;
 
       const result = {

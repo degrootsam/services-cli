@@ -16,11 +16,23 @@ export type GitAPI = {
   handleUpdate: () => Promise<string | null>;
 };
 
-export function compareVersions(a: string, b: string = "0.0.0"): number {
+export function compareVersions({
+  a,
+  b = "0.0.0",
+}: {
+  a: string;
+  b?: string;
+}): number {
   return semver.compare(semver.clean(a) ?? "", semver.clean(b) ?? "");
 }
 
-export function createGit(deps: AppDeps, cfg: GitTemplateConfig): GitAPI {
+export function createGit({
+  deps,
+  cfg,
+}: {
+  deps: AppDeps;
+  cfg: GitTemplateConfig;
+}): GitAPI {
   const repoPath = path.resolve(cfg.path);
   const { name, version } = cfg;
 
@@ -79,7 +91,7 @@ export function createGit(deps: AppDeps, cfg: GitTemplateConfig): GitAPI {
     },
 
     async checkForNewVersion() {
-      const git = createGit(deps, cfg);
+      const git = createGit({ deps, cfg });
       const remoteTags = await git.getAvailableRemoteTags();
       const resolvedVersion = remoteTags[0] ?? null;
       if (!resolvedVersion) {
@@ -91,7 +103,7 @@ export function createGit(deps: AppDeps, cfg: GitTemplateConfig): GitAPI {
     },
 
     async handleUpdate() {
-      const git = createGit(deps, cfg);
+      const git = createGit({ deps, cfg });
       const remoteTags = await git.getAvailableRemoteTags();
       let resolvedVersion: string | null;
 

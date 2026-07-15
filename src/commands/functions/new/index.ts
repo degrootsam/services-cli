@@ -11,7 +11,7 @@ const newFunction = new Command("new")
   )
   .action(
     withErrorHandling(async (name) => {
-      await generateFunction(deps, name);
+      await generateFunction({ deps, name });
     }),
   );
 

@@ -1,3 +1,4 @@
+import { describe, it, expect } from "bun:test";
 import { createDirector } from "../utils/director";
 import { createLogger } from "../utils/logger";
 import { fileURLToPath } from "url";
@@ -7,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("createDirector", () => {
   const logger = createLogger({ verbose: false });
-  const director = createDirector(logger, __dirname);
+  const director = createDirector({ logger, dirPath: __dirname });
 
   it("returns an object with core filesystem methods", () => {
     expect(typeof director.readFile).toBe("function");

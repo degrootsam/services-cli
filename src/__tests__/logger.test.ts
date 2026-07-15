@@ -1,13 +1,22 @@
+import {
+  spyOn,
+  describe,
+  it,
+  test,
+  expect,
+  beforeEach,
+  afterEach,
+} from "bun:test";
 import { logger } from "../utils/index";
 import { DEBUG_PREFIX, ERROR_PREFIX, createLogger } from "../utils/logger";
 
 describe("Logger", () => {
-  let debugSpy: ReturnType<typeof vi.spyOn>;
-  let errorSpy: ReturnType<typeof vi.spyOn>;
+  let debugSpy: ReturnType<typeof spyOn>;
+  let errorSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
-    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    debugSpy = spyOn(console, "debug").mockImplementation(() => {});
+    errorSpy = spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -34,12 +43,12 @@ describe("Logger", () => {
 });
 
 describe("createLogger", () => {
-  let debugSpy: ReturnType<typeof vi.spyOn>;
-  let errorSpy: ReturnType<typeof vi.spyOn>;
+  let debugSpy: ReturnType<typeof spyOn>;
+  let errorSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    debugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
-    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    debugSpy = spyOn(console, "debug").mockImplementation(() => {});
+    errorSpy = spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {

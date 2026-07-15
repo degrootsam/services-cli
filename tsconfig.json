@@ -21,6 +21,8 @@
   ],
   "exclude": [
     "node_modules", // Exclude the "node_modules" directory
-    "dist" // Exclude the "dist" directory (output directory)
+    "dist", // Exclude the "dist" directory (output directory)
+    "src/__tests__",
+    "src/__mocks__"
   ]
 }

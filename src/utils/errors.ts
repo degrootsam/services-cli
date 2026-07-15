@@ -1,3 +1,5 @@
+// Type guard functions must use positional params — TypeScript type predicates
+// cannot reference destructured binding elements (TS error 1230).
 export function isErrorWithMessage(
   error: unknown,
 ): error is { message: string } {

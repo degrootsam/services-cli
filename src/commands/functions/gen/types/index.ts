@@ -28,7 +28,7 @@ const genTypes = new Command("types")
               "Please provide a name for the project",
               true,
             );
-            await generateProject(deps, name, true);
+            await generateProject({ deps, name, javascript: true });
 
             deps.director.changeDir(name);
             break;
@@ -96,7 +96,7 @@ const genTypes = new Command("types")
         JSON.stringify(packageJSONContent),
       );
 
-      const gqlAPI = createGraphQLAPI(deps);
+      const gqlAPI = createGraphQLAPI({ deps });
       let tokens: GraphQLAccessToken = {
         jwtToken: String(),
         refreshToken: String(),
@@ -129,7 +129,11 @@ const genTypes = new Command("types")
 
       const apiURL = await deps.config.getApiURL();
 
-      await generateCodeGenFile(deps, apiURL, tokens.jwtToken!);
+      await generateCodeGenFile({
+        deps,
+        graphqlURL: apiURL,
+        accessToken: tokens.jwtToken!,
+      });
       deps.spinner.update("Generating types...");
       deps.spinner.start();
       await deps.director.runCommand("npm", ["run", "generate-types"]);

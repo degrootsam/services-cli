@@ -10,12 +10,12 @@ const validateFunctionsCmd = new Command("validate")
   .description("Validate your functions")
   .action(
     withErrorHandling(async () => {
-      const functions = getFunctions(deps);
-      await validateFunctions(
+      const functions = getFunctions({ deps });
+      await validateFunctions({
         deps,
         functions,
-        deps.config.isTypescript ? "ts" : "js",
-      );
+        type: deps.config.isTypescript ? "ts" : "js",
+      });
     }),
   );
 

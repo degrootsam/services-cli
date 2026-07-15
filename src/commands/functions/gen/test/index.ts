@@ -10,7 +10,7 @@ const genTest = new Command("test")
   .description("Generate test files for a selected function")
   .action(
     withErrorHandling(async (options) => {
-      await generateTest(deps, undefined, options.force);
+      await generateTest({ deps, force: options.force });
     }),
   );
 export default genTest;

@@ -6,7 +6,7 @@ const bumpFunctionCmd = new Command("bump")
   .description("Create a new version for a function")
   .action(
     withErrorHandling(async () => {
-      await bumpFunction(deps);
+      await bumpFunction({ deps });
     }),
   );
 
