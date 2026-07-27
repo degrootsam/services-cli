@@ -26,7 +26,7 @@ const projectTypes: SelectChoice[] = [
 
 const initFunction = new Command("init")
   .arguments("<name>")
-  .description("Initialize a new TypeScript functions project")
+  .description("Initialize a new functions project")
   .option(
     "-f, --force",
     "Overwrites project if it already exists. Use with caution!",
