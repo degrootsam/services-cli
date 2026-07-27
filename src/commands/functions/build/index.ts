@@ -17,7 +17,7 @@ const buildFunctionsCmd = new Command("build")
     withErrorHandling(async (options) => {
       const appDir = path.resolve(deps.config.buildDir, "app");
 
-      const functions = getFunctions({ deps });
+      const functions = await getFunctions({ deps });
 
       const validatedFunctions = await validateFunctions({
         deps,

@@ -10,7 +10,7 @@ const validateFunctionsCmd = new Command("validate")
   .description("Validate your functions")
   .action(
     withErrorHandling(async () => {
-      const functions = getFunctions({ deps });
+      const functions = await getFunctions({ deps });
       await validateFunctions({
         deps,
         functions,
