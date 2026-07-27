@@ -17,12 +17,12 @@ describe("createDirector", () => {
     expect(typeof director.runCommand).toBe("function");
   });
 
-  it("exists returns false for a non-existent path", () => {
-    expect(director.exists("/nonexistent/path/xyz123")).toBe(false);
+  it("exists returns false for a non-existent path", async () => {
+    expect(await director.exists("/nonexistent/path/xyz123")).toBe(false);
   });
 
-  it("exists returns true for __dirname", () => {
-    expect(director.exists(__dirname)).toBe(true);
+  it("exists returns true for __dirname", async () => {
+    expect(await director.exists(__dirname)).toBe(true);
   });
 
   it("resolveCLIPath returns a non-empty string", () => {

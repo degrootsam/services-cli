@@ -1,4 +1,4 @@
-import { mock, describe, it, expect } from "bun:test";
+import { mock, describe, it, expect, Mock } from "bun:test";
 import path from "path";
 import { createState } from "../utils/state";
 import type { LoggerAPI } from "../utils/logger";
@@ -6,8 +6,8 @@ import type { DirectorAPI } from "../utils/director";
 
 const makeDeps = () => ({
   director: {
-    exists: mock(() => false),
-    readFile: mock(() => ""),
+    exists: mock(async () => false),
+    readFile: mock(async () => ""),
     writeFile: mock(),
   } as Partial<DirectorAPI> as DirectorAPI,
   logger: {
@@ -22,32 +22,34 @@ const makeDeps = () => ({
 });
 
 describe("createState", () => {
-  it("starts empty when .bbs/state.json does not exist", () => {
-    const state = createState({ deps: makeDeps() });
+  it("starts empty when .bbs/state.json does not exist", async () => {
+    const state = await createState({ deps: makeDeps() });
     expect(state.getState()).toEqual({});
   });
 
-  it("loads existing state.json content", () => {
+  it("loads existing state.json content", async () => {
     const deps = makeDeps();
-    (deps.director.exists as any).mockReturnValue(true);
-    (deps.director.readFile as any).mockReturnValue(
+    (deps.director.exists as Mock<() => Promise<boolean>>).mockResolvedValue(
+      true,
+    );
+    (deps.director.readFile as Mock<() => Promise<string>>).mockResolvedValue(
       JSON.stringify({ app: { uuid: "abc-123" } }),
     );
-    const state = createState({ deps });
+    const state = await createState({ deps });
     expect(state.getState()).toEqual({ app: { uuid: "abc-123" } });
   });
 
-  it("falls back to empty state when state.json is malformed", () => {
+  it("falls back to empty state when state.json is malformed", async () => {
     const deps = makeDeps();
     (deps.director.exists as any).mockReturnValue(true);
     (deps.director.readFile as any).mockReturnValue("{not json");
-    const state = createState({ deps });
+    const state = await createState({ deps });
     expect(state.getState()).toEqual({});
     expect(deps.logger.error).toHaveBeenCalled();
   });
 
-  it("updateState deep merges into the in-memory state", () => {
-    const state = createState({ deps: makeDeps() });
+  it("updateState deep merges into the in-memory state", async () => {
+    const state = await createState({ deps: makeDeps() });
     state.updateState({ app: { uuid: "abc-123" } });
     state.updateState({ app: { identifier: "my-app" } });
     expect(state.getState()).toEqual({
@@ -55,9 +57,9 @@ describe("createState", () => {
     });
   });
 
-  it("saveState writes the current state to .bbs/state.json", () => {
+  it("saveState writes the current state to .bbs/state.json", async () => {
     const deps = makeDeps();
-    const state = createState({ deps });
+    const state = await createState({ deps });
     state.updateState({ app: { uuid: "abc-123" } });
     state.saveState();
     const expectedPath = path.resolve(process.cwd(), ".bbs", "state.json");

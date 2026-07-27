@@ -10,9 +10,9 @@ import type { StateAPI } from "../utils/state";
 
 const makeDeps = () => ({
   director: {
-    exists: mock(() => false),
-    readFile: mock(() => ""),
-    getTsConfig: mock(() => null),
+    exists: mock(async () => false),
+    readFile: mock(async () => ""),
+    getTsConfig: mock(async () => null),
   } as Partial<DirectorAPI> as DirectorAPI,
   logger: {
     debug: mock(),
@@ -34,31 +34,31 @@ const makeDeps = () => ({
 });
 
 describe("bootstrapConfig", () => {
-  it("defaults srcDir to 'functions'", () => {
-    const config = bootstrapConfig({
+  it("defaults srcDir to 'functions'", async () => {
+    const config = await bootstrapConfig({
       opts: { force: false },
       deps: makeDeps(),
     });
     expect(config.srcDir).toBe("functions");
   });
 
-  it("uses .js extension when no tsconfig found", () => {
-    const config = bootstrapConfig({
+  it("uses .js extension when no tsconfig found", async () => {
+    const config = await bootstrapConfig({
       opts: { force: false },
       deps: makeDeps(),
     });
     expect(config.projectExtension).toBe(".js");
   });
 
-  it("uses .ts extension when tsconfig found", () => {
+  it("uses .ts extension when tsconfig found", async () => {
     const deps = makeDeps();
     (deps.director.getTsConfig as any).mockReturnValue({ compilerOptions: {} });
-    const config = bootstrapConfig({ opts: { force: false }, deps });
+    const config = await bootstrapConfig({ opts: { force: false }, deps });
     expect(config.projectExtension).toBe(".ts");
   });
 
-  it("updateConfig mutates the internal state", () => {
-    const config = bootstrapConfig({
+  it("updateConfig mutates the internal state", async () => {
+    const config = await bootstrapConfig({
       opts: { force: false },
       deps: makeDeps(),
     });
@@ -66,21 +66,24 @@ describe("bootstrapConfig", () => {
     expect(config.app.uuid).toBe("abc-123");
   });
 
-  it("force flag is exposed on the config object", () => {
-    const config = bootstrapConfig({ opts: { force: true }, deps: makeDeps() });
+  it("force flag is exposed on the config object", async () => {
+    const config = await bootstrapConfig({
+      opts: { force: true },
+      deps: makeDeps(),
+    });
     expect(config.force).toBe(true);
   });
 
-  it("fills gaps from .bbs/state.json", () => {
+  it("fills gaps from .bbs/state.json", async () => {
     const deps = makeDeps();
     (deps.state.getState as any).mockReturnValue({
       app: { uuid: "state-uuid" },
     });
-    const config = bootstrapConfig({ opts: { force: false }, deps });
+    const config = await bootstrapConfig({ opts: { force: false }, deps });
     expect(config.app.uuid).toBe("state-uuid");
   });
 
-  it("legacy config.json overrides .bbs/state.json", () => {
+  it("legacy config.json overrides .bbs/state.json", async () => {
     const deps = makeDeps();
     (deps.state.getState as any).mockReturnValue({
       app: { uuid: "state-uuid" },
@@ -89,15 +92,15 @@ describe("bootstrapConfig", () => {
     (deps.director.readFile as any).mockReturnValue(
       JSON.stringify({ app: { uuid: "legacy-uuid" } }),
     );
-    const config = bootstrapConfig({ opts: { force: false }, deps });
+    const config = await bootstrapConfig({ opts: { force: false }, deps });
     expect(config.app.uuid).toBe("legacy-uuid");
   });
 
-  it("falls back to defaults when config.json is malformed", () => {
+  it("falls back to defaults when config.json is malformed", async () => {
     const deps = makeDeps();
     (deps.director.exists as any).mockReturnValue(true);
     (deps.director.readFile as any).mockReturnValue("{not json");
-    const config = bootstrapConfig({ opts: { force: false }, deps });
+    const config = await bootstrapConfig({ opts: { force: false }, deps });
     expect(config.app.uuid).toBe("");
     expect(deps.logger.error).toHaveBeenCalled();
   });
@@ -105,7 +108,7 @@ describe("bootstrapConfig", () => {
   it("getAppUUID persists the resolved uuid to state", async () => {
     const deps = makeDeps();
     (deps.prompter.input as any).mockResolvedValue("prompted-uuid");
-    const config = bootstrapConfig({ opts: { force: false }, deps });
+    const config = await bootstrapConfig({ opts: { force: false }, deps });
     const uuid = await config.getAppUUID();
     expect(uuid).toBe("prompted-uuid");
     expect(deps.state.updateState).toHaveBeenCalledWith({
@@ -127,8 +130,8 @@ describe("bootstrapConfig", () => {
 
     it("skips silently when bbs.config.ts does not exist", async () => {
       const deps = makeDeps();
-      const config = bootstrapConfig({ opts: { force: false }, deps });
-      await expect(config.loadUserConfig()).resolves.toBeUndefined();
+      const config = await bootstrapConfig({ opts: { force: false }, deps });
+      expect(config.loadUserConfig()).resolves.toBeUndefined();
     });
 
     it("merges bbs.config.ts on top of every other layer", async () => {
@@ -144,7 +147,7 @@ describe("bootstrapConfig", () => {
       (deps.state.getState as any).mockReturnValue({
         app: { uuid: "state-uuid" },
       });
-      const config = bootstrapConfig({ opts: { force: false }, deps });
+      const config = await bootstrapConfig({ opts: { force: false }, deps });
       (deps.director.exists as any).mockReturnValue(true);
 
       await config.loadUserConfig();
@@ -163,9 +166,9 @@ describe("bootstrapConfig", () => {
 
       const deps = makeDeps();
       (deps.director.exists as any).mockReturnValue(true);
-      const config = bootstrapConfig({ opts: { force: false }, deps });
+      const config = await bootstrapConfig({ opts: { force: false }, deps });
 
-      await expect(config.loadUserConfig()).rejects.toThrow(
+      expect(config.loadUserConfig()).rejects.toThrow(
         "bbs.config.ts must have a default export from createConfig(...)",
       );
     });
@@ -181,9 +184,9 @@ describe("bootstrapConfig", () => {
 
       const deps = makeDeps();
       (deps.director.exists as any).mockReturnValue(true);
-      const config = bootstrapConfig({ opts: { force: false }, deps });
+      const config = await bootstrapConfig({ opts: { force: false }, deps });
 
-      await expect(config.loadUserConfig()).rejects.toThrow(
+      expect(config.loadUserConfig()).rejects.toThrow(
         "Failed to load bbs.config.ts",
       );
     });
