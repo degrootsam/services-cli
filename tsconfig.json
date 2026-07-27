@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ESNext", // Use the latest JavaScript features
-    "module": "CommonJS", // CommonJS for CLI module format
+    "module": "esnext", // CommonJS for CLI module format
     "moduleResolution": "Node", // Node-style module resolution
     "lib": ["ESNext"], // Include ESNext lib features
     "outDir": "dist", // Output compiled JavaScript files to "dist"

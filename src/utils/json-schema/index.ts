@@ -14,7 +14,7 @@ export async function validateJson({
   const request = new RequestHandler(schemaURL);
   const response = await request.get("");
   const schema = await response.json();
-  const jsonContent = deps.director.readFile(pathToJson);
+  const jsonContent = await deps.director.readFile(pathToJson);
   const jsonData = JSON.parse(jsonContent!);
   console.log(schema);
 }

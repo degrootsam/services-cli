@@ -46,6 +46,12 @@ const DEFAULT_CONFIG: Config = {
             url: "https://github.com/degrootsam/bb-generic-actions",
             description: "JavaScript project template",
           },
+          wasm: {
+            name: "bb-generic-actions-wasm",
+            path: "functions/projects/wasm",
+            url: "https://github.com/degrootsam/bb-generic-actions-wasm",
+            description: "WASM project template",
+          },
         },
         typegen: "functions/types/index.ts",
       },
@@ -131,20 +137,20 @@ export type ConfigAPI = {
   builderAPIURL: () => Promise<string>;
 };
 
-export function bootstrapConfig({
+export async function bootstrapConfig({
   opts,
   deps,
 }: {
   opts: { force?: boolean };
   deps: ConfigDeps;
-}): ConfigAPI {
+}): Promise<ConfigAPI> {
   const LEGACY_CONFIG_PATH = path.resolve(process.cwd(), "config.json");
   const USER_CONFIG_PATH = path.resolve(process.cwd(), "bbs.config.ts");
-  const _isTs = deps.director.getTsConfig() !== null;
+  const _isTs = (await deps.director.getTsConfig()) !== null;
   const _force = opts.force ?? false;
-  let _data: Config = loadConfig();
+  let _data: Config = await loadConfig();
 
-  function loadConfig(): Config {
+  async function loadConfig(): Promise<Config> {
     let merged = deepMerge(
       JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
       deps.state.getState(),
@@ -153,7 +159,7 @@ export function bootstrapConfig({
     if (deps.director.exists(LEGACY_CONFIG_PATH)) {
       try {
         const legacyConfig = JSON.parse(
-          deps.director.readFile(LEGACY_CONFIG_PATH) ?? "",
+          (await deps.director.readFile(LEGACY_CONFIG_PATH)) ?? "",
         );
         merged = deepMerge(merged, legacyConfig) as Config;
       } catch (err) {

@@ -88,13 +88,13 @@ export async function downloadTemplate({
   return cloneLocation;
 }
 
-export function generateBbsConfigFile({
+export async function generateBbsConfigFile({
   deps,
   targetDir,
 }: {
   deps: AppDeps;
   targetDir: string;
-}): void {
+}): Promise<void> {
   const content = `import { createConfig } from "bbs-cli";
 
 export default createConfig({
@@ -106,5 +106,5 @@ export default createConfig({
 });
 `;
   const outputPath = path.resolve(targetDir, "bbs.config.ts");
-  deps.director.writeFile(outputPath, content);
+  await deps.director.writeFile(outputPath, content);
 }

@@ -1,11 +1,31 @@
 import { Command } from "commander";
 import { withErrorHandling, deps } from "../../../utils";
-import { generateProject } from "../../../utils/scaffolder/functions";
+import {
+  generateFunction,
+  generateProject,
+} from "../../../utils/scaffolder/functions";
 import { generateBbsConfigFile } from "../../../utils/scaffolder";
+import { SelectChoice } from "../../../utils/prompter";
+import { ProjectTypeKey } from "../../../utils/types";
+import path from "path";
+
+const projectTypes: SelectChoice[] = [
+  {
+    name: "WASM",
+    value: "wasm",
+  },
+  {
+    name: "Typescript",
+    value: "ts",
+  },
+  {
+    name: "Javascript",
+    value: "js",
+  },
+];
 
 const initFunction = new Command("init")
   .arguments("<name>")
-  .option("--j, --javascript", "Use vanilla JavaScript")
   .description("Initialize a new TypeScript functions project")
   .option(
     "-f, --force",
@@ -13,12 +33,37 @@ const initFunction = new Command("init")
   )
   .action(
     withErrorHandling(async (name, options) => {
-      await generateProject({ deps, name, javascript: options.javascript });
-      generateBbsConfigFile({ deps, targetDir: name });
-      deps.director.changeDir(name);
-      deps.spinner.start("Installing dependencies...");
-      await deps.director.runCommand("bun", ["install"], { stdio: "ignore" });
-      deps.spinner.success("Dependencies installed");
+      const choice = await deps.prompter.select(
+        projectTypes,
+        `What kind of functions project should ${name} be?`,
+      );
+
+      if (!choice) throw new Error("Please make a choice!");
+
+      await generateProject({
+        deps,
+        name,
+        type: choice as ProjectTypeKey,
+      });
+
+      await generateBbsConfigFile({ deps, targetDir: name });
+
+      if (choice !== "wasm") {
+        deps.director.changeDir(name);
+        deps.spinner.start("Installing dependencies...");
+        await deps.director.runCommand("bun", ["install"], {
+          stdio: "ignore",
+          cwd: path.resolve(name),
+        });
+        deps.spinner.success("Dependencies installed");
+      } else {
+        await generateFunction({
+          name: "hello-world",
+          deps,
+          type: "wasm",
+        });
+      }
+
       deps.logger.info(
         `Functions project "${name}" created!\n\n  To start developing:\n  - cd ${name}\n  - bbs functions publish\n    `,
       );

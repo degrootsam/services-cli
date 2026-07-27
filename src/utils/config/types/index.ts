@@ -11,6 +11,7 @@ export type TemplateConfig = {
 export type ProjectVariants = {
   ts: TemplateConfig;
   js: TemplateConfig;
+  wasm: TemplateConfig;
 };
 
 export type ScaffolderConfig = {

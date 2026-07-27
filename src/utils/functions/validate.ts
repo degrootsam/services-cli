@@ -23,7 +23,7 @@ export async function validateFunctions({
 
   for (const currentFunctionName of functionNames) {
     const currentFunction = functions[currentFunctionName];
-    const functionContent = deps.director.readFile(
+    const functionContent = await deps.director.readFile(
       getFunctionFilePath({ func: currentFunction }),
     );
 

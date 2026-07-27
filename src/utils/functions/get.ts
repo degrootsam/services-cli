@@ -65,14 +65,14 @@ export function getFunctions({ deps }: { deps: AppDeps }): Functions {
   return sortedFunctions;
 }
 
-export function getFunctionsJSON({
+export async function getFunctionsJSON({
   deps,
   functions,
 }: {
   deps: AppDeps;
   functions: Functions;
-}): any[] {
-  return Object.keys(functions).map((functionName) => {
+}): Promise<any[]> {
+  return Object.keys(functions).map(async (functionName) => {
     const currentFunction = functions[functionName];
     const { latestVersion, path: functionPath } = currentFunction;
     const functionJSONPath = path.resolve(
@@ -80,7 +80,8 @@ export function getFunctionsJSON({
       latestVersion,
       "function.json",
     );
-    const functionJSONContent = deps.director.readFile(functionJSONPath) ?? "";
+    const functionJSONContent =
+      (await deps.director.readFile(functionJSONPath)) ?? "";
     try {
       const parsedContent = JSON.parse(functionJSONContent);
       return {

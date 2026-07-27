@@ -21,7 +21,7 @@ export type StateDeps = {
 export type StateAPI = {
   getState: () => StateData;
   updateState: (partial: DeepPartial<StateData>) => void;
-  saveState: () => void;
+  saveState: () => Promise<void>;
 };
 
 function deepMerge(
@@ -46,11 +46,11 @@ export function createState({ deps }: { deps: StateDeps }): StateAPI {
   const STATE_PATH = path.resolve(process.cwd(), ".bbs", "state.json");
   let _data: StateData = loadState();
 
-  function loadState(): StateData {
+  function loadState() {
     if (deps.director.exists(STATE_PATH)) {
       try {
         return JSON.parse(
-          deps.director.readFile(STATE_PATH) ?? "{}",
+          deps.director.readFileSync(STATE_PATH) ?? "{}",
         ) as StateData;
       } catch (err) {
         deps.logger.error(
@@ -70,9 +70,9 @@ export function createState({ deps }: { deps: StateDeps }): StateAPI {
       deps.logger.debug("Storing new state value", partial);
       _data = deepMerge(_data, partial) as StateData;
     },
-    saveState() {
+    async saveState() {
       deps.logger.debug("Saving state to .bbs/state.json");
-      deps.director.writeFile(STATE_PATH, JSON.stringify(_data, null, 2));
+      await deps.director.writeFile(STATE_PATH, JSON.stringify(_data, null, 2));
     },
   };
 }

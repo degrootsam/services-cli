@@ -5,31 +5,36 @@ import archiver from "archiver";
 import os from "os";
 import { isErrorWithMessage } from "../errors";
 import type { LoggerAPI } from "../logger";
+import { ProjectTypeKey } from "../types";
+import { generateTest } from "../scaffolder/functions";
+import { director } from "..";
 
 export type DirectorAPI = {
   resolveCLIPath: () => string;
   resolveCLITemplatePath: (templatesPath: string) => string;
-  createDir: (name: string) => void;
+  createDir: (name: string) => Promise<void>;
   readDir: (path: string, recursive?: boolean) => string[];
   copyDir: (sourceDir: string, targetDir: string) => Promise<void>;
   exists: (targetPath: string) => boolean;
   changeDir: (path: string) => void;
   zipDir: (sourceDir: string, outputPath: string) => Promise<void>;
-  removeDir: (dirPath: string) => void;
+  removeDir: (dirPath: string) => Promise<void>;
   writeFile: (
     outputPath: string,
     content: string,
     encoding?: BufferEncoding,
-  ) => void;
-  readFile: (path: string, silent?: boolean) => string;
-  getPackageJSON: () => null | Record<string, any>;
-  getTsConfig: () => null | Record<string, any>;
+  ) => Promise<void>;
+  readFile: (path: string, silent?: boolean) => Promise<string>;
+  readFileSync: (path: string, silent?: boolean) => string;
+  getPackageJSON: () => Promise<null | Record<string, any>>;
+  getTsConfig: () => Promise<null | Record<string, any>>;
   findBbsCliPath: () => Promise<string | null>;
   runCommand: (
     command: string,
     args?: string[],
     options?: SpawnOptions,
   ) => Promise<string>;
+  getProjectType: () => Promise<ProjectTypeKey>;
 };
 
 export function createDirector({
@@ -50,9 +55,9 @@ export function createDirector({
       return path.resolve(this.resolveCLIPath(), templatesPath);
     },
 
-    createDir(name) {
+    async createDir(name): Promise<void> {
       logger.debug(`Creating directory in ${name}`);
-      fs.mkdirSync(name, { recursive: true });
+      await fs.mkdir(name, { recursive: true });
     },
 
     readDir(dirPath, recursive = false) {
@@ -113,25 +118,39 @@ export function createDirector({
       });
     },
 
-    removeDir(dirPath) {
+    async removeDir(dirPath): Promise<void> {
       logger.debug(`Removing directory at ${dirPath}`);
-      fs.rmSync(dirPath, { force: true, recursive: true });
+      await fs.rm(dirPath, { force: true, recursive: true });
     },
 
-    writeFile(outputPath, content, encoding = "utf-8") {
+    async writeFile(outputPath, content, encoding = "utf-8"): Promise<void> {
       logger.debug(`Writing file to ${outputPath}`);
       const contentSize = Buffer.byteLength(content, "utf-8");
       const dir = path.dirname(outputPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      if (!(await fs.exists(dir))) {
+        await fs.mkdir(dir, { recursive: true });
       }
       logger.debug(`Size in bytes ${contentSize}`);
       logger.debug(`Encoding: ${encoding}`);
-      fs.writeFileSync(outputPath, content, { encoding, mode: 0o666 });
+      await fs.writeFile(outputPath, content, { encoding, mode: 0o666 });
       logger.debug("File written successfully");
     },
 
-    readFile(filePath, silent = false) {
+    async readFile(filePath, silent = false): Promise<string> {
+      logger.debug(`Opening file at ${filePath}`);
+      try {
+        return await fs.readFile(filePath, { encoding: "utf-8" });
+      } catch (error) {
+        if (silent) return "";
+        if (isErrorWithMessage(error) && error.message.includes("ENOENT")) {
+          logger.error(error.message);
+          return "";
+        }
+        throw error;
+      }
+    },
+
+    readFileSync(filePath, silent) {
       logger.debug(`Opening file at ${filePath}`);
       try {
         return fs.readFileSync(filePath, { encoding: "utf-8" });
@@ -145,9 +164,9 @@ export function createDirector({
       }
     },
 
-    getPackageJSON() {
+    async getPackageJSON(): Promise<Record<string, any> | null> {
       try {
-        const fileContent = this.readFile("package.json");
+        const fileContent = await this.readFile("package.json");
         if (!fileContent) return null;
         return JSON.parse(fileContent);
       } catch (error) {
@@ -156,9 +175,9 @@ export function createDirector({
       }
     },
 
-    getTsConfig() {
+    async getTsConfig(): Promise<Record<string, any> | null> {
       try {
-        let fileContent = this.readFile("tsconfig.json", true);
+        let fileContent = await this.readFile("tsconfig.json", true);
         if (!fileContent) return null;
         const commentRegex =
           /((\/\*\*)(\/\*)[\S\s]*?(\*\/))|((\/\/)[\S\s]*?(?=[\n\r]))/g;
@@ -218,6 +237,19 @@ export function createDirector({
           );
         }
       });
+    },
+    async getProjectType(): Promise<ProjectTypeKey> {
+      const appFunctions = await this.readFile(".app-functions", true);
+      const appFunctionsTs = await this.readFile(".app-functions-ts", true);
+      const wasmFunctions = await this.readFile(".wasm-functions", true);
+
+      if (appFunctions) return "js";
+      if (appFunctionsTs) return "ts";
+      if (wasmFunctions) return "wasm";
+
+      throw new Error(
+        "Current project is not a valid functions project (js/ts/wasm). Missing file:\n\t-js: .app-functions\n\t-ts:.app-functions-ts\n\t-wasm: .wasm-functions",
+      );
     },
   };
 }

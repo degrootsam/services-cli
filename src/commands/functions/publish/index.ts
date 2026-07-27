@@ -43,8 +43,7 @@ const publishFunction = new Command("publish")
       const outputZipPath = path.resolve(deps.config.buildDir, "app.zip");
       await deps.director.zipDir(appDir, outputZipPath);
 
-      console.log(outputZipPath);
-      deps.director.removeDir(appDir);
+      await deps.director.removeDir(appDir);
 
       await uploadFunctions({
         deps,

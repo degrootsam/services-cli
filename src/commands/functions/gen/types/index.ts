@@ -12,43 +12,11 @@ const genTypes = new Command("types")
   .description("Generate a typescript file based on a Betty Blocks application")
   .action(
     withErrorHandling(async () => {
-      let packageJSONContent = deps.director.getPackageJSON();
+      let packageJSONContent = await deps.director.getPackageJSON();
       if (!packageJSONContent) {
-        const choice = (await deps.prompter.select(
-          [
-            { name: "Initialize functions project", value: "functions" },
-            { name: "Initialize empty project (bun init)", value: "npm" },
-          ],
-          "The current working directory has no package.json (required). Please make a choice:",
-        )) as "functions" | "npm";
-
-        switch (choice) {
-          case "functions":
-            const name = await deps.prompter.input(
-              "Please provide a name for the project",
-              true,
-            );
-            await generateProject({ deps, name, javascript: true });
-
-            deps.director.changeDir(name);
-            break;
-          case "npm":
-            const createNewDirectory = await deps.prompter.confirm(
-              "Do you want to create a new directory?",
-            );
-            if (createNewDirectory) {
-              const newDirectoryName = await deps.prompter.input(
-                "Please enter a name for the direcory",
-                true,
-              );
-              deps.director.createDir(newDirectoryName);
-              deps.director.changeDir(newDirectoryName);
-            }
-            await deps.director.runCommand("bun", ["init", "-y"], {
-              stdio: "inherit",
-            });
-            break;
-        }
+        throw new Error(
+          "Please initialize a functions project first! Use: bbs functions init <project-name>",
+        );
       }
 
       const dependencies = [
@@ -59,6 +27,7 @@ const genTypes = new Command("types")
         "-d @graphql-codegen/introspection",
         "graphql",
       ];
+
       deps.spinner.start("Installing dependencies...");
       for (let i = 0; i < dependencies.length; i++) {
         try {
@@ -76,7 +45,7 @@ const genTypes = new Command("types")
       deps.spinner.success("Dependencies installed");
 
       // Reload the packageJSON with the new dependencies
-      packageJSONContent = deps.director.getPackageJSON();
+      packageJSONContent = await deps.director.getPackageJSON();
 
       if (!packageJSONContent) {
         throw new Error(
@@ -91,7 +60,7 @@ const genTypes = new Command("types")
           "generate-types": "graphql-codegen --config codegen.ts",
         },
       };
-      deps.director.writeFile(
+      await deps.director.writeFile(
         "package.json",
         JSON.stringify(packageJSONContent),
       );

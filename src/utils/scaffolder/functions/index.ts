@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { downloadTemplate, copyTemplateFromLocal } from "..";
-import type { AppDeps } from "../../types";
+import type { AppDeps, ProjectTypeKey } from "../../types";
 import {
   getFunctions,
   getValidFunctions,
@@ -10,23 +10,38 @@ import {
   generateBarrelFunctionDeclaration,
 } from "../../functions";
 import type { FunctionInfo, Functions } from "../../functions/types";
+import { SelectChoice } from "../../prompter";
+
+const WASM_FUNCTION_TYPES: SelectChoice[] = [
+  {
+    name: "TypeScript",
+    value: "ts",
+  },
+  {
+    name: "Rust",
+    value: "rust",
+  },
+  {
+    name: "GO",
+    value: "go",
+  },
+];
 
 export async function generateProject({
   deps,
   name,
-  javascript = false,
+  type,
 }: {
   deps: AppDeps;
   name: string;
   javascript?: boolean;
+  type: ProjectTypeKey;
 }): Promise<void> {
   const functionTemplateURLs =
     deps.config.scaffolder.templates.functions.project;
-  let templateUrl = functionTemplateURLs.ts.url;
+  let templateUrl = functionTemplateURLs[type].url;
 
-  if (javascript) {
-    templateUrl = functionTemplateURLs.js.url;
-  }
+  console.log({ templateUrl });
 
   await downloadTemplate({
     deps,
@@ -63,7 +78,7 @@ export async function generateCodeGenFile({
     templates.functions.typegen,
   );
 
-  let templateContent = deps.director.readFile(templatePath);
+  let templateContent = await deps.director.readFile(templatePath);
 
   if (!templateContent) {
     throw new Error(
@@ -83,7 +98,7 @@ export async function generateCodeGenFile({
 
   deps.logger.debug(`Writing template file to ${outputPath}`);
 
-  deps.director.writeFile(outputPath, templateContent);
+  await deps.director.writeFile(outputPath, templateContent);
 
   deps.logger.debug(`Cleaning temp files at ${cacheDir}`);
 
@@ -100,71 +115,97 @@ export async function generateCodeGenFile({
 export async function generateFunction({
   deps,
   name,
+  type,
 }: {
   deps: AppDeps;
   name: string;
+  type?: ProjectTypeKey;
 }): Promise<void> {
-  const tsConfig = deps.director.getTsConfig();
+  const projectType = type || (await deps.director.getProjectType());
 
-  const targetFileType = tsConfig ? "ts" : "js";
-  const targetFileName = `index.${targetFileType}`;
+  if (["js", "ts"].includes(projectType)) {
+    const tsConfig = await deps.director.getTsConfig();
 
-  const functions = getFunctions({ deps });
+    const targetFileType = tsConfig ? "ts" : "js";
+    const targetFileName = `index.${targetFileType}`;
 
-  const existingFunctionNames = Object.keys(functions);
+    const functions = getFunctions({ deps });
 
-  if (existingFunctionNames.includes(name) && !deps.config.force) {
-    throw new Error(`Function ${name} already exists!`);
-  }
+    const existingFunctionNames = Object.keys(functions);
 
-  const newFunctionTemplateDir = path.resolve(
-    deps.director.resolveCLITemplatePath(deps.config.scaffolder.templates.path),
-    deps.config.scaffolder.templates.functions.new,
-  );
+    if (existingFunctionNames.includes(name) && !deps.config.force) {
+      throw new Error(`Function ${name} already exists!`);
+    }
 
-  let indexTsJs = deps.director.readFile(
-    path.resolve(newFunctionTemplateDir, targetFileName),
-  );
-  let functionJSON = deps.director.readFile(
-    path.resolve(newFunctionTemplateDir, "function.json"),
-  );
+    const newFunctionTemplateDir = path.resolve(
+      deps.director.resolveCLITemplatePath(
+        deps.config.scaffolder.templates.path,
+      ),
+      deps.config.scaffolder.templates.functions.new,
+      projectType,
+    );
 
-  if (!indexTsJs || !functionJSON) {
-    deps.logger.debug({ indexTsJs, functionJSON });
-    throw new Error("The template file(s) yielded no content");
-  }
+    let indexTsJs = await deps.director.readFile(
+      path.resolve(newFunctionTemplateDir, targetFileName),
+    );
 
-  const parsedName = parseName({ name });
+    let functionJSON = await deps.director.readFile(
+      path.resolve(newFunctionTemplateDir, "function.json"),
+    );
 
-  indexTsJs = indexTsJs.replace("functionName", parsedName);
-  functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
-  const functionDir = path.resolve(deps.config.srcDir, name);
+    if (!indexTsJs || !functionJSON) {
+      deps.logger.debug({ indexTsJs, functionJSON });
+      throw new Error("The template file(s) yielded no content");
+    }
 
-  const targetDir = path.resolve(functionDir, "1.0");
+    const parsedName = parseName({ name });
 
-  deps.director.createDir(targetDir);
+    indexTsJs = indexTsJs.replace("functionName", parsedName);
+    functionJSON = functionJSON.replaceAll("{{ functionName }}", parsedName);
+    const functionDir = path.resolve(deps.config.srcDir, name);
 
-  const newIndexTSPath = path.resolve(targetDir, targetFileName);
-  const newFunctionJSONPath = path.resolve(targetDir, "function.json");
+    const targetDir = path.resolve(functionDir, "1.0");
 
-  deps.director.writeFile(newIndexTSPath, indexTsJs);
-  deps.director.writeFile(newFunctionJSONPath, functionJSON);
+    await deps.director.createDir(targetDir);
 
-  deps.spinner.success(`Successfully created function ${parsedName}`);
+    const newIndexTSPath = path.resolve(targetDir, targetFileName);
+    const newFunctionJSONPath = path.resolve(targetDir, "function.json");
 
-  const createTests = await deps.prompter.confirm(
-    "Would you like to create a test file as well?",
-    true,
-  );
+    await deps.director.writeFile(newIndexTSPath, indexTsJs);
+    await deps.director.writeFile(newFunctionJSONPath, functionJSON);
 
-  if (createTests) {
-    const newFunction: Partial<FunctionInfo> = {
-      fileType: targetFileType,
-      latestVersion: "1.0",
-      path: functionDir,
-      versions: new Set(["1.0"]),
-    };
-    await generateTest({ deps, func: newFunction as FunctionInfo });
+    deps.spinner.success(`Successfully created function ${parsedName}`);
+
+    const createTests = await deps.prompter.confirm(
+      "Would you like to create a test file as well?",
+      true,
+    );
+
+    if (createTests) {
+      const newFunction: Partial<FunctionInfo> = {
+        fileType: targetFileType,
+        latestVersion: "1.0",
+        path: functionDir,
+        versions: new Set(["1.0"]),
+      };
+      await generateTest({ deps, func: newFunction as FunctionInfo });
+    }
+  } else {
+    const choice = await deps.prompter.select(
+      WASM_FUNCTION_TYPES,
+      "What language would you like to use for this function?",
+    );
+
+    if (!WASM_FUNCTION_TYPES.map((t) => t.value).includes(choice)) {
+      throw new Error(`"${choice} is not a valid language option!`);
+    }
+
+    let newFunctionPath = path.resolve(
+      deps.config.scaffolder.templates.functions.new,
+      "wasm",
+      choice,
+    );
+    console.log({ newFunctionPath });
   }
 }
 
@@ -272,7 +313,7 @@ export async function generateTest({
     );
   }
 
-  deps.director.createDir(targetDir);
+  await deps.director.createDir(targetDir);
 
   const templatePath = path.resolve(
     deps.director.resolveCLITemplatePath(deps.config.scaffolder.templates.path),
@@ -280,7 +321,7 @@ export async function generateTest({
     targetFile,
   );
 
-  let templateContent = deps.director.readFile(templatePath);
+  let templateContent = await deps.director.readFile(templatePath);
 
   const importDir = path.resolve(functionDir, latestVersion);
   const relativePath = path.relative(targetDir, importDir);
@@ -305,14 +346,14 @@ export async function generateTest({
     `await ${parsedFunctionName}()`,
   );
 
-  deps.director.writeFile(targetPath, templateContent);
+  await deps.director.writeFile(targetPath, templateContent);
 
   deps.spinner.success(`Successfully created test for ${functionName}`);
 
   return targetPath;
 }
 
-export function generateFunctionsBarrelFile({
+export async function generateFunctionsBarrelFile({
   deps,
   outputDir,
   functions,
@@ -322,7 +363,7 @@ export function generateFunctionsBarrelFile({
   outputDir: string;
   functions: Functions;
   fileType?: "js" | "ts";
-}): void {
+}): Promise<void> {
   const validFunctions = getValidFunctions({ functions });
 
   let barrelContent = "";
@@ -343,5 +384,5 @@ export function generateFunctionsBarrelFile({
 
   const outputPath = path.resolve(outputDir, `index.${fileType}`);
 
-  deps.director.writeFile(outputPath, barrelContent);
+  await deps.director.writeFile(outputPath, barrelContent);
 }

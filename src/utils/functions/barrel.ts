@@ -38,7 +38,7 @@ export function generateBarrelFunctionDeclaration({
   return result;
 }
 
-export function generateFunctionsBarrelFile({
+export async function generateFunctionsBarrelFile({
   deps,
   outputDir,
   functions,
@@ -48,7 +48,7 @@ export function generateFunctionsBarrelFile({
   outputDir: string;
   functions: Functions;
   fileType?: "js" | "ts";
-}): void {
+}): Promise<void> {
   const validFunctions = getValidFunctions({ functions });
   let barrelContent = "";
   barrelContent += generateBarrelImportDeclarations({
@@ -61,5 +61,5 @@ export function generateFunctionsBarrelFile({
   barrelContent += "\r\n";
   barrelContent += "export default fn;";
   const outputPath = path.resolve(outputDir, `index.${fileType}`);
-  deps.director.writeFile(outputPath, barrelContent);
+  await deps.director.writeFile(outputPath, barrelContent);
 }

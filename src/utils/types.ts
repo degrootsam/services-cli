@@ -36,3 +36,5 @@ export type AppDeps = {
   state: StateAPI;
   spinner: SpinnerAPI;
 };
+
+export type ProjectTypeKey = "js" | "ts" | "wasm";
