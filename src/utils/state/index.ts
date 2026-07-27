@@ -42,15 +42,19 @@ function deepMerge(
   return target;
 }
 
-export function createState({ deps }: { deps: StateDeps }): StateAPI {
+export async function createState({
+  deps,
+}: {
+  deps: StateDeps;
+}): Promise<StateAPI> {
   const STATE_PATH = path.resolve(process.cwd(), ".bbs", "state.json");
-  let _data: StateData = loadState();
+  let _data: StateData = await loadState();
 
-  function loadState() {
-    if (deps.director.exists(STATE_PATH)) {
+  async function loadState() {
+    if (await deps.director.exists(STATE_PATH)) {
       try {
         return JSON.parse(
-          deps.director.readFileSync(STATE_PATH) ?? "{}",
+          (await deps.director.readFile(STATE_PATH)) ?? "{}",
         ) as StateData;
       } catch (err) {
         deps.logger.error(

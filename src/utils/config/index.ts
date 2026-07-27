@@ -156,7 +156,7 @@ export async function bootstrapConfig({
       deps.state.getState(),
     ) as Config;
 
-    if (deps.director.exists(LEGACY_CONFIG_PATH)) {
+    if (await deps.director.exists(LEGACY_CONFIG_PATH)) {
       try {
         const legacyConfig = JSON.parse(
           (await deps.director.readFile(LEGACY_CONFIG_PATH)) ?? "",
@@ -174,7 +174,7 @@ export async function bootstrapConfig({
   }
 
   async function importUserConfig(): Promise<BbsUserConfig | undefined> {
-    if (!deps.director.exists(USER_CONFIG_PATH)) {
+    if (!(await deps.director.exists(USER_CONFIG_PATH))) {
       return undefined;
     }
 

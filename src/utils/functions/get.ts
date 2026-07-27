@@ -1,5 +1,5 @@
 import path from "path";
-import { AppDeps } from "../types";
+import { AppDeps, ProjectTypeKey } from "../types";
 import { Functions } from "./types";
 
 const functionRegexp = /^([A-Za-z0-9_-]+)\/(\d+\.\d+)\/([^\/]+)\.(ts|js)$/;
@@ -20,11 +20,17 @@ export function getValidFunctions({
   );
 }
 
-export function getFunctions({ deps }: { deps: AppDeps }): Functions {
+export async function getFunctions({
+  deps,
+  type,
+}: {
+  deps: AppDeps;
+  type?: ProjectTypeKey;
+}): Promise<Functions> {
   const srcDir = deps.config.srcDir;
   deps.logger.debug(`Getting functions in ${srcDir}`);
 
-  const filePaths = deps.director.readDir(srcDir, true);
+  const filePaths = await deps.director.readDir(srcDir, true);
   const functions: Functions = {};
 
   filePaths.forEach((filePath) => {

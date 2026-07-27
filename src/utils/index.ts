@@ -51,7 +51,7 @@ const logger = createLogger({
 const prompter = createPrompter({ logger });
 const director = createDirector({ logger });
 const spinner = createSpinner();
-const state = createState({ deps: { director, logger } });
+const state = await createState({ deps: { director, logger } });
 const config = await bootstrapConfig({
   opts: { force: !!(forceArg && forceArg.length > 0) },
   deps: { director, logger, prompter, state },

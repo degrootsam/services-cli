@@ -13,9 +13,9 @@ export type DirectorAPI = {
   resolveCLIPath: () => string;
   resolveCLITemplatePath: (templatesPath: string) => string;
   createDir: (name: string) => Promise<void>;
-  readDir: (path: string, recursive?: boolean) => string[];
+  readDir: (path: string, recursive?: boolean) => Promise<string[]>;
   copyDir: (sourceDir: string, targetDir: string) => Promise<void>;
-  exists: (targetPath: string) => boolean;
+  exists: (targetPath: string) => Promise<boolean>;
   changeDir: (path: string) => void;
   zipDir: (sourceDir: string, outputPath: string) => Promise<void>;
   removeDir: (dirPath: string) => Promise<void>;
@@ -60,9 +60,9 @@ export function createDirector({
       await fs.mkdir(name, { recursive: true });
     },
 
-    readDir(dirPath, recursive = false) {
+    async readDir(dirPath, recursive = false) {
       logger.debug(`Reading directory at ${dirPath}`);
-      const directory = fs.readdirSync(dirPath, {
+      const directory = fs.readdir(dirPath, {
         recursive,
         encoding: "utf8",
       });
@@ -74,9 +74,9 @@ export function createDirector({
       return fs.cpSync(sourceDir, targetDir, { recursive: true });
     },
 
-    exists(targetPath) {
+    async exists(targetPath) {
       logger.debug(`Checking if ${targetPath} exists`);
-      const result = fs.existsSync(targetPath);
+      const result = fs.exists(targetPath);
       logger.debug(`Result: ${result}`);
       return result;
     },
@@ -239,9 +239,9 @@ export function createDirector({
       });
     },
     async getProjectType(): Promise<ProjectTypeKey> {
-      const appFunctions = await this.readFile(".app-functions", true);
-      const appFunctionsTs = await this.readFile(".app-functions-ts", true);
-      const wasmFunctions = await this.readFile(".wasm-functions", true);
+      const appFunctions = await this.exists(".app-functions");
+      const appFunctionsTs = await this.exists(".app-functions-ts");
+      const wasmFunctions = await this.exists(".wasm-functions");
 
       if (appFunctions) return "js";
       if (appFunctionsTs) return "ts";

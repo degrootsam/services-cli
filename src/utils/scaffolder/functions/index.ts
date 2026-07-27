@@ -37,11 +37,8 @@ export async function generateProject({
   javascript?: boolean;
   type: ProjectTypeKey;
 }): Promise<void> {
-  const functionTemplateURLs =
-    deps.config.scaffolder.templates.functions.project;
-  let templateUrl = functionTemplateURLs[type].url;
-
-  console.log({ templateUrl });
+  let templateUrl =
+    deps.config.scaffolder.templates.functions.project[type].url;
 
   await downloadTemplate({
     deps,
@@ -129,7 +126,7 @@ export async function generateFunction({
     const targetFileType = tsConfig ? "ts" : "js";
     const targetFileName = `index.${targetFileType}`;
 
-    const functions = getFunctions({ deps });
+    const functions = await getFunctions({ deps });
 
     const existingFunctionNames = Object.keys(functions);
 
@@ -205,12 +202,14 @@ export async function generateFunction({
       "wasm",
       choice,
     );
-    console.log({ newFunctionPath });
+
+    const existingFunctions = await getFunctions({ deps, type });
+    console.log({ existingFunctions, newFunctionPath });
   }
 }
 
 export async function bumpFunction({ deps }: { deps: AppDeps }): Promise<void> {
-  const functions = getFunctions({ deps });
+  const functions = await getFunctions({ deps });
   const functionNames = Object.keys(functions);
 
   const selectedFunctionName = await deps.prompter.select(
@@ -280,7 +279,7 @@ export async function generateTest({
 }): Promise<string> {
   let parsedFunction: FunctionInfo = func as FunctionInfo;
   if (!parsedFunction) {
-    const functions = getFunctions({ deps });
+    const functions = await getFunctions({ deps });
     const functionNames = Object.keys(functions);
     const choices = functionNames.map((name) => ({
       name,
@@ -307,7 +306,7 @@ export async function generateTest({
   );
   const targetPath = path.resolve(targetDir, targetFile);
 
-  if (deps.director.exists(targetPath) && !force) {
+  if ((await deps.director.exists(targetPath)) && !force) {
     throw new Error(
       `A test for ${parsedFunctionName}/${latestVersion} already exists! Use --force to overwrite`,
     );
