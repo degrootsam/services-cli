@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { withErrorHandling, deps } from "../../../../utils";
-import { generateTest } from "../../../../utils/scaffolder/functions";
+import { generateTest } from "../../../../utils/functions/gen/test";
 
 const genTest = new Command("test")
   .option(

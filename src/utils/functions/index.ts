@@ -4,7 +4,7 @@ import {
   generateBarrelFunctionDeclaration,
   generateBarrelImportDeclarations,
   generateFunctionsBarrelFile,
-} from "./barrel";
+} from "./gen/barrel";
 import { buildFunctions } from "./build";
 import { getFunctions, getFunctionsJSON, getValidFunctions } from "./get";
 import { logUploadedFunction, logValidatedFunctions } from "./log";

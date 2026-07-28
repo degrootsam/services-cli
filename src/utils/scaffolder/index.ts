@@ -87,24 +87,3 @@ export async function downloadTemplate({
   deps.spinner.success("Template downloaded successfully");
   return cloneLocation;
 }
-
-export async function generateBbsConfigFile({
-  deps,
-  targetDir,
-}: {
-  deps: AppDeps;
-  targetDir: string;
-}): Promise<void> {
-  const content = `import { createConfig } from "bbs-cli";
-
-export default createConfig({
-  app: {
-    uuid: "",
-    identifier: "",
-    zone: "",
-  },
-});
-`;
-  const outputPath = path.resolve(targetDir, "bbs.config.ts");
-  await deps.director.writeFile(outputPath, content);
-}

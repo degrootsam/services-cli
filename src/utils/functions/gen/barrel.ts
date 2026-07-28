@@ -1,8 +1,42 @@
 import path from "path";
-import { parseName } from ".";
-import { AppDeps } from "../types";
-import { getValidFunctions } from "./get";
-import { Functions } from "./types";
+import { parseName } from "..";
+import { AppDeps } from "../../types";
+import { getValidFunctions } from "../get";
+import { Functions } from "../types";
+
+export async function generateFunctionsBarrelFile({
+  deps,
+  outputDir,
+  functions,
+  fileType = "ts",
+}: {
+  deps: AppDeps;
+  outputDir: string;
+  functions: Functions;
+  fileType?: "js" | "ts";
+}): Promise<void> {
+  const validFunctions = getValidFunctions({ functions });
+
+  let barrelContent = "";
+
+  barrelContent += generateBarrelImportDeclarations({
+    functions: validFunctions,
+  });
+
+  barrelContent += "\r\n";
+
+  barrelContent += generateBarrelFunctionDeclaration({
+    functions: validFunctions,
+  });
+
+  barrelContent += "\r\n";
+
+  barrelContent += "export default fn;";
+
+  const outputPath = path.resolve(outputDir, `index.${fileType}`);
+
+  await deps.director.writeFile(outputPath, barrelContent);
+}
 
 export function generateBarrelImportDeclarations({
   functions,
@@ -36,30 +70,4 @@ export function generateBarrelFunctionDeclaration({
   });
   result += "};\r\n";
   return result;
-}
-
-export async function generateFunctionsBarrelFile({
-  deps,
-  outputDir,
-  functions,
-  fileType = "ts",
-}: {
-  deps: AppDeps;
-  outputDir: string;
-  functions: Functions;
-  fileType?: "js" | "ts";
-}): Promise<void> {
-  const validFunctions = getValidFunctions({ functions });
-  let barrelContent = "";
-  barrelContent += generateBarrelImportDeclarations({
-    functions: validFunctions,
-  });
-  barrelContent += "\r\n";
-  barrelContent += generateBarrelFunctionDeclaration({
-    functions: validFunctions,
-  });
-  barrelContent += "\r\n";
-  barrelContent += "export default fn;";
-  const outputPath = path.resolve(outputDir, `index.${fileType}`);
-  await deps.director.writeFile(outputPath, barrelContent);
 }

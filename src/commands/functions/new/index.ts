@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { withErrorHandling, deps } from "../../../utils";
-import { generateFunction } from "../../../utils/scaffolder/functions";
+import { createFunction } from "../../../utils/functions/create";
 
 const newFunction = new Command("new")
   .arguments("<name>")
@@ -11,7 +11,7 @@ const newFunction = new Command("new")
   )
   .action(
     withErrorHandling(async (name) => {
-      await generateFunction({ deps, name });
+      await createFunction({ deps, name });
     }),
   );
 

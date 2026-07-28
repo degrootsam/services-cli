@@ -1,13 +1,11 @@
-import fs from "fs-extra";
-import path from "path";
-import { spawn, SpawnOptions } from "child_process";
 import archiver from "archiver";
+import { spawn, SpawnOptions } from "child_process";
+import fs from "fs-extra";
 import os from "os";
+import path from "path";
 import { isErrorWithMessage } from "../errors";
 import type { LoggerAPI } from "../logger";
 import { ProjectTypeKey } from "../types";
-import { generateTest } from "../scaffolder/functions";
-import { director } from "..";
 
 export type DirectorAPI = {
   resolveCLIPath: () => string;
@@ -19,6 +17,7 @@ export type DirectorAPI = {
   changeDir: (path: string) => void;
   zipDir: (sourceDir: string, outputPath: string) => Promise<void>;
   removeDir: (dirPath: string) => Promise<void>;
+  renamePath: (sourcePath: string, targetPath: string) => Promise<void>;
   writeFile: (
     outputPath: string,
     content: string,
@@ -71,7 +70,7 @@ export function createDirector({
     },
 
     async copyDir(sourceDir, targetDir) {
-      return fs.cpSync(sourceDir, targetDir, { recursive: true });
+      return fs.copy(sourceDir, targetDir, { overwrite: true });
     },
 
     async exists(targetPath) {
@@ -118,12 +117,17 @@ export function createDirector({
       });
     },
 
-    async removeDir(dirPath): Promise<void> {
+    async removeDir(dirPath) {
       logger.debug(`Removing directory at ${dirPath}`);
       await fs.rm(dirPath, { force: true, recursive: true });
     },
 
-    async writeFile(outputPath, content, encoding = "utf-8"): Promise<void> {
+    async renamePath(sourcePath, targetPath) {
+      logger.debug(`Renaming path: ${sourcePath} to ${targetPath}`);
+      await fs.rename(sourcePath, targetPath);
+    },
+
+    async writeFile(outputPath, content, encoding = "utf-8") {
       logger.debug(`Writing file to ${outputPath}`);
       const contentSize = Buffer.byteLength(content, "utf-8");
       const dir = path.dirname(outputPath);

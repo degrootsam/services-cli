@@ -26,7 +26,7 @@ import { createLogger } from "./logger/index";
 import { createPrompter } from "./prompter";
 import {
   generateProject as generateFunctionsProject,
-  generateFunction,
+  createFunction,
   generateCodeGenFile,
   generateFunctionsBarrelFile as generateFunctionsBarrel,
   generateTest,
@@ -126,7 +126,7 @@ export {
   generateCodeGenFile,
   generateComponent,
   generateComponentsProject,
-  generateFunction,
+  createFunction as generateFunction,
   generateFunctionsBarrel,
   generateFunctionsBarrelFile,
   generateFunctionsProject,
