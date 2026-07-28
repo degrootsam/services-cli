@@ -1,24 +1,32 @@
-import { config, getToken, logger, prompter, saveToken } from "..";
+import { getToken, saveToken } from "../keychain";
 import { RequestHandler } from "../request-handler";
+import { AppDeps } from "../types";
 import { StoredFusionAuthToken } from "./types";
 
 export default class FusionAuth {
   private token?: StoredFusionAuthToken;
 
-  async getFusionAuthURL() {
-    let fusionAuthURL = config.fusionAuthURL;
+  async getFusionAuthURL({ deps }: { deps: AppDeps }) {
+    let fusionAuthURL = deps.config.fusionAuthURL;
 
     if (!fusionAuthURL) {
-      fusionAuthURL = await prompter.getURL("Please enter the Fusion Auth URL");
+      fusionAuthURL = await deps.prompter.getURL(
+        "Please enter the Fusion Auth URL",
+      );
     }
 
     return fusionAuthURL;
   }
 
-  async storeToken(
-    token: string,
-    tokenExpirationInstant: number,
-  ): Promise<StoredFusionAuthToken> {
+  async storeToken({
+    token,
+    tokenExpirationInstant,
+    deps,
+  }: {
+    token: string;
+    tokenExpirationInstant: number;
+    deps: AppDeps;
+  }): Promise<StoredFusionAuthToken> {
     const expiresAtDate = new Date(tokenExpirationInstant);
     const expiresAt = expiresAtDate.setMinutes(expiresAtDate.getMinutes() - 10);
 
@@ -29,24 +37,35 @@ export default class FusionAuth {
     await saveToken({
       account_name: "fusionAuthToken",
       token: JSON.stringify(fusionAuthToken),
+      deps,
     });
     return fusionAuthToken;
   }
 
-  validateToken(token: StoredFusionAuthToken) {
-    logger.debug("Validating FusionAuth Access Token");
+  validateToken({
+    token,
+    deps,
+  }: {
+    token: StoredFusionAuthToken;
+    deps: AppDeps;
+  }) {
+    deps.logger.debug("Validating FusionAuth Access Token");
     let result = false;
 
     const now = new Date();
     const expiresAt = new Date(token.expiresAt);
     result = now < expiresAt;
-    logger.debug(`Result: ${now} > ${expiresAt} = ${result}`);
+    deps.logger.debug(`Result: ${now} > ${expiresAt} = ${result}`);
     return result;
   }
 
-  async getStoredToken(): Promise<StoredFusionAuthToken | undefined> {
+  async getStoredToken({
+    deps,
+  }: {
+    deps: AppDeps;
+  }): Promise<StoredFusionAuthToken | undefined> {
     if (!this.token) {
-      const token = await getToken({ account_name: "fusionAuthToken" });
+      const token = await getToken({ account_name: "fusionAuthToken", deps });
       if (token) {
         try {
           this.token = JSON.parse(token);
@@ -56,56 +75,57 @@ export default class FusionAuth {
     return this.token;
   }
 
-  async getToken(): Promise<StoredFusionAuthToken> {
-    logger.debug("Getting stored token for FusionAuth...");
-    let token = await this.getStoredToken();
+  async getToken({ deps }: { deps: AppDeps }): Promise<StoredFusionAuthToken> {
+    deps.logger.debug("Getting stored token for FusionAuth...");
+    let token = await this.getStoredToken({ deps });
 
     if (!token) {
-      logger.debug("No stored token for FusionAuth available");
-      token = await this.login();
+      deps.logger.debug("No stored token for FusionAuth available");
+      token = await this.login({ deps });
     }
 
-    const tokenIsValid = this.validateToken(token);
+    const tokenIsValid = this.validateToken({ token, deps });
 
     if (!tokenIsValid) {
-      token = await this.login();
+      token = await this.login({ deps });
     }
 
     return this.token!;
   }
 
-  async login(): Promise<StoredFusionAuthToken> {
-    const loginId = await prompter.getUsername();
-    const password = await prompter.getPassword();
-    const fusionAuthURL = await this.getFusionAuthURL();
+  async login({ deps }: { deps: AppDeps }): Promise<StoredFusionAuthToken> {
+    const loginId = await deps.prompter.getUsername();
+    const password = await deps.prompter.getPassword();
+    const fusionAuthURL = await this.getFusionAuthURL({ deps });
     const requestHandler = new RequestHandler(fusionAuthURL);
 
-    const response = await requestHandler.post(
-      "/api/login",
-      JSON.stringify({
+    const response = await requestHandler.post({
+      endpoint: "/api/login",
+      body: JSON.stringify({
         loginId,
         password,
       }),
-      {
+      headers: {
         "Content-Type": "application/json; charset=UTF-8",
       },
-    );
+      deps,
+    });
 
     switch (response.status) {
       case 404:
-        logger.error("Invalid login credentials! Please try again");
-        return await this.login();
+        deps.logger.error("Invalid login credentials! Please try again");
+        return await this.login({ deps });
       case 200:
         const { token, tokenExpirationInstant } = (await response.json()) as {
           token: string;
           tokenExpirationInstant: number;
         };
-        return await this.storeToken(token, tokenExpirationInstant);
+        return await this.storeToken({ token, tokenExpirationInstant, deps });
       case 242:
         const { twoFactorId } = (await response.json()) as {
           twoFactorId: string;
         };
-        return await this.handle2FA(twoFactorId);
+        return await this.handle2FA({ deps, twoFactorId });
       default:
         throw new Error(
           `Unhandled response status from Fusion Auth: ${response.status} - ${response.statusText}`,
@@ -113,17 +133,27 @@ export default class FusionAuth {
     }
   }
 
-  async handle2FA(twoFactorId: string): Promise<StoredFusionAuthToken> {
-    const code = await prompter.input("Please enter your 2FA code", true);
-    const request = new RequestHandler(config.fusionAuthURL);
+  async handle2FA({
+    twoFactorId,
+    deps,
+  }: {
+    twoFactorId: string;
+    deps: AppDeps;
+  }): Promise<StoredFusionAuthToken> {
+    const code = await deps.prompter.input("Please enter your 2FA code", true);
+    const request = new RequestHandler(deps.config.fusionAuthURL);
 
-    const response = await request.post("/api/two-factor/login", {
-      code,
-      twoFactorId,
+    const response = await request.post({
+      endpoint: "/api/two-factor/login",
+      body: JSON.stringify({
+        code,
+        twoFactorId,
+      }),
+      deps,
     });
 
     if (response.status !== 200) {
-      return await this.handle2FA(twoFactorId);
+      return await this.handle2FA({ twoFactorId, deps });
     }
 
     const result = (await response.json()) as {
@@ -137,6 +167,6 @@ export default class FusionAuth {
     }
 
     const { token, tokenExpirationInstant } = result;
-    return await this.storeToken(token, tokenExpirationInstant);
+    return await this.storeToken({ token, tokenExpirationInstant, deps });
   }
 }

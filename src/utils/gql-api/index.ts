@@ -77,11 +77,16 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
 
     _expiresAt = accessExpiresAt;
 
-    await saveToken({ account_name: "gqlAccessToken", token: jwtToken! });
-    await saveToken({ account_name: "gqlRefreshToken", token: refreshToken! });
+    await saveToken({ account_name: "gqlAccessToken", token: jwtToken!, deps });
+    await saveToken({
+      account_name: "gqlRefreshToken",
+      token: refreshToken!,
+      deps,
+    });
     await saveToken({
       account_name: "gqlAccessTokenExpiresAt",
       token: accessExpiresAt.toString(),
+      deps,
     });
 
     return {
@@ -99,11 +104,13 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
     async getTokensFromKeychain(): Promise<GraphQLAccessToken | undefined> {
       logger.debug("Checking tokens in keychain");
 
-      _jwt = (await getToken({ account_name: "gqlAccessToken" })) ?? "";
-      _refresh = (await getToken({ account_name: "gqlRefreshToken" })) ?? "";
+      _jwt = (await getToken({ account_name: "gqlAccessToken", deps })) ?? "";
+      _refresh =
+        (await getToken({ account_name: "gqlRefreshToken", deps })) ?? "";
 
       const accessTokenExpiresAt = await getToken({
         account_name: "gqlAccessTokenExpiresAt",
+        deps,
       });
       _expiresAt = accessTokenExpiresAt ? Number(accessTokenExpiresAt) : null;
 
@@ -293,7 +300,6 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
           }
 
           if (!loginMutationData) return;
-          console.log({ loginMutationData });
           return await parseLoginResult(loginMutationData?.action.results);
       }
     },

@@ -1,5 +1,5 @@
 import keytar from "keytar";
-import { logger } from "..";
+import { AppDeps } from "../types";
 
 interface AccountNames {
   gqlAccessToken: string;
@@ -12,32 +12,38 @@ const SERVICE_NAME = process.env.SERVICE_NAME ?? "bbs-cli-dev";
 export async function saveToken({
   account_name,
   token,
+  deps,
 }: {
   account_name: keyof AccountNames;
   token: string;
+  deps: AppDeps;
 }) {
-  logger.debug(`Storing password in Keychain`);
+  deps.logger.debug(`Storing password in Keychain`);
   await keytar.setPassword(SERVICE_NAME, account_name, token);
-  logger.debug(`Password stored in Keychain`);
+  deps.logger.debug(`Password stored in Keychain`);
 }
 
 export async function getToken({
   account_name,
+  deps,
 }: {
   account_name: keyof AccountNames;
+  deps: AppDeps;
 }): Promise<string | null> {
-  logger.debug(`Fetching password from Keychain`);
+  deps.logger.debug(`Fetching password from Keychain`);
   const result = await keytar.getPassword(SERVICE_NAME, account_name);
-  logger.debug(`Password fetched from Keychain ${result?.length}`);
+  deps.logger.debug(`Password fetched from Keychain ${result?.length}`);
   return result;
 }
 
 export async function clearToken({
   account_name,
+  deps,
 }: {
   account_name: keyof AccountNames;
+  deps: AppDeps;
 }) {
-  logger.debug(`Clearing password from Keychain`);
+  deps.logger.debug(`Clearing password from Keychain`);
   await keytar.deletePassword(SERVICE_NAME, account_name);
-  logger.debug(`Password cleared from Keychain`);
+  deps.logger.debug(`Password cleared from Keychain`);
 }
