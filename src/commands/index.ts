@@ -24,7 +24,7 @@ const runCLI = async () => {
     .action(
       withErrorHandling(async () => {
         const fusionAuth = new FusionAuth();
-        await fusionAuth.login();
+        await fusionAuth.login({ deps });
       }),
     );
 
