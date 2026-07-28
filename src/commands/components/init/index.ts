@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { generateProject } from "../../../utils/scaffolder/components";
-import { withErrorHandling } from "../../../utils";
+import { deps, withErrorHandling } from "../../../utils";
 
 const initComponent = new Command("init")
   .arguments("<name>")
