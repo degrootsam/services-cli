@@ -1,13 +1,10 @@
 import { Command } from "commander";
 import path from "path";
-import {
-  deps,
-  generateFunctionsBarrelFile,
-  getFunctions,
-  validateFunctions,
-  buildFunctions,
-  withErrorHandling,
-} from "../../../utils";
+import { deps, withErrorHandling } from "../../../utils";
+import { buildFunctions } from "../../../utils/functions/build";
+import { generateFunctionsBarrelFile } from "../../../utils/functions/gen/barrel";
+import { getFunctions } from "../../../utils/functions/get";
+import { validateFunctions } from "../../../utils/functions/validate";
 
 const buildFunctionsCmd = new Command("build")
   .description("Build your functions")

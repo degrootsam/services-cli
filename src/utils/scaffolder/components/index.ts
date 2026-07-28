@@ -1,4 +1,5 @@
 import { downloadTemplate } from "..";
+import { generateBbsConfigFile } from "../../functions/gen/config";
 import type { AppDeps } from "../../types";
 
 export async function generateProject({
@@ -17,6 +18,7 @@ export async function generateProject({
     cloneLocation: name,
     force,
   });
+  await generateBbsConfigFile({ deps, targetDir: name });
   deps.logger.info(
     `Components project "${name}" created!
 

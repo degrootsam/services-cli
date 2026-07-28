@@ -1,6 +1,7 @@
 import path from "path";
-import { AppDeps, generateTest } from "..";
+import { AppDeps } from "..";
 import { getFunctions } from "./get";
+import { generateTest } from "./gen/test";
 
 export async function bumpFunction({ deps }: { deps: AppDeps }): Promise<void> {
   const functions = await getFunctions({ deps });

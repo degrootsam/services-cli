@@ -1,16 +1,16 @@
 import { Command } from "commander";
 import path from "path";
-import { config, withErrorHandling, director, logger } from "../utils";
 import FusionAuth from "../utils/fusion-auth";
 import update from "./update";
 import components from "./components";
 import functions from "./functions";
+import { deps, withErrorHandling } from "../utils";
 
 const runCLI = async () => {
   try {
-    await config.loadUserConfig();
+    await deps.config.loadUserConfig();
   } catch (error) {
-    logger.error(error instanceof Error ? error.message : String(error));
+    deps.logger.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 

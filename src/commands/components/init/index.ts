@@ -1,7 +1,6 @@
 import { Command } from "commander";
-import { withErrorHandling, deps } from "../../../utils";
 import { generateProject } from "../../../utils/scaffolder/components";
-import { generateBbsConfigFile } from "../../../utils/scaffolder";
+import { withErrorHandling } from "../../../utils";
 
 const initComponent = new Command("init")
   .arguments("<name>")
@@ -10,7 +9,6 @@ const initComponent = new Command("init")
   .action(
     withErrorHandling(async (name, options) => {
       await generateProject({ deps, name, force: options.force ?? false });
-      generateBbsConfigFile({ deps, targetDir: name });
     }),
   );
 

@@ -1,45 +1,10 @@
 import { createSpinner } from "nanospinner";
 import { bootstrapConfig } from "./config";
-import { createState } from "./state";
 import { createDirector } from "./director";
-import {
-  buildFunctions,
-  getFunctions,
-  validateFunctions,
-  parseName,
-  uploadFunctions,
-  getFunctionsJSON,
-  getValidFunctions,
-  logValidatedFunctions,
-  logUploadedFunction,
-  generateFunctionsBarrelFile,
-  generateBarrelImportDeclarations,
-  generateBarrelFunctionDeclaration,
-  getFunctionFilePath,
-  getFunctionJsonFilePath,
-  getBuildPath,
-  functionIsExportedAsDefault,
-} from "./functions";
-import { createGraphQLAPI } from "./gql-api";
-import { clearToken, getToken, saveToken } from "./keychain";
+import { isErrorWithMessage } from "./errors";
 import { createLogger } from "./logger/index";
 import { createPrompter } from "./prompter";
-import {
-  generateProject as generateFunctionsProject,
-  createFunction,
-  generateCodeGenFile,
-  generateFunctionsBarrelFile as generateFunctionsBarrel,
-  generateTest,
-  bumpFunction,
-} from "./scaffolder/functions";
-import {
-  generateProject as generateComponentsProject,
-  generateComponent,
-} from "./scaffolder/components";
-import { downloadTemplate, copyTemplateFromLocal } from "./scaffolder";
-import { createGit, compareVersions } from "./git";
-import { createCodeParser } from "./code-parser";
-import { isErrorWithMessage, isErrorWithCode } from "./errors";
+import { createState } from "./state";
 import type { AppDeps } from "./types";
 
 const opts = process.argv;
@@ -59,8 +24,10 @@ const config = await bootstrapConfig({
 
 const deps: AppDeps = { logger, director, prompter, config, state, spinner };
 
+export { deps };
+
 // Wrapper function to catch errors
-function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
+export function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
   return async (...args: any[]) => {
     try {
       await fn(...args);
@@ -87,7 +54,7 @@ function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
   };
 }
 
-function deepMerge(
+export function deepMerge(
   target: Record<string, any>,
   source: Record<string, any>,
 ): Record<string, any> {
@@ -105,50 +72,5 @@ function deepMerge(
   return target;
 }
 
+export { isErrorWithCode, isErrorWithMessage } from "./errors";
 export type { AppDeps, SpinnerAPI } from "./types";
-export { isErrorWithMessage, isErrorWithCode } from "./errors";
-
-export {
-  buildFunctions,
-  bumpFunction,
-  copyTemplateFromLocal,
-  createCodeParser,
-  clearToken,
-  config,
-  deepMerge,
-  deps,
-  director,
-  state,
-  downloadTemplate,
-  functionIsExportedAsDefault,
-  generateBarrelFunctionDeclaration,
-  generateBarrelImportDeclarations,
-  generateCodeGenFile,
-  generateComponent,
-  generateComponentsProject,
-  createFunction as generateFunction,
-  generateFunctionsBarrel,
-  generateFunctionsBarrelFile,
-  generateFunctionsProject,
-  generateTest,
-  getBuildPath,
-  getFunctionFilePath,
-  getFunctionJsonFilePath,
-  getFunctions,
-  getFunctionsJSON,
-  getToken,
-  getValidFunctions,
-  createGraphQLAPI,
-  createGit,
-  compareVersions,
-  logUploadedFunction,
-  logValidatedFunctions,
-  logger,
-  parseName,
-  prompter,
-  saveToken,
-  spinner,
-  uploadFunctions,
-  validateFunctions,
-  withErrorHandling,
-};

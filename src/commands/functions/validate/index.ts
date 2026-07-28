@@ -1,10 +1,7 @@
 import { Command } from "commander";
-import {
-  withErrorHandling,
-  getFunctions,
-  validateFunctions,
-  deps,
-} from "../../../utils";
+import { withErrorHandling, deps } from "../../../utils";
+import { getFunctions } from "../../../utils/functions/get";
+import { validateFunctions } from "../../../utils/functions/validate";
 
 const validateFunctionsCmd = new Command("validate")
   .description("Validate your functions")

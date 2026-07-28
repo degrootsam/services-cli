@@ -1,30 +1,6 @@
 import path from "path";
 import type { AppDeps } from "../types";
-import {
-  generateBarrelFunctionDeclaration,
-  generateBarrelImportDeclarations,
-  generateFunctionsBarrelFile,
-} from "./gen/barrel";
-import { buildFunctions } from "./build";
-import { getFunctions, getFunctionsJSON, getValidFunctions } from "./get";
-import { logUploadedFunction, logValidatedFunctions } from "./log";
 import { FunctionInfo } from "./types";
-import { uploadFunctions } from "./upload";
-import { validateFunctions } from "./validate";
-
-export {
-  buildFunctions,
-  generateBarrelFunctionDeclaration,
-  generateBarrelImportDeclarations,
-  generateFunctionsBarrelFile,
-  getFunctions,
-  getFunctionsJSON,
-  getValidFunctions,
-  logUploadedFunction,
-  logValidatedFunctions,
-  uploadFunctions,
-  validateFunctions,
-};
 
 export function parseName({ name }: { name: string }): string {
   return name

@@ -1,15 +1,11 @@
 import { Command } from "commander";
 import path from "path";
-import {
-  deps,
-  withErrorHandling,
-  getFunctions,
-  validateFunctions,
-  getValidFunctions,
-  generateFunctionsBarrelFile,
-  buildFunctions,
-  uploadFunctions,
-} from "../../../utils";
+import { deps, withErrorHandling } from "../../../utils";
+import { buildFunctions } from "../../../utils/functions/build";
+import { generateFunctionsBarrelFile } from "../../../utils/functions/gen/barrel";
+import { getFunctions, getValidFunctions } from "../../../utils/functions/get";
+import { uploadFunctions } from "../../../utils/functions/upload";
+import { validateFunctions } from "../../../utils/functions/validate";
 
 const publishFunction = new Command("publish")
   .description("Publish your functions")
