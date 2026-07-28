@@ -1,6 +1,7 @@
-import { getFunctionFilePath, parseName, logValidatedFunctions } from ".";
+import { getFunctionFilePath, parseName } from ".";
 import { createCodeParser } from "../code-parser";
 import { AppDeps } from "../types";
+import { logValidatedFunctions } from "./log";
 import { Functions } from "./types";
 
 export async function validateFunctions({

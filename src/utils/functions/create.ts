@@ -1,9 +1,10 @@
 import path from "path";
-import { AppDeps, parseName } from "..";
+import { AppDeps } from "..";
 import { SelectChoice } from "../prompter";
 import { FunctionInfo } from "./types";
 import { getFunctions } from "./get";
 import { generateTest } from "./gen/test";
+import { parseName } from ".";
 
 export async function createFunction({
   name,

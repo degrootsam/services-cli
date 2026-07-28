@@ -24,12 +24,13 @@ export async function uploadFunctions({
   const builderAPIURL = await deps.config.builderAPIURL();
   const request = new RequestHandler(builderAPIURL);
   const fusionAuth = new FusionAuth();
-  const { token } = await fusionAuth.getToken();
-  const response = await request.post(
-    `/artifacts/actions/${appUUID}/functions`,
-    form,
-    { Authorization: `Bearer ${token}` },
-  );
+  const { token } = await fusionAuth.getToken({ deps });
+  const response = await request.post({
+    endpoint: `/artifacts/actions/${appUUID}/functions`,
+    body: form,
+    headers: { Authorization: `Bearer ${token}` },
+    deps,
+  });
   if (response.status === 201) {
     const { created, updated, deleted } =
       (await response.json()) as PublishResponse;

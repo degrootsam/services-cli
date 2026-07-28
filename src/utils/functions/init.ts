@@ -1,8 +1,9 @@
 import path from "path";
-import { AppDeps, downloadTemplate } from "..";
+import { AppDeps } from "..";
 import { ProjectTypeKey } from "../types";
 import { createWASMFunction } from "./create";
 import { generateBbsConfigFile } from "./gen/config";
+import { downloadTemplate } from "../scaffolder";
 
 export async function initFunctionsProject({
   name,
