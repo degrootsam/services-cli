@@ -7,12 +7,12 @@ import {
   beforeEach,
   afterEach,
 } from "bun:test";
-import { logger } from "../utils/index";
 import { DEBUG_PREFIX, ERROR_PREFIX, createLogger } from "../utils/logger";
 
 describe("Logger", () => {
   let debugSpy: ReturnType<typeof spyOn>;
   let errorSpy: ReturnType<typeof spyOn>;
+  const logger = createLogger();
 
   beforeEach(() => {
     debugSpy = spyOn(console, "debug").mockImplementation(() => {});

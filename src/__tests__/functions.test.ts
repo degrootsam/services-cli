@@ -1,5 +1,6 @@
 import { describe, it, expect } from "bun:test";
-import { parseName, getValidFunctions } from "../utils/functions";
+import { parseName } from "../utils/functions";
+import { getValidFunctions } from "../utils/functions/validate";
 import type { Functions } from "../utils/functions/types";
 
 describe("parseName", () => {

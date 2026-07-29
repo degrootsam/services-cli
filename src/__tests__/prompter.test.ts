@@ -2,7 +2,6 @@ import { mock, describe, it, expect, beforeEach } from "bun:test";
 import * as inquirer from "@inquirer/prompts";
 import { createLogger } from "../utils/logger";
 import { createPrompter } from "../utils/prompter";
-import { prompter } from "../utils/index";
 
 // @inquirer/prompts is mocked via setup.ts preload — cast to access mock methods
 const mockedInput = inquirer.input as ReturnType<typeof mock>;
@@ -12,14 +11,16 @@ const mockedSelect = inquirer.select as ReturnType<typeof mock>;
 describe("createPrompter", () => {
   it("returns an object with prompt methods", () => {
     const logger = createLogger({ verbose: false });
-    const p = createPrompter(logger);
-    expect(typeof p.input).toBe("function");
-    expect(typeof p.confirm).toBe("function");
-    expect(typeof p.select).toBe("function");
+    const prompter = createPrompter({ logger });
+    expect(typeof prompter.input).toBe("function");
+    expect(typeof prompter.confirm).toBe("function");
+    expect(typeof prompter.select).toBe("function");
   });
 });
 
 describe("Prompter", () => {
+  const logger = createLogger({ verbose: false });
+  const prompter = createPrompter({ logger });
   beforeEach(() => {
     mockedInput.mockClear();
     mockedPassword.mockClear();

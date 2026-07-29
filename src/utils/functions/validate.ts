@@ -49,3 +49,22 @@ export async function validateFunctions({
 
   return validatedFunctions;
 }
+
+export function getValidFunctions({
+  functions,
+}: {
+  functions: Functions;
+}): Functions {
+  const funcNames = Object.keys(functions);
+  const validFunctions: Functions = {};
+
+  for (let i = 0; i < funcNames.length; i++) {
+    const name = funcNames[i];
+    const func = functions[name];
+    if (func?.validation.valid) {
+      validFunctions[funcNames[i]] = func;
+    }
+  }
+
+  return validFunctions;
+}

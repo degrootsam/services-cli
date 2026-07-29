@@ -13,8 +13,7 @@ export async function validateJson({
 }): Promise<void> {
   const request = new RequestHandler(schemaURL);
   // const response = await request.get({ deps });
-  // const schema = await response.json();
-  // const jsonContent = await deps.director.readFile(pathToJson);
+  // const schema = await response.json(); const jsonContent = await deps.director.readFile(pathToJson);
   // const jsonData = JSON.parse(jsonContent!);
   // console.log(schema);
 }
