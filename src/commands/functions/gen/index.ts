@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import genTest from "./test";
-import genTypes from "./types";
+import genTest from "./test.js";
+import genTypes from "./types.js";
 
 const genFunctions = new Command("gen");
 

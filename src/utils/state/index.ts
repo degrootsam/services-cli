@@ -1,8 +1,8 @@
 import path from "path";
-import type { Config } from "../config/types";
-import type { DeepPartial } from "../types";
-import type { LoggerAPI } from "../logger";
-import type { DirectorAPI } from "../director";
+import type { Config } from "../config/types/index.js";
+import type { DeepPartial } from "../types.js";
+import type { LoggerAPI } from "../logger/index.js";
+import type { DirectorAPI } from "../director/index.js";
 
 export type StateData = {
   app?: Partial<Config["app"]>;

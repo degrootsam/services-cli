@@ -1,5 +1,5 @@
 import { confirm, editor, input, password, select } from "@inquirer/prompts";
-import type { LoggerAPI } from "../logger";
+import type { LoggerAPI } from "../logger/index.js";
 
 export type SelectChoice = {
   description?: string;

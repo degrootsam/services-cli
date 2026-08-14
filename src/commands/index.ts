@@ -1,9 +1,9 @@
 import { Command } from "commander";
-import { deps, withErrorHandling } from "../utils";
-import FusionAuth from "../utils/fusion-auth";
-import components from "./components";
-import functions from "./functions";
-import update from "./update";
+import { deps, withErrorHandling } from "../utils/index.js";
+import FusionAuth from "../utils/fusion-auth/index.js";
+import components from "./components/index.js";
+import functions from "./functions/index.js";
+import update from "./update/index.js";
 
 const runCLI = async () => {
   try {

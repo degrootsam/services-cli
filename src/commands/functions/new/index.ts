@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { withErrorHandling, deps } from "../../../utils";
-import { createFunction } from "../../../utils/functions/create";
+import { withErrorHandling, deps } from "../../../utils/index.js";
+import { createFunction } from "../../../utils/functions/create.js";
 
 const newFunction = new Command("new")
   .arguments("<name>")

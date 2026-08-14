@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
-import { parseName } from "../utils/functions";
-import { getValidFunctions } from "../utils/functions/validate";
-import type { Functions } from "../utils/functions/types";
+import { parseName } from "../utils/functions/index.js";
+import { getValidFunctions } from "../utils/functions/validate.js";
+import type { Functions } from "../utils/functions/types.js";
 
 describe("parseName", () => {
   it("converts kebab-case function name to camelCase", () => {

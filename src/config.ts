@@ -1,3 +1,3 @@
-export { createConfig } from "./utils/config";
-export type { BbsUserConfig } from "./utils/config";
-export type { Config } from "./utils/config/types";
+export { createConfig } from "./utils/config/index.js";
+export type { BbsUserConfig } from "./utils/config/index.js";
+export type { Config } from "./utils/config/types/index.js";

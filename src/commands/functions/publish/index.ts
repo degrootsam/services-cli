@@ -1,11 +1,14 @@
 import { Command } from "commander";
 import path from "path";
-import { deps, withErrorHandling } from "../../../utils";
-import { buildFunctions } from "../../../utils/functions/build";
-import { generateFunctionsBarrelFile } from "../../../utils/functions/gen/barrel";
-import { getFunctions, getValidFunctions } from "../../../utils/functions/get";
-import { uploadFunctions } from "../../../utils/functions/upload";
-import { validateFunctions } from "../../../utils/functions/validate";
+import { deps, withErrorHandling } from "../../../utils/index.js";
+import { buildFunctions } from "../../../utils/functions/build.js";
+import { generateFunctionsBarrelFile } from "../../../utils/functions/gen/barrel.js";
+import {
+  getFunctions,
+  getValidFunctions,
+} from "../../../utils/functions/get.js";
+import { uploadFunctions } from "../../../utils/functions/upload.js";
+import { validateFunctions } from "../../../utils/functions/validate.js";
 
 const publishFunction = new Command("publish")
   .description("Publish your functions")
@@ -32,7 +35,6 @@ const publishFunction = new Command("publish")
 
       await buildFunctions({
         deps,
-        mode: deps.config.isTypescript ? "ts" : "js",
         debug: true,
       });
 

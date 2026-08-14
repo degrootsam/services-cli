@@ -1,5 +1,5 @@
 import keytar from "keytar";
-import { AppDeps } from "../types";
+import { AppDeps } from "../types.js";
 
 interface AccountNames {
   gqlAccessToken: string;

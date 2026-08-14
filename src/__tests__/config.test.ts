@@ -2,11 +2,11 @@ import { mock, describe, it, expect, afterEach } from "bun:test";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { bootstrapConfig } from "../utils/config";
-import type { LoggerAPI } from "../utils/logger";
-import type { DirectorAPI } from "../utils/director";
-import type { PrompterAPI } from "../utils/prompter";
-import type { StateAPI } from "../utils/state";
+import { bootstrapConfig } from "../utils/config/index.js";
+import type { LoggerAPI } from "../utils/logger/index.js";
+import type { DirectorAPI } from "../utils/director/index.js";
+import type { PrompterAPI } from "../utils/prompter/index.js";
+import type { StateAPI } from "../utils/state/index.js";
 
 const makeDeps = () => ({
   director: {

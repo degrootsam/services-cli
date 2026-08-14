@@ -1,8 +1,8 @@
 import path from "path";
-import { parseName } from "..";
-import { AppDeps } from "../../types";
-import { getValidFunctions } from "../get";
-import { Functions } from "../types";
+import { parseName } from "../index.js";
+import { AppDeps } from "../../types.js";
+import { getValidFunctions } from "../get.js";
+import { Functions } from "../types.js";
 
 export async function generateFunctionsBarrelFile({
   deps,

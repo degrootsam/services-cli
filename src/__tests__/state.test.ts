@@ -1,8 +1,8 @@
 import { mock, describe, it, expect, Mock } from "bun:test";
 import path from "path";
-import { createState } from "../utils/state";
-import type { LoggerAPI } from "../utils/logger";
-import type { DirectorAPI } from "../utils/director";
+import { createState } from "../utils/state/index.js";
+import type { LoggerAPI } from "../utils/logger/index.js";
+import type { DirectorAPI } from "../utils/director/index.js";
 
 const makeDeps = () => ({
   director: {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
-import { createDirector } from "../utils/director";
-import { createLogger } from "../utils/logger";
+import { createDirector } from "../utils/director/index.js";
+import { createLogger } from "../utils/logger/index.js";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 

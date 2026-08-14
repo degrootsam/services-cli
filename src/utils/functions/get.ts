@@ -1,6 +1,6 @@
 import path from "path";
-import { AppDeps, ProjectTypeKey } from "../types";
-import { Functions } from "./types";
+import { AppDeps, ProjectTypeKey } from "../types.js";
+import { Functions } from "./types.js";
 
 const functionRegexp = /^([A-Za-z0-9_-]+)\/(\d+\.\d+)\/([^\/]+)\.(ts|js)$/;
 

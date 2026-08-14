@@ -1,7 +1,7 @@
 import path from "path";
-import { AppDeps } from "..";
-import { getFunctions } from "./get";
-import { generateTest } from "./gen/test";
+import { AppDeps } from "../index.js";
+import { getFunctions } from "./get.js";
+import { generateTest } from "./gen/test.js";
 
 export async function bumpFunction({ deps }: { deps: AppDeps }): Promise<void> {
   const functions = await getFunctions({ deps });

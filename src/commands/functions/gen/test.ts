@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { withErrorHandling, deps } from "../../../utils";
-import { generateTest } from "../../../utils/functions/gen/test";
+import { withErrorHandling, deps } from "../../../utils/index.js";
+import { generateTest } from "../../../utils/functions/gen/test.js";
 
 const genTest = new Command("test")
   .option(

@@ -1,8 +1,8 @@
 import path from "path";
-import { parseName } from "..";
-import { AppDeps } from "../..";
-import { getFunctions } from "../get";
-import { FunctionInfo } from "../types";
+import { parseName } from "../index.js";
+import { AppDeps } from "../../index.js";
+import { getFunctions } from "../get.js";
+import { FunctionInfo } from "../types.js";
 
 export async function generateTest({
   deps,
@@ -14,6 +14,9 @@ export async function generateTest({
   force?: boolean;
 }): Promise<string> {
   let parsedFunction: FunctionInfo = func as FunctionInfo;
+  const projectType = await deps.director.getProjectType();
+  if (projectType === "wasm")
+    throw new Error("Test generation is not supported in WASM projects!");
   if (!parsedFunction) {
     const functions = await getFunctions({ deps });
     const functionNames = Object.keys(functions);

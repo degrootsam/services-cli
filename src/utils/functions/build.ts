@@ -1,23 +1,57 @@
 import { Glob } from "bun";
 import * as fs from "fs";
 import path from "path";
-import { AppDeps } from "../types";
+import { AppDeps } from "../types.js";
+import { getFunctions } from "./get.js";
 
 export async function buildFunctions({
   deps,
-  mode = "ts",
   outdir = ".tmp",
   debug = false,
 }: {
   deps: AppDeps;
-  mode?: "ts" | "js";
   outdir?: string;
   debug?: boolean;
 }): Promise<string> {
+  const projectType = await deps.director.getProjectType();
+
   deps.logger.debug(
-    `Building functions with mode ${mode} in destination ${outdir}`,
+    `Building functions with mode ${projectType} in destination ${outdir}`,
   );
   deps.spinner.start("Building functions...");
+
+  if (projectType === "wasm") {
+    await buildWASMFunctions({ outdir, deps, debug });
+  } else {
+    await buildJSTSFunctions({ outdir, deps, debug });
+  }
+
+  return outdir;
+}
+
+async function buildWASMFunctions({
+  outdir,
+  deps,
+  debug,
+}: {
+  outdir: string;
+  deps: AppDeps;
+  debug: boolean;
+}) {
+  const functions = await getFunctions({ deps, type: "wasm" });
+  console.log({ functions, length: functions.length });
+  const justFile = await deps.director.readFile("Justfile", true);
+}
+
+async function buildJSTSFunctions({
+  outdir,
+  deps,
+  debug,
+}: {
+  outdir: string;
+  deps: AppDeps;
+  debug: boolean;
+}) {
   const appDir = path.resolve(outdir, "app");
   const functionsOutputDir = path.resolve(appDir, "functions");
 

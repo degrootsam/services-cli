@@ -1,6 +1,6 @@
 import { Command } from "commander";
-import { deps, withErrorHandling } from "../../../utils";
-import { bumpFunction } from "../../../utils/functions/bump";
+import { deps, withErrorHandling } from "../../../utils/index.js";
+import { bumpFunction } from "../../../utils/functions/bump.js";
 
 const bumpFunctionCmd = new Command("bump")
   .description("Create a new version for a function")

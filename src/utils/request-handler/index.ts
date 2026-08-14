@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { AppDeps } from "../types";
+import { AppDeps } from "../types.js";
 
 type RequestResponse<T> = {
   data?: T;

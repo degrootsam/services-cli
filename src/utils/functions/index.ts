@@ -1,6 +1,6 @@
 import path from "path";
-import type { AppDeps } from "../types";
-import { FunctionInfo } from "./types";
+import type { AppDeps } from "../types.js";
+import { FunctionInfo } from "./types.js";
 
 export function parseName({ name }: { name: string }): string {
   return name

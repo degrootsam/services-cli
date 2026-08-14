@@ -1,7 +1,7 @@
 import { mock, describe, it, expect, beforeEach } from "bun:test";
 import * as inquirer from "@inquirer/prompts";
-import { createLogger } from "../utils/logger";
-import { createPrompter } from "../utils/prompter";
+import { createLogger } from "../utils/logger/index.js";
+import { createPrompter } from "../utils/prompter/index.js";
 
 // @inquirer/prompts is mocked via setup.ts preload — cast to access mock methods
 const mockedInput = inquirer.input as ReturnType<typeof mock>;

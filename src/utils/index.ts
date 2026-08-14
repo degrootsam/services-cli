@@ -1,11 +1,11 @@
 import { createSpinner } from "nanospinner";
-import { bootstrapConfig } from "./config";
-import { createDirector } from "./director";
-import { isErrorWithMessage } from "./errors";
-import { createLogger } from "./logger/index";
-import { createPrompter } from "./prompter";
-import { createState } from "./state";
-import type { AppDeps } from "./types";
+import { bootstrapConfig } from "./config/index.js";
+import { createDirector } from "./director/index.js";
+import { isErrorWithMessage } from "./errors.js";
+import { createLogger } from "./logger/index.js";
+import { createPrompter } from "./prompter/index.js";
+import { createState } from "./state/index.js";
+import type { AppDeps } from "./types.js";
 
 const opts = process.argv;
 const verboseArg = opts.find((v) => v === "-v" || v === "--verbose");
@@ -72,5 +72,5 @@ export function deepMerge(
   return target;
 }
 
-export { isErrorWithCode, isErrorWithMessage } from "./errors";
-export type { AppDeps, SpinnerAPI } from "./types";
+export { isErrorWithCode, isErrorWithMessage } from "./errors.js";
+export type { AppDeps, SpinnerAPI } from "./types.js";

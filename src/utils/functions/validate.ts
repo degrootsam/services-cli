@@ -1,25 +1,63 @@
-import { getFunctionFilePath, parseName } from ".";
-import { createCodeParser } from "../code-parser";
-import { AppDeps } from "../types";
-import { logValidatedFunctions } from "./log";
-import { Functions } from "./types";
+import { getFunctionFilePath, parseName } from "./index.js";
+import { createCodeParser } from "../code-parser/index.js";
+import { AppDeps, ProjectTypeKey } from "../types.js";
+import { logValidatedFunctions } from "./log.js";
+import { Functions } from "./types.js";
 
 export async function validateFunctions({
+  deps,
+  functions,
+  type,
+}: {
+  deps: AppDeps;
+  functions: Functions;
+  type: ProjectTypeKey;
+}): Promise<Functions> {
+  deps.spinner.start("Validating functions...");
+  let validatedFunctions: Functions = {};
+  if (type === "wasm") {
+    validatedFunctions = await validateWASMFunctions({ deps, functions });
+  } else {
+    validatedFunctions = await validateJSTSFunctions({ deps, functions, type });
+  }
+  deps.spinner.success("Functions validated:");
+  logValidatedFunctions({ deps, functions });
+  return validatedFunctions;
+}
+
+export async function validateWASMFunctions({
+  deps,
+  functions,
+}: {
+  deps: AppDeps;
+  functions: Functions;
+}): Promise<Functions> {
+  const functionNames = Object.keys(functions);
+  let validatedFunctions: Functions = {};
+
+  for (const currentFunctionName of functionNames) {
+    const currentFunction = functions[currentFunctionName];
+    console.log({ currentFunction });
+  }
+
+  return validatedFunctions;
+}
+
+export async function validateJSTSFunctions({
   deps,
   functions,
   type = "ts",
 }: {
   deps: AppDeps;
   functions: Functions;
-  type?: "js" | "ts";
-}): Promise<Functions> {
+  type: ProjectTypeKey;
+}) {
   deps.logger.debug(
     `Validating functions in ${type === "js" ? "JavaScript" : "TypeScript"}`,
   );
   const functionNames = Object.keys(functions);
   let validatedFunctions: Functions = {};
 
-  deps.spinner.start("Validating functions...");
   const parser = createCodeParser({ type, logger: deps.logger });
 
   for (const currentFunctionName of functionNames) {
@@ -43,9 +81,6 @@ export async function validateFunctions({
     );
     validatedFunctions[currentFunctionName] = validatedFunction;
   }
-
-  deps.spinner.success("Functions validated:");
-  logValidatedFunctions({ deps, functions: validatedFunctions });
 
   return validatedFunctions;
 }

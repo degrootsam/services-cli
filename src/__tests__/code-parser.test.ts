@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
-import { createCodeParser } from "../utils/code-parser";
-import { createLogger } from "../utils/logger";
-import { FunctionInfo } from "../utils/functions/types";
+import { createCodeParser } from "../utils/code-parser/index.js";
+import { createLogger } from "../utils/logger/index.js";
+import { FunctionInfo } from "../utils/functions/types.js";
 
 const logger = createLogger({ verbose: false });
 

@@ -1,6 +1,6 @@
-import { parseName } from ".";
-import { AppDeps } from "../types";
-import { Functions } from "./types";
+import { parseName } from "./index.js";
+import { AppDeps } from "../types.js";
+import { Functions } from "./types.js";
 
 export function logUploadedFunction({
   deps,

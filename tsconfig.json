@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ESNext", // Use the latest JavaScript features
-    "module": "esnext", // CommonJS for CLI module format
-    "moduleResolution": "Node", // Node-style module resolution
+    "module": "nodenext", // CommonJS for CLI module format
+    "moduleResolution": "Node16", // Node-style module resolution
     "lib": ["ESNext"], // Include ESNext lib features
     "outDir": "dist", // Output compiled JavaScript files to "dist"
     "rootDir": "src", // Set the root directory for TypeScript source files

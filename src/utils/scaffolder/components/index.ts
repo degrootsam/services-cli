@@ -1,6 +1,6 @@
-import { downloadTemplate } from "..";
-import { generateBbsConfigFile } from "../../functions/gen/config";
-import type { AppDeps } from "../../types";
+import { downloadTemplate } from "../index.js";
+import { generateBbsConfigFile } from "../../functions/gen/config.js";
+import type { AppDeps } from "../../types.js";
 
 export async function generateProject({
   deps,

@@ -1,13 +1,14 @@
 import { parse } from "@babel/parser";
 import _traverse from "@babel/traverse";
 import * as t from "@babel/types";
-import type { LoggerAPI } from "../logger";
-import { FunctionInfo } from "../functions/types";
+import type { LoggerAPI } from "../logger/index.js";
+import { FunctionInfo } from "../functions/types.js";
+import { ProjectTypeKey } from "../types.js";
 
 // Handle CJS/ESM interop: Node.js ESM wraps the entire module.exports as the
 // default when importing a CJS module. @babel/traverse uses __esModule convention
 // with exports.default = traverse, so we need to extract .default explicitly.
-const traverse = ((_traverse as any).default ?? _traverse) as typeof _traverse;
+const traverse = _traverse.default ?? _traverse;
 
 export type CodeParserAPI = {
   validateFunction: (
@@ -21,7 +22,7 @@ export function createCodeParser({
   type,
   logger,
 }: {
-  type: "js" | "ts";
+  type: ProjectTypeKey;
   logger: LoggerAPI;
 }): CodeParserAPI {
   function makeAst(code: string) {

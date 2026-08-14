@@ -1,11 +1,11 @@
 import { Command } from "commander";
-import buildFunctions from "./build";
-import bumpFunction from "./bump";
-import genFunctions from "./gen";
-import initFunction from "./init";
-import validateFunctions from "./validate";
-import newFunction from "./new";
-import publishFunction from "./publish";
+import buildFunctions from "./build/index.js";
+import bumpFunction from "./bump/index.js";
+import genFunctions from "./gen/index.js";
+import initFunction from "./init/index.js";
+import validateFunctions from "./validate/index.js";
+import newFunction from "./new/index.js";
+import publishFunction from "./publish/index.js";
 
 const functions = new Command("functions");
 

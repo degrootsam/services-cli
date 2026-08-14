@@ -1,6 +1,6 @@
 import { Schema, validate } from "jtd";
-import { RequestHandler } from "../request-handler";
-import type { AppDeps } from "../types";
+import { RequestHandler } from "../request-handler/index.js";
+import type { AppDeps } from "../types.js";
 
 export async function validateJson({
   deps,

@@ -1,7 +1,7 @@
-import { getToken, saveToken } from "../keychain";
-import { RequestHandler } from "../request-handler";
-import { AppDeps } from "../types";
-import { StoredFusionAuthToken } from "./types";
+import { getToken, saveToken } from "../keychain/index.js";
+import { RequestHandler } from "../request-handler/index.js";
+import { AppDeps } from "../types.js";
+import { StoredFusionAuthToken } from "./types/index.js";
 
 export default class FusionAuth {
   private token?: StoredFusionAuthToken;

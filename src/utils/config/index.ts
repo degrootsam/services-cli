@@ -1,10 +1,10 @@
 import path from "path";
-import { Config } from "./types";
-import { DeepPartial } from "../types";
-import type { LoggerAPI } from "../logger";
-import type { DirectorAPI } from "../director";
-import type { PrompterAPI } from "../prompter";
-import type { StateAPI } from "../state";
+import { Config } from "./types/index.js";
+import { DeepPartial } from "../types.js";
+import type { LoggerAPI } from "../logger/index.js";
+import type { DirectorAPI } from "../director/index.js";
+import type { PrompterAPI } from "../prompter/index.js";
+import type { StateAPI } from "../state/index.js";
 
 function deepMerge(
   target: Record<string, any>,

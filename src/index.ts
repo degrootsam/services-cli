@@ -1,4 +1,4 @@
 #!/usr/bin/env bun
-import runCLI from "./commands";
+import runCLI from "./commands/index.js";
 
 runCLI();

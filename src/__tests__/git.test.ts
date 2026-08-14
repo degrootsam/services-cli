@@ -1,7 +1,7 @@
 import { describe, it, expect } from "bun:test";
-import { createGit, compareVersions } from "../utils/git";
-import { createLogger } from "../utils/logger";
-import type { AppDeps } from "../utils/types";
+import { createGit, compareVersions } from "../utils/git/index.js";
+import { createLogger } from "../utils/logger/index.js";
+import type { AppDeps } from "../utils/types.js";
 
 describe("compareVersions", () => {
   it("returns 1 when a is greater than b", () => {

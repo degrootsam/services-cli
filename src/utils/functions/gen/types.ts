@@ -1,7 +1,7 @@
 import path from "path";
-import { AppDeps } from "../..";
-import { createGraphQLAPI } from "../../gql-api";
-import { GraphQLAccessToken } from "../../gql-api/types";
+import { AppDeps } from "../../index.js";
+import { createGraphQLAPI } from "../../gql-api/index.js";
+import { GraphQLAccessToken } from "../../gql-api/types/index.js";
 
 export async function generateCodeGenFile({
   deps,

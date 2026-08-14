@@ -1,13 +1,13 @@
-import type { AppDeps } from "../types";
+import type { AppDeps } from "../types.js";
 import {
   GraphQLErrorPayload,
   AuthenticationSuccessPayload,
   GraphQLAccessToken,
   AuthenticationTokenPayload,
   GraphQLResponse,
-} from "./types/index";
-import { getToken, saveToken } from "../keychain/index";
-import { ActionObject, AllowedActionInputTypes } from "../types";
+} from "./types/index.js";
+import { getToken, saveToken } from "../keychain/index.js";
+import { ActionObject, AllowedActionInputTypes } from "../types.js";
 
 export type GqlAPI = {
   getAccessTokens: () => Promise<GraphQLAccessToken | undefined>;

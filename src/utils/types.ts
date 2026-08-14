@@ -1,8 +1,8 @@
-import type { LoggerAPI } from "./logger";
-import type { DirectorAPI } from "./director";
-import type { PrompterAPI } from "./prompter";
-import type { ConfigAPI } from "./config";
-import type { StateAPI } from "./state";
+import type { LoggerAPI } from "./logger/index.js";
+import type { DirectorAPI } from "./director/index.js";
+import type { PrompterAPI } from "./prompter/index.js";
+import type { ConfigAPI } from "./config/index.js";
+import type { StateAPI } from "./state/index.js";
 import type { createSpinner } from "nanospinner";
 
 export type DeepPartial<T> = {

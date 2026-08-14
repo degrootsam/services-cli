@@ -1,7 +1,7 @@
 import path from "path";
 import chalk from "chalk";
-import { createGit, compareVersions } from "../git";
-import type { AppDeps } from "../types";
+import { createGit, compareVersions } from "../git/index.js";
+import type { AppDeps } from "../types.js";
 
 export async function checkSubmodulesForUpdate({
   deps,

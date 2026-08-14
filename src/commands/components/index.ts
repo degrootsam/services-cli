@@ -1,6 +1,6 @@
 import { program } from "commander";
-import initComponent from "./init";
-import newComponent from "./new";
+import initComponent from "./init/index.js";
+import newComponent from "./new/index.js";
 
 const components = program.command("components");
 

@@ -1,10 +1,10 @@
 import path from "path";
-import { AppDeps } from "..";
-import { SelectChoice } from "../prompter";
-import { FunctionInfo } from "./types";
-import { getFunctions } from "./get";
-import { generateTest } from "./gen/test";
-import { parseName } from ".";
+import { AppDeps } from "../index.js";
+import { SelectChoice } from "../prompter/index.js";
+import { FunctionInfo } from "./types.js";
+import { getFunctions } from "./get.js";
+import { generateTest } from "./gen/test.js";
+import { parseName } from "./index.js";
 
 export async function createFunction({
   name,

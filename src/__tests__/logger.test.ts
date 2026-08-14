@@ -7,7 +7,11 @@ import {
   beforeEach,
   afterEach,
 } from "bun:test";
-import { DEBUG_PREFIX, ERROR_PREFIX, createLogger } from "../utils/logger";
+import {
+  DEBUG_PREFIX,
+  ERROR_PREFIX,
+  createLogger,
+} from "../utils/logger/index.js";
 
 describe("Logger", () => {
   let debugSpy: ReturnType<typeof spyOn>;

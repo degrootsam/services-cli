@@ -1,10 +1,10 @@
 import { fileFromSync, FormData } from "node-fetch";
-import { logUploadedFunction } from "./log";
-import FusionAuth from "../fusion-auth";
-import { RequestHandler } from "../request-handler";
-import { AppDeps } from "../types";
-import { getFunctionsJSON } from "./get";
-import { Functions, PublishResponse } from "./types";
+import { logUploadedFunction } from "./log.js";
+import FusionAuth from "../fusion-auth/index.js";
+import { RequestHandler } from "../request-handler/index.js";
+import { AppDeps } from "../types.js";
+import { getFunctionsJSON } from "./get.js";
+import { Functions, PublishResponse } from "./types.js";
 
 export async function uploadFunctions({
   deps,

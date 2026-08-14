@@ -1,6 +1,6 @@
 import path from "path";
 import semver from "semver";
-import type { AppDeps } from "../types";
+import type { AppDeps } from "../types.js";
 
 export type GitTemplateConfig = {
   name: string;

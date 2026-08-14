@@ -1,8 +1,8 @@
 import { Command } from "commander";
-import { deps, withErrorHandling } from "../../../utils";
-import { initFunctionsProject } from "../../../utils/functions/init";
-import { SelectChoice } from "../../../utils/prompter";
-import { ProjectTypeKey } from "../../../utils/types";
+import { deps, withErrorHandling } from "../../../utils/index.js";
+import { initFunctionsProject } from "../../../utils/functions/init.js";
+import { SelectChoice } from "../../../utils/prompter/index.js";
+import { ProjectTypeKey } from "../../../utils/types.js";
 
 const projectTypes: SelectChoice[] = [
   {

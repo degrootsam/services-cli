@@ -3,9 +3,9 @@ import { spawn, SpawnOptions } from "child_process";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
-import { isErrorWithMessage } from "../errors";
-import type { LoggerAPI } from "../logger";
-import { ProjectTypeKey } from "../types";
+import { isErrorWithMessage } from "../errors.js";
+import type { LoggerAPI } from "../logger/index.js";
+import { ProjectTypeKey } from "../types.js";
 
 export type DirectorAPI = {
   resolveCLIPath: () => string;

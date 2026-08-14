@@ -1,6 +1,9 @@
 import { Command } from "commander";
-import { withErrorHandling, deps } from "../../utils";
-import { checkSubmodulesForUpdate, updateSubmodules } from "../../utils/update";
+import { withErrorHandling, deps } from "../../utils/index.js";
+import {
+  checkSubmodulesForUpdate,
+  updateSubmodules,
+} from "../../utils/update/index.js";
 
 const update = new Command("update");
 

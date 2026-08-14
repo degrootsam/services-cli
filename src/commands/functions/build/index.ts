@@ -1,10 +1,10 @@
 import { Command } from "commander";
 import path from "path";
-import { deps, withErrorHandling } from "../../../utils";
-import { buildFunctions } from "../../../utils/functions/build";
-import { generateFunctionsBarrelFile } from "../../../utils/functions/gen/barrel";
-import { getFunctions } from "../../../utils/functions/get";
-import { validateFunctions } from "../../../utils/functions/validate";
+import { deps, withErrorHandling } from "../../../utils/index.js";
+import { buildFunctions } from "../../../utils/functions/build.js";
+import { generateFunctionsBarrelFile } from "../../../utils/functions/gen/barrel.js";
+import { getFunctions } from "../../../utils/functions/get.js";
+import { validateFunctions } from "../../../utils/functions/validate.js";
 
 const buildFunctionsCmd = new Command("build")
   .description("Build your functions")
@@ -31,7 +31,6 @@ const buildFunctionsCmd = new Command("build")
 
       await buildFunctions({
         deps,
-        mode: deps.config.isTypescript ? "ts" : "js",
         outdir: options.destination,
         debug: options.debug,
       });

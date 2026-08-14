@@ -1,9 +1,9 @@
 import path from "path";
-import { AppDeps } from "..";
-import { ProjectTypeKey } from "../types";
-import { createWASMFunction } from "./create";
-import { generateBbsConfigFile } from "./gen/config";
-import { downloadTemplate } from "../scaffolder";
+import { AppDeps } from "../index.js";
+import { ProjectTypeKey } from "../types.js";
+import { createWASMFunction } from "./create.js";
+import { generateBbsConfigFile } from "./gen/config.js";
+import { downloadTemplate } from "../scaffolder/index.js";
 
 export async function initFunctionsProject({
   name,

@@ -1,5 +1,5 @@
 import path from "path";
-import { AppDeps } from "../..";
+import { AppDeps } from "../../index.js";
 
 export async function generateBbsConfigFile({
   deps,
