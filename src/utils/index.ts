@@ -54,23 +54,6 @@ export function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
   };
 }
 
-export function deepMerge(
-  target: Record<string, any>,
-  source: Record<string, any>,
-): Record<string, any> {
-  for (const key of Object.keys(source)) {
-    if (
-      source[key] &&
-      typeof source[key] === "object" &&
-      !Array.isArray(source[key])
-    ) {
-      target[key] = deepMerge(target[key] ?? {}, source[key]);
-    } else {
-      target[key] = source[key];
-    }
-  }
-  return target;
-}
-
+export { deepMerge } from "./deep-merge.js";
 export { isErrorWithCode, isErrorWithMessage } from "./errors.js";
 export type { AppDeps, SpinnerAPI } from "./types.js";

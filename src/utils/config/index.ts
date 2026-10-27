@@ -5,24 +5,7 @@ import type { LoggerAPI } from "../logger/index.js";
 import type { DirectorAPI } from "../director/index.js";
 import type { PrompterAPI } from "../prompter/index.js";
 import type { StateAPI } from "../state/index.js";
-
-function deepMerge(
-  target: Record<string, any>,
-  source: Record<string, any>,
-): Record<string, any> {
-  for (const key of Object.keys(source)) {
-    if (
-      source[key] &&
-      typeof source[key] === "object" &&
-      !Array.isArray(source[key])
-    ) {
-      target[key] = deepMerge(target[key] ?? {}, source[key]);
-    } else {
-      target[key] = source[key];
-    }
-  }
-  return target;
-}
+import { deepMerge } from "../deep-merge.js";
 
 const DEFAULT_CONFIG: Config = {
   buildOptions: undefined,
