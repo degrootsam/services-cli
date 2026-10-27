@@ -78,30 +78,32 @@ export async function getFunctionsJSON({
   deps: AppDeps;
   functions: Functions;
 }): Promise<any[]> {
-  return Object.keys(functions).map(async (functionName) => {
-    const currentFunction = functions[functionName];
-    const { latestVersion, path: functionPath } = currentFunction;
-    const functionJSONPath = path.resolve(
-      functionPath,
-      latestVersion,
-      "function.json",
-    );
-    const functionJSONContent =
-      (await deps.director.readFile(functionJSONPath)) ?? "";
-    try {
-      const parsedContent = JSON.parse(functionJSONContent);
-      return {
-        ...parsedContent,
-        options: JSON.stringify(parsedContent.options),
-        paths: "{}",
-        name: functionName,
-        version: latestVersion,
-      };
-    } catch (error) {
-      deps.logger.debug(error);
-      throw new Error(
-        `Unable parse functions JSON for function ${functionName}. Toggle verbose logging with --verbose for more information`,
+  return Promise.all(
+    Object.keys(functions).map(async (functionName) => {
+      const currentFunction = functions[functionName];
+      const { latestVersion, path: functionPath } = currentFunction;
+      const functionJSONPath = path.resolve(
+        functionPath,
+        latestVersion,
+        "function.json",
       );
-    }
-  });
+      const functionJSONContent =
+        (await deps.director.readFile(functionJSONPath)) ?? "";
+      try {
+        const parsedContent = JSON.parse(functionJSONContent);
+        return {
+          ...parsedContent,
+          options: JSON.stringify(parsedContent.options),
+          paths: "{}",
+          name: functionName,
+          version: latestVersion,
+        };
+      } catch (error) {
+        deps.logger.debug(error);
+        throw new Error(
+          `Unable parse functions JSON for function ${functionName}. Toggle verbose logging with --verbose for more information`,
+        );
+      }
+    }),
+  );
 }

@@ -17,7 +17,7 @@ export async function uploadFunctions({
 }): Promise<void> {
   const appUUID = await deps.config.getAppUUID();
   const form = new FormData();
-  const functionsJson = getFunctionsJSON({ deps, functions });
+  const functionsJson = await getFunctionsJSON({ deps, functions });
   form.append("functions", JSON.stringify(functionsJson));
   form.append("options", JSON.stringify({ compile: !deps.config.skipCompile }));
   form.append("file", fileFromSync(zipPath));
