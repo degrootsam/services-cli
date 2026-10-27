@@ -62,7 +62,7 @@ export function createDirector({
 
     async readDir(dirPath, recursive = false) {
       logger.debug(`Reading directory at ${dirPath}`);
-      const directory = fs.readdir(dirPath, {
+      const directory = await fs.readdir(dirPath, {
         recursive,
         encoding: "utf8",
       });
@@ -76,7 +76,7 @@ export function createDirector({
 
     async exists(targetPath) {
       logger.debug(`Checking if ${targetPath} exists`);
-      const result = fs.exists(targetPath);
+      const result = await fs.exists(targetPath);
       logger.debug(`Result: ${result}`);
       return result;
     },

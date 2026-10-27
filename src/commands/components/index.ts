@@ -1,8 +1,8 @@
-import { program } from "commander";
+import { Command } from "commander";
 import initComponent from "./init/index.js";
 import newComponent from "./new/index.js";
 
-const components = program.command("components");
+const components = new Command("components");
 
 components.addCommand(initComponent);
 components.addCommand(newComponent);

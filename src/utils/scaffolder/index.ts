@@ -81,7 +81,7 @@ export async function downloadTemplate({
         );
       }
     }
-    throw new Error(JSON.stringify(err));
+    throw new Error(err instanceof Error ? err.message : JSON.stringify(err));
   }
 
   deps.spinner.success("Template downloaded successfully");

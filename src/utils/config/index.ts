@@ -258,7 +258,10 @@ export async function bootstrapConfig({
 
     async getAppUUID() {
       if (!_data.app.uuid) {
-        const uuid = await deps.prompter.input("Please enter your app UUID");
+        const uuid = await deps.prompter.input(
+          "Please enter your app UUID",
+          true,
+        );
         api.updateConfig({ app: { ..._data.app, uuid } });
         deps.state.updateState({ app: { uuid } });
       }
@@ -269,6 +272,7 @@ export async function bootstrapConfig({
       if (!_data.app.identifier) {
         const identifier = await deps.prompter.input(
           "Please enter your app identifier",
+          true,
         );
         api.updateConfig({ app: { ..._data.app, identifier } });
         deps.state.updateState({ app: { identifier } });

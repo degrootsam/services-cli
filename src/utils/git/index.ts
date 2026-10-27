@@ -164,7 +164,8 @@ export function createGit({
         );
       }
 
-      return resolvedVersion.replaceAll("v", "");
+      // ^v1.2.0 -> ^1.2.0
+      return resolvedVersion.replace(/^(\^?)v/, "$1");
     },
   };
 }
