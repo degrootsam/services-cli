@@ -9,10 +9,12 @@ export async function validateFunctions({
   deps,
   functions,
   type,
+  log = true,
 }: {
   deps: AppDeps;
   functions: Functions;
   type: ProjectTypeKey;
+  log?: boolean;
 }): Promise<Functions> {
   deps.spinner.start("Validating functions...");
   let validatedFunctions: Functions = {};
@@ -21,8 +23,12 @@ export async function validateFunctions({
   } else {
     validatedFunctions = await validateJSTSFunctions({ deps, functions, type });
   }
-  deps.spinner.success("Functions validated:");
-  logValidatedFunctions({ deps, functions });
+  if (log) {
+    deps.spinner.success("Functions validated:");
+    logValidatedFunctions({ deps, functions: validatedFunctions });
+  } else {
+    deps.spinner.stop();
+  }
   return validatedFunctions;
 }
 
