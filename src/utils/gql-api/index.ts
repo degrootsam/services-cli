@@ -37,12 +37,13 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
     password: string,
     authProfileUuid: string,
   ): string {
+    // JSON string escaping is valid GraphQL string escaping
     return `
       mutation login {
         login(
-          authProfileUuid: "${authProfileUuid}"
-          username: "${username}"
-          password: "${password}"
+          authProfileUuid: ${JSON.stringify(authProfileUuid)}
+          username: ${JSON.stringify(username)}
+          password: ${JSON.stringify(password)}
         ) {
           jwtToken
           refreshToken
@@ -344,9 +345,8 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
     ): Promise<GraphQLResponse<D>> {
       logger.debug(`Preparing POST request to ${url}`);
       logger.debug({ body, headers });
-      const apiURL = await config.getApiURL();
 
-      const response = await fetch(apiURL, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
