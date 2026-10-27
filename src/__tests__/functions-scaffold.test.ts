@@ -1,9 +1,17 @@
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterAll } from "bun:test";
 import path from "path";
 import { autoMock } from "../__mocks__/utils.js";
 // Real modules first, so the mocks below only replace what this test needs
-import * as realGet from "../utils/functions/get.js";
-import * as realScaffolder from "../utils/scaffolder/index.js";
+import * as realGetModule from "../utils/functions/get.js";
+import * as realScaffolderModule from "../utils/scaffolder/index.js";
+import * as realGenTestModule from "../utils/functions/gen/test.js";
+import * as realGenConfigModule from "../utils/functions/gen/config.js";
+
+// Copy the real exports now: the namespaces are live and will point at the mocks
+const realGet = { ...realGetModule };
+const realScaffolder = { ...realScaffolderModule };
+const realGenTest = { ...realGenTestModule };
+const realGenConfig = { ...realGenConfigModule };
 
 const existingFunctions = {
   "say-hello": {
@@ -31,6 +39,14 @@ mock.module("../utils/functions/gen/config.js", () => ({
 const { createFunction } = await import("../utils/functions/create.js");
 const { bumpFunction } = await import("../utils/functions/bump.js");
 const { initFunctionsProject } = await import("../utils/functions/init.js");
+
+// Module mocks are process-wide: put the real modules back for other files
+afterAll(() => {
+  mock.module("../utils/functions/get.js", () => ({ ...realGet }));
+  mock.module("../utils/functions/gen/test.js", () => ({ ...realGenTest }));
+  mock.module("../utils/scaffolder/index.js", () => ({ ...realScaffolder }));
+  mock.module("../utils/functions/gen/config.js", () => ({ ...realGenConfig }));
+});
 
 const makeDeps = () =>
   ({

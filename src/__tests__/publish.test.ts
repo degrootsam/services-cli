@@ -1,12 +1,19 @@
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { describe, it, expect, mock, beforeEach, afterAll } from "bun:test";
 import path from "path";
 import { autoMock } from "../__mocks__/utils.js";
 // Real modules first, so the mocks below only replace what this test needs
-import * as realBuild from "../utils/functions/build.js";
-import * as realBarrel from "../utils/functions/gen/barrel.js";
-import * as realUpload from "../utils/functions/upload.js";
-import * as realValidate from "../utils/functions/validate.js";
-import * as realGet from "../utils/functions/get.js";
+import * as realBuildModule from "../utils/functions/build.js";
+import * as realBarrelModule from "../utils/functions/gen/barrel.js";
+import * as realUploadModule from "../utils/functions/upload.js";
+import * as realValidateModule from "../utils/functions/validate.js";
+import * as realGetModule from "../utils/functions/get.js";
+
+// Copy the real exports now: the namespaces are live and will point at the mocks
+const realBuild = { ...realBuildModule };
+const realBarrel = { ...realBarrelModule };
+const realUpload = { ...realUploadModule };
+const realValidate = { ...realValidateModule };
+const realGet = { ...realGetModule };
 
 const calls: string[] = [];
 const later = (name: string, result?: any) =>
@@ -50,6 +57,15 @@ mock.module("../utils/functions/get.js", () => ({
 }));
 
 const { publishFunctions } = await import("../utils/functions/publish.js");
+
+// Module mocks are process-wide: put the real modules back for other files
+afterAll(() => {
+  mock.module("../utils/functions/build.js", () => ({ ...realBuild }));
+  mock.module("../utils/functions/gen/barrel.js", () => ({ ...realBarrel }));
+  mock.module("../utils/functions/upload.js", () => ({ ...realUpload }));
+  mock.module("../utils/functions/validate.js", () => ({ ...realValidate }));
+  mock.module("../utils/functions/get.js", () => ({ ...realGet }));
+});
 
 const makeDeps = () =>
   ({
