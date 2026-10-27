@@ -69,6 +69,8 @@ async function buildJSTSFunctions({
   }
   await Bun.build({
     entrypoints,
+    // Without a root, a single entrypoint loses its name/version folders
+    root: srcDir,
     outdir: functionsOutputDir,
     format: "esm",
     target: "node",
