@@ -6,7 +6,13 @@ import { getFunctions, getValidFunctions } from "./get.js";
 import { uploadFunctions } from "./upload.js";
 import { validateFunctions } from "./validate.js";
 
-export async function publishFunctions({ deps }: { deps: AppDeps }) {
+export async function publishFunctions({
+  deps,
+  dryRun = false,
+}: {
+  deps: AppDeps;
+  dryRun?: boolean;
+}) {
   const appDir = path.resolve(deps.config.buildDir, "app");
   const projectType = await deps.director.getProjectType();
 
@@ -38,6 +44,18 @@ export async function publishFunctions({ deps }: { deps: AppDeps }) {
   await deps.director.zipDir(appDir, outputZipPath);
 
   await deps.director.removeDir(appDir);
+
+  if (dryRun) {
+    const names = Object.keys(validFunctions);
+    deps.logger.info(
+      `Dry run: nothing was uploaded. ${names.length} function(s) would be published:`,
+    );
+    for (const name of names) {
+      deps.logger.info(`  - ${name} ${validFunctions[name].latestVersion}`);
+    }
+    deps.logger.info(`Archive: ${outputZipPath}`);
+    return;
+  }
 
   await uploadFunctions({
     deps,

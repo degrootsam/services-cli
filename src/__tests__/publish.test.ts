@@ -94,4 +94,14 @@ describe("publishFunctions", () => {
     const [, zipPath] = deps.director.zipDir.mock.calls[0];
     expect(zipPath).toBe(path.resolve("out", "app.zip"));
   });
+
+  it("stops before logging in and uploading on a dry run", async () => {
+    const deps = makeDeps();
+    await publishFunctions({ deps, dryRun: true });
+
+    expect(calls).toEqual(["barrel", "build", "zip", "removeDir"]);
+    const output = deps.logger.info.mock.calls.flat().join("\n");
+    expect(output).toContain(path.resolve("out", "app.zip"));
+    expect(output).toContain("say-hello 1.0");
+  });
 });
