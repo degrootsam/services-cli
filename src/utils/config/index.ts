@@ -6,6 +6,7 @@ import type { DirectorAPI } from "../director/index.js";
 import type { PrompterAPI } from "../prompter/index.js";
 import type { StateAPI } from "../state/index.js";
 import { deepMerge } from "../deep-merge.js";
+import { createSourceTracker, type ConfigEntry } from "./sources.js";
 import {
   readEnvConfig,
   readEnvTokens,
@@ -118,6 +119,7 @@ export type ConfigAPI = {
   skipCompile: boolean;
   tokens: EnvTokens;
   getConfig: () => Config;
+  getConfigEntries: () => ConfigEntry[];
   updateConfig: (newConfig: DeepPartial<Config>) => void;
   loadUserConfig: () => Promise<void>;
   getAppUUID: () => Promise<string>;
@@ -138,13 +140,16 @@ export async function bootstrapConfig({
   const _isTs = (await deps.director.getTsConfig()) !== null;
   const _force = opts.force ?? false;
   const _env = opts.env ?? process.env;
+  const _sources = createSourceTracker();
   let _data: Config = await loadConfig();
 
   async function loadConfig(): Promise<Config> {
+    const state = deps.state.getState();
     let merged = deepMerge(
       JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
-      deps.state.getState(),
+      state,
     ) as Config;
+    _sources.record(state, ".bbs/state.json");
 
     if (await deps.director.exists(LEGACY_CONFIG_PATH)) {
       try {
@@ -152,6 +157,7 @@ export async function bootstrapConfig({
           (await deps.director.readFile(LEGACY_CONFIG_PATH)) ?? "",
         );
         merged = deepMerge(merged, legacyConfig) as Config;
+        _sources.record(legacyConfig, "config.json");
       } catch (err) {
         deps.logger.error(
           "Unable to parse config.json! Skipping legacy config file.",
@@ -254,6 +260,10 @@ export async function bootstrapConfig({
       return _data;
     },
 
+    getConfigEntries() {
+      return _sources.entries(_data);
+    },
+
     updateConfig(newConfig = {}) {
       deps.logger.debug("Storing new config value", newConfig);
       _data = deepMerge(_data, newConfig) as Config;
@@ -263,8 +273,11 @@ export async function bootstrapConfig({
       const userConfig = await importUserConfig();
       if (userConfig) {
         api.updateConfig(userConfig as DeepPartial<Config>);
+        _sources.record(userConfig, "bbs.config.ts");
       }
-      api.updateConfig(readEnvConfig(_env));
+      const envConfig = readEnvConfig(_env);
+      api.updateConfig(envConfig);
+      _sources.record(envConfig, "environment");
     },
 
     async getAppUUID() {

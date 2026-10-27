@@ -4,6 +4,7 @@ import { getCLIVersion } from "../utils/cli-version.js";
 import FusionAuth from "../utils/fusion-auth/index.js";
 import { clearAllTokens } from "../utils/keychain/index.js";
 import components from "./components/index.js";
+import config from "./config/index.js";
 import functions from "./functions/index.js";
 import update from "./update/index.js";
 
@@ -50,6 +51,7 @@ const runCLI = async () => {
 
   program.addCommand(update);
   program.addCommand(components);
+  program.addCommand(config);
   program.addCommand(functions);
 
   program.parseAsync();
