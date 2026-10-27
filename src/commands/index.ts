@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { deps, withErrorHandling } from "../utils/index.js";
+import { getCLIVersion } from "../utils/cli-version.js";
 import FusionAuth from "../utils/fusion-auth/index.js";
 import components from "./components/index.js";
 import functions from "./functions/index.js";
@@ -17,7 +18,7 @@ const runCLI = async () => {
 
   program
     .name("Betty Blocks Services CLI (Proof of Concept)")
-    .version("0.0.1")
+    .version(getCLIVersion(deps))
     .option("-v, --verbose", "Enable verbose logging")
     .command("login")
     .action(
