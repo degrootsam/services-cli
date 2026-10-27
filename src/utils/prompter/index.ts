@@ -23,6 +23,7 @@ export type PrompterAPI = {
   getUsername: () => Promise<string>;
   getPassword: () => Promise<string>;
   getAuthProfileUUID: () => Promise<string>;
+  getAuthorizationToken: () => Promise<string>;
   getURL: (message: string) => Promise<string>;
   select: (
     choices: SelectChoice[],
@@ -73,6 +74,17 @@ export function createPrompter({ logger }: { logger: LoggerAPI }): PrompterAPI {
       });
       logger.debug(`Answer ${answer}`);
       return answer;
+    },
+
+    async getAuthorizationToken() {
+      return await password({
+        mask: "*",
+        message: "Please paste your authorization token",
+        validate(value) {
+          if (!value.trim()) return "Authorization token is required";
+          return true;
+        },
+      });
     },
 
     async getURL(message) {

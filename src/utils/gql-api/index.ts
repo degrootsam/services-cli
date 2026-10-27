@@ -64,6 +64,21 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
     };
   }
 
+  function getJWTExpiresIn(token: string): number | undefined {
+    try {
+      const [, payload] = token.split(".");
+      if (!payload) return;
+      const { exp } = JSON.parse(
+        Buffer.from(payload, "base64url").toString("utf8"),
+      ) as { exp?: number };
+      if (typeof exp !== "number") return;
+      return exp - Math.floor(Date.now() / 1000);
+    } catch (err) {
+      logger.debug("Unable to decode JWT expiry", err);
+      return;
+    }
+  }
+
   async function parseLoginResult(loginResponse: AuthenticationTokenPayload) {
     const { jwtToken, refreshToken, accessExpiresIn } = loginResponse;
 
@@ -78,11 +93,13 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
     _expiresAt = accessExpiresAt;
 
     await saveToken({ account_name: "gqlAccessToken", token: jwtToken!, deps });
-    await saveToken({
-      account_name: "gqlRefreshToken",
-      token: refreshToken!,
-      deps,
-    });
+    if (refreshToken) {
+      await saveToken({
+        account_name: "gqlRefreshToken",
+        token: refreshToken,
+        deps,
+      });
+    }
     await saveToken({
       account_name: "gqlAccessTokenExpiresAt",
       token: accessExpiresAt.toString(),
@@ -169,6 +186,12 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
           description:
             "Uses an action to login to access data from the GraphQL Client. Usefull if you are using custom authentication profiles",
         },
+        {
+          name: "Authorization token",
+          value: "token",
+          description:
+            "Paste an existing authorization token (JWT). Skips the login query and action",
+        },
       ];
       const choice =
         options?.option ??
@@ -180,6 +203,16 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
       const parsedAPIURL = options?.apiURL ?? (await config.getApiURL());
 
       switch (choice) {
+        case "token":
+          const authorizationToken = (await prompter.getAuthorizationToken())
+            .trim()
+            .replace(/^Bearer\s+/i, "");
+
+          return await parseLoginResult({
+            jwtToken: authorizationToken,
+            accessExpiresIn: getJWTExpiresIn(authorizationToken),
+          });
+
         case "query":
           const authProfileUuid =
             options?.authProfileUUID ?? (await prompter.getAuthProfileUUID());
