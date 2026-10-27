@@ -22,6 +22,18 @@ export function loginQuery(
   `;
 }
 
+export function refreshQuery(refreshToken: string): string {
+  return `
+    mutation refresh {
+      refreshToken(token: ${JSON.stringify(refreshToken)}) {
+        isValid
+        jwtToken
+        refreshToken
+      }
+    }
+  `;
+}
+
 export function makeQuery(mutation: string, variables: ActionObject) {
   return {
     query: mutation,

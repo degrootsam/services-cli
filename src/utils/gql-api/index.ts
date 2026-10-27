@@ -9,11 +9,12 @@ import {
 import { getToken, saveToken } from "../keychain/index.js";
 import { promptActionLoginQuery } from "./action-login.js";
 import { getJWTExpiresIn } from "./jwt.js";
-import { loginQuery } from "./queries.js";
+import { loginQuery, refreshQuery } from "./queries.js";
 
 export type GqlAPI = {
   getAccessTokens: () => Promise<GraphQLAccessToken | undefined>;
   getTokensFromKeychain: () => Promise<GraphQLAccessToken | undefined>;
+  refreshAccessToken: () => Promise<GraphQLAccessToken | undefined>;
   validateAccessToken: () => boolean;
   login: (options?: {
     option?: string;
@@ -70,7 +71,37 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
 
   const api: GqlAPI = {
     async getAccessTokens() {
-      return await api.getTokensFromKeychain();
+      return (
+        (await api.getTokensFromKeychain()) ?? (await api.refreshAccessToken())
+      );
+    },
+
+    async refreshAccessToken(): Promise<GraphQLAccessToken | undefined> {
+      if (!_refresh) return;
+      logger.debug("Refreshing the GraphQL access token");
+
+      const apiURL = await config.getApiURL();
+      let response: GraphQLResponse<{
+        refreshToken: AuthenticationTokenPayload;
+      }>;
+      try {
+        response = await api.request({ query: refreshQuery(_refresh) }, apiURL);
+      } catch (err) {
+        logger.debug("Refresh request failed", err);
+        return;
+      }
+
+      const result = response.data?.refreshToken;
+      if (response.error || !result?.isValid || !result.jwtToken) {
+        logger.debug("Unable to refresh the access token", response.error);
+        return;
+      }
+
+      return await parseLoginResult({
+        jwtToken: result.jwtToken,
+        refreshToken: result.refreshToken,
+        accessExpiresIn: getJWTExpiresIn(result.jwtToken, logger),
+      });
     },
 
     async getTokensFromKeychain(): Promise<GraphQLAccessToken | undefined> {
