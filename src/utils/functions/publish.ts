@@ -20,7 +20,7 @@ export async function publishFunctions({ deps }: { deps: AppDeps }) {
     functions: validatedFunctions,
   });
 
-  generateFunctionsBarrelFile({
+  await generateFunctionsBarrelFile({
     deps,
     outputDir: appDir,
     functions: validFunctions,
@@ -29,6 +29,7 @@ export async function publishFunctions({ deps }: { deps: AppDeps }) {
 
   await buildFunctions({
     deps,
+    outdir: deps.config.buildDir,
     debug: true,
     type: projectType,
   });

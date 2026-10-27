@@ -1,6 +1,9 @@
 import { describe, it, expect, mock, beforeEach } from "bun:test";
 import path from "path";
 import { autoMock } from "../__mocks__/utils.js";
+// Real modules first, so the mocks below only replace what this test needs
+import * as realGet from "../utils/functions/get.js";
+import * as realScaffolder from "../utils/scaffolder/index.js";
 
 const existingFunctions = {
   "say-hello": {
@@ -12,11 +15,13 @@ const existingFunctions = {
 };
 
 mock.module("../utils/functions/get.js", () => ({
+  ...realGet,
   getFunctions: mock(async () => existingFunctions),
 }));
 const generateTest = mock(async () => "");
 mock.module("../utils/functions/gen/test.js", () => ({ generateTest }));
 mock.module("../utils/scaffolder/index.js", () => ({
+  ...realScaffolder,
   downloadTemplate: mock(async () => ""),
 }));
 mock.module("../utils/functions/gen/config.js", () => ({
