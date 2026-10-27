@@ -3,6 +3,7 @@ import type { Config } from "../config/types/index.js";
 import type { DeepPartial } from "../types.js";
 import type { LoggerAPI } from "../logger/index.js";
 import type { DirectorAPI } from "../director/index.js";
+import { deepMerge } from "../deep-merge.js";
 
 export type StateData = {
   app?: Partial<Config["app"]>;
@@ -23,24 +24,6 @@ export type StateAPI = {
   updateState: (partial: DeepPartial<StateData>) => void;
   saveState: () => Promise<void>;
 };
-
-function deepMerge(
-  target: Record<string, any>,
-  source: Record<string, any>,
-): Record<string, any> {
-  for (const key of Object.keys(source)) {
-    if (
-      source[key] &&
-      typeof source[key] === "object" &&
-      !Array.isArray(source[key])
-    ) {
-      target[key] = deepMerge(target[key] ?? {}, source[key]);
-    } else {
-      target[key] = source[key];
-    }
-  }
-  return target;
-}
 
 export async function createState({
   deps,

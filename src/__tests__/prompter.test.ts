@@ -63,3 +63,34 @@ describe("Prompter", () => {
     expect(mockedSelect).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Prompter without input", () => {
+  const logger = createLogger({ verbose: false });
+  const prompter = createPrompter({ logger, interactive: false });
+  beforeEach(() => {
+    mockedInput.mockClear();
+    mockedSelect.mockClear();
+  });
+
+  it("fails instead of asking a question", async () => {
+    await expect(prompter.input("Please enter your app UUID")).rejects.toThrow(
+      'Cannot ask "Please enter your app UUID"',
+    );
+    await expect(prompter.getPassword()).rejects.toThrow("--no-input");
+    expect(mockedInput).not.toHaveBeenCalled();
+  });
+
+  it("uses the default for confirm and select", async () => {
+    expect(await prompter.confirm("Create tests?", false)).toBe(false);
+    expect(
+      await prompter.select([{ name: "A", value: "a" }], "Pick", "a"),
+    ).toBe("a");
+    expect(mockedSelect).not.toHaveBeenCalled();
+  });
+
+  it("fails for a select without a default", async () => {
+    await expect(
+      prompter.select([{ name: "A", value: "a" }], "Pick one"),
+    ).rejects.toThrow('Cannot ask "Pick one"');
+  });
+});

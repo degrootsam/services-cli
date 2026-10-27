@@ -5,24 +5,13 @@ import type { LoggerAPI } from "../logger/index.js";
 import type { DirectorAPI } from "../director/index.js";
 import type { PrompterAPI } from "../prompter/index.js";
 import type { StateAPI } from "../state/index.js";
-
-function deepMerge(
-  target: Record<string, any>,
-  source: Record<string, any>,
-): Record<string, any> {
-  for (const key of Object.keys(source)) {
-    if (
-      source[key] &&
-      typeof source[key] === "object" &&
-      !Array.isArray(source[key])
-    ) {
-      target[key] = deepMerge(target[key] ?? {}, source[key]);
-    } else {
-      target[key] = source[key];
-    }
-  }
-  return target;
-}
+import { deepMerge } from "../deep-merge.js";
+import { createSourceTracker, type ConfigEntry } from "./sources.js";
+import {
+  readEnvConfig,
+  readEnvTokens,
+  type EnvTokens,
+} from "../environment.js";
 
 const DEFAULT_CONFIG: Config = {
   buildOptions: undefined,
@@ -128,7 +117,9 @@ export type ConfigAPI = {
   blockstoreAPIURL: string;
   domain: string;
   skipCompile: boolean;
+  tokens: EnvTokens;
   getConfig: () => Config;
+  getConfigEntries: () => ConfigEntry[];
   updateConfig: (newConfig: DeepPartial<Config>) => void;
   loadUserConfig: () => Promise<void>;
   getAppUUID: () => Promise<string>;
@@ -141,20 +132,24 @@ export async function bootstrapConfig({
   opts,
   deps,
 }: {
-  opts: { force?: boolean };
+  opts: { force?: boolean; env?: Record<string, string | undefined> };
   deps: ConfigDeps;
 }): Promise<ConfigAPI> {
   const LEGACY_CONFIG_PATH = path.resolve(process.cwd(), "config.json");
   const USER_CONFIG_PATH = path.resolve(process.cwd(), "bbs.config.ts");
   const _isTs = (await deps.director.getTsConfig()) !== null;
   const _force = opts.force ?? false;
+  const _env = opts.env ?? process.env;
+  const _sources = createSourceTracker();
   let _data: Config = await loadConfig();
 
   async function loadConfig(): Promise<Config> {
+    const state = deps.state.getState();
     let merged = deepMerge(
       JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
-      deps.state.getState(),
+      state,
     ) as Config;
+    _sources.record(state, ".bbs/state.json");
 
     if (await deps.director.exists(LEGACY_CONFIG_PATH)) {
       try {
@@ -162,6 +157,7 @@ export async function bootstrapConfig({
           (await deps.director.readFile(LEGACY_CONFIG_PATH)) ?? "",
         );
         merged = deepMerge(merged, legacyConfig) as Config;
+        _sources.record(legacyConfig, "config.json");
       } catch (err) {
         deps.logger.error(
           "Unable to parse config.json! Skipping legacy config file.",
@@ -256,9 +252,16 @@ export async function bootstrapConfig({
     get skipCompile() {
       return _data.options.skipCompile ?? false;
     },
+    get tokens() {
+      return readEnvTokens(_env);
+    },
 
     getConfig() {
       return _data;
+    },
+
+    getConfigEntries() {
+      return _sources.entries(_data);
     },
 
     updateConfig(newConfig = {}) {
@@ -270,12 +273,19 @@ export async function bootstrapConfig({
       const userConfig = await importUserConfig();
       if (userConfig) {
         api.updateConfig(userConfig as DeepPartial<Config>);
+        _sources.record(userConfig, "bbs.config.ts");
       }
+      const envConfig = readEnvConfig(_env);
+      api.updateConfig(envConfig);
+      _sources.record(envConfig, "environment");
     },
 
     async getAppUUID() {
       if (!_data.app.uuid) {
-        const uuid = await deps.prompter.input("Please enter your app UUID");
+        const uuid = await deps.prompter.input(
+          "Please enter your app UUID",
+          true,
+        );
         api.updateConfig({ app: { ..._data.app, uuid } });
         deps.state.updateState({ app: { uuid } });
       }
@@ -286,6 +296,7 @@ export async function bootstrapConfig({
       if (!_data.app.identifier) {
         const identifier = await deps.prompter.input(
           "Please enter your app identifier",
+          true,
         );
         api.updateConfig({ app: { ..._data.app, identifier } });
         deps.state.updateState({ app: { identifier } });

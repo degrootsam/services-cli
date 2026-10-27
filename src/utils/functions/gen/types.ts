@@ -122,7 +122,7 @@ export async function generateTypes({ deps }: { deps: AppDeps }) {
     accessExpiresAt: Number(),
   };
 
-  const tokensFromKeychain = await gqlAPI.getTokensFromKeychain();
+  const tokensFromKeychain = await gqlAPI.getAccessTokens();
 
   if (tokensFromKeychain) {
     tokens = {

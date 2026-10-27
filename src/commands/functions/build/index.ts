@@ -12,17 +12,19 @@ const buildFunctionsCmd = new Command("build")
   .option("--debug", "Outputs a non minified version for debugging purposes")
   .action(
     withErrorHandling(async (options) => {
-      const appDir = path.resolve(deps.config.buildDir, "app");
+      const outdir = options.destination ?? deps.config.buildDir;
+      const appDir = path.resolve(outdir, "app");
+      const projectType = await deps.director.getProjectType();
 
-      const functions = await getFunctions({ deps });
+      const functions = await getFunctions({ deps, type: projectType });
 
       const validatedFunctions = await validateFunctions({
         deps,
         functions,
-        type: deps.config.isTypescript ? "ts" : "js",
+        type: projectType,
       });
 
-      generateFunctionsBarrelFile({
+      await generateFunctionsBarrelFile({
         deps,
         outputDir: appDir,
         functions: validatedFunctions,
@@ -31,8 +33,9 @@ const buildFunctionsCmd = new Command("build")
 
       await buildFunctions({
         deps,
-        outdir: options.destination,
+        outdir,
         debug: options.debug,
+        type: projectType,
       });
     }),
   );

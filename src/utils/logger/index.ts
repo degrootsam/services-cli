@@ -36,7 +36,7 @@ export function createLogger({
       console.info(...message);
     },
     warn(...message) {
-      console.log(warningColor("⚠", message));
+      console.log(warningColor("⚠", ...message));
     },
     getValidationPrefix(state) {
       return state ? "√" : "x";

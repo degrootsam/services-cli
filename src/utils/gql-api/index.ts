@@ -7,11 +7,14 @@ import {
   GraphQLResponse,
 } from "./types/index.js";
 import { getToken, saveToken } from "../keychain/index.js";
-import { ActionObject, AllowedActionInputTypes } from "../types.js";
+import { promptActionLoginQuery } from "./action-login.js";
+import { getJWTExpiresIn } from "./jwt.js";
+import { loginQuery, refreshQuery } from "./queries.js";
 
 export type GqlAPI = {
   getAccessTokens: () => Promise<GraphQLAccessToken | undefined>;
   getTokensFromKeychain: () => Promise<GraphQLAccessToken | undefined>;
+  refreshAccessToken: () => Promise<GraphQLAccessToken | undefined>;
   validateAccessToken: () => boolean;
   login: (options?: {
     option?: string;
@@ -32,38 +35,6 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
   let _refresh = "";
   let _expiresAt: number | null = null;
 
-  function loginQuery(
-    username: string,
-    password: string,
-    authProfileUuid: string,
-  ): string {
-    return `
-      mutation login {
-        login(
-          authProfileUuid: "${authProfileUuid}"
-          username: "${username}"
-          password: "${password}"
-        ) {
-          jwtToken
-          refreshToken
-          accessExpiresIn
-        }
-      }
-
-    `;
-  }
-
-  function makeQuery(mutation: string, variables: ActionObject) {
-    return {
-      query: mutation,
-      variables: {
-        input: {
-          ...variables,
-        },
-      },
-    };
-  }
-
   async function parseLoginResult(loginResponse: AuthenticationTokenPayload) {
     const { jwtToken, refreshToken, accessExpiresIn } = loginResponse;
 
@@ -78,11 +49,13 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
     _expiresAt = accessExpiresAt;
 
     await saveToken({ account_name: "gqlAccessToken", token: jwtToken!, deps });
-    await saveToken({
-      account_name: "gqlRefreshToken",
-      token: refreshToken!,
-      deps,
-    });
+    if (refreshToken) {
+      await saveToken({
+        account_name: "gqlRefreshToken",
+        token: refreshToken,
+        deps,
+      });
+    }
     await saveToken({
       account_name: "gqlAccessTokenExpiresAt",
       token: accessExpiresAt.toString(),
@@ -98,7 +71,41 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
 
   const api: GqlAPI = {
     async getAccessTokens() {
-      return await api.getTokensFromKeychain();
+      if (config.tokens.graphql) {
+        logger.debug("Using the GraphQL token from BBS_GRAPHQL_TOKEN");
+        return { jwtToken: config.tokens.graphql };
+      }
+      return (
+        (await api.getTokensFromKeychain()) ?? (await api.refreshAccessToken())
+      );
+    },
+
+    async refreshAccessToken(): Promise<GraphQLAccessToken | undefined> {
+      if (!_refresh) return;
+      logger.debug("Refreshing the GraphQL access token");
+
+      const apiURL = await config.getApiURL();
+      let response: GraphQLResponse<{
+        refreshToken: AuthenticationTokenPayload;
+      }>;
+      try {
+        response = await api.request({ query: refreshQuery(_refresh) }, apiURL);
+      } catch (err) {
+        logger.debug("Refresh request failed", err);
+        return;
+      }
+
+      const result = response.data?.refreshToken;
+      if (response.error || !result?.isValid || !result.jwtToken) {
+        logger.debug("Unable to refresh the access token", response.error);
+        return;
+      }
+
+      return await parseLoginResult({
+        jwtToken: result.jwtToken,
+        refreshToken: result.refreshToken,
+        accessExpiresIn: getJWTExpiresIn(result.jwtToken, logger),
+      });
     },
 
     async getTokensFromKeychain(): Promise<GraphQLAccessToken | undefined> {
@@ -169,6 +176,12 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
           description:
             "Uses an action to login to access data from the GraphQL Client. Usefull if you are using custom authentication profiles",
         },
+        {
+          name: "Authorization token",
+          value: "token",
+          description:
+            "Paste an existing authorization token (JWT). Skips the login query and action",
+        },
       ];
       const choice =
         options?.option ??
@@ -180,6 +193,16 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
       const parsedAPIURL = options?.apiURL ?? (await config.getApiURL());
 
       switch (choice) {
+        case "token":
+          const authorizationToken = (await prompter.getAuthorizationToken())
+            .trim()
+            .replace(/^Bearer\s+/i, "");
+
+          return await parseLoginResult({
+            jwtToken: authorizationToken,
+            accessExpiresIn: getJWTExpiresIn(authorizationToken, logger),
+          });
+
         case "query":
           const authProfileUuid =
             options?.authProfileUUID ?? (await prompter.getAuthProfileUUID());
@@ -217,58 +240,7 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
           return parseLoginResult(loginQueryData.login);
 
         case "action":
-          const mutation = await prompter.editor(
-            "Copy/Paste the login mutation from the action",
-          );
-          const input = await prompter.editor(
-            "Copy/Paste the input variables from the action",
-            (value) => {
-              try {
-                JSON.parse(value);
-                return true;
-              } catch (err) {
-                return "Please enter valid JSON";
-              }
-            },
-          );
-
-          let parsedInput = JSON.parse(input);
-          if (typeof parsedInput !== "object") {
-            throw new Error("Please provide a valid JSON object");
-          }
-
-          if ("input" in parsedInput && Object.keys(parsedInput).length === 1) {
-            parsedInput = parsedInput.input;
-          }
-
-          let actionInput: AllowedActionInputTypes = {};
-          const keys = Object.keys(parsedInput);
-
-          for (let i = 0; i < keys.length; i++) {
-            const key = keys[i];
-            const valueType = parsedInput[key];
-            let v;
-            const prompt = `Please enter the value for ${key}`;
-
-            if (valueType === "Object") {
-              v = await prompter.editor(prompt, (value) => {
-                if (valueType === "Object") {
-                  try {
-                    JSON.parse(value);
-                    return true;
-                  } catch (err) {
-                    return "Please enter valid JSON";
-                  }
-                }
-                return true;
-              });
-            } else {
-              v = await prompter.input(prompt);
-            }
-            (actionInput as Record<string, string>)[key] = v.trim();
-          }
-
-          const query = makeQuery(mutation, actionInput as ActionObject);
+          const query = await promptActionLoginQuery({ prompter });
           if (!parsedAPIURL) throw new Error("Invalid API URL");
           const { data: loginMutationData, error: loginMutationError } =
             await api.request<{
@@ -311,9 +283,8 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
     ): Promise<GraphQLResponse<D>> {
       logger.debug(`Preparing POST request to ${url}`);
       logger.debug({ body, headers });
-      const apiURL = await config.getApiURL();
 
-      const response = await fetch(apiURL, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

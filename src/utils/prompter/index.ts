@@ -23,6 +23,7 @@ export type PrompterAPI = {
   getUsername: () => Promise<string>;
   getPassword: () => Promise<string>;
   getAuthProfileUUID: () => Promise<string>;
+  getAuthorizationToken: () => Promise<string>;
   getURL: (message: string) => Promise<string>;
   select: (
     choices: SelectChoice[],
@@ -32,23 +33,40 @@ export type PrompterAPI = {
   confirm: (message: string, def?: boolean) => Promise<boolean>;
 };
 
-export function createPrompter({ logger }: { logger: LoggerAPI }): PrompterAPI {
+// Thrown instead of prompting when prompts are disabled
+function promptsDisabled(message: string): Error {
+  return new Error(
+    `Cannot ask "${message}": prompts are disabled (--no-input or CI). Provide the value up front, see "Non-interactive use" in the readme.`,
+  );
+}
+
+export function createPrompter({
+  logger,
+  interactive = true,
+}: {
+  logger: LoggerAPI;
+  interactive?: boolean;
+}): PrompterAPI {
   return {
     async input(message, required, validate) {
+      if (!interactive) throw promptsDisabled(message);
       const answer = await input({ message, required, validate });
       logger.debug(`Answer '${answer}'`);
       return answer;
     },
 
     async editor(message, validate) {
+      if (!interactive) throw promptsDisabled(message);
       const answer = await editor({ message, validate });
       logger.debug("Answer", answer);
       return answer;
     },
 
     async getUsername() {
+      const message = "Please provide your username";
+      if (!interactive) throw promptsDisabled(message);
       const answer = await input({
-        message: "Please provide your username",
+        message,
         required: true,
       });
       logger.debug(`Answer '${answer}'`);
@@ -56,9 +74,11 @@ export function createPrompter({ logger }: { logger: LoggerAPI }): PrompterAPI {
     },
 
     async getPassword() {
+      const message = "Please provide your password";
+      if (!interactive) throw promptsDisabled(message);
       return await password({
         mask: "*",
-        message: "Please provide your password",
+        message,
         validate(value) {
           if (!value) return "Password is required";
           return true;
@@ -67,15 +87,31 @@ export function createPrompter({ logger }: { logger: LoggerAPI }): PrompterAPI {
     },
 
     async getAuthProfileUUID() {
+      const message = "Please enter the UUID of the authentication profile";
+      if (!interactive) throw promptsDisabled(message);
       const answer = await input({
-        message: "Please enter the UUID of the authentication profile",
+        message,
         required: true,
       });
       logger.debug(`Answer ${answer}`);
       return answer;
     },
 
+    async getAuthorizationToken() {
+      const message = "Please paste your authorization token";
+      if (!interactive) throw promptsDisabled(message);
+      return await password({
+        mask: "*",
+        message,
+        validate(value) {
+          if (!value.trim()) return "Authorization token is required";
+          return true;
+        },
+      });
+    },
+
     async getURL(message) {
+      if (!interactive) throw promptsDisabled(message);
       const answer = await input({
         message,
         required: true,
@@ -91,9 +127,13 @@ export function createPrompter({ logger }: { logger: LoggerAPI }): PrompterAPI {
       return answer;
     },
 
-    async select(choices, message, def) {
+    async select(choices, message = "Please make a choice", def) {
+      if (!interactive) {
+        if (def === undefined) throw promptsDisabled(message);
+        return def;
+      }
       const answer = await select({
-        message: message ?? "Please make a choice",
+        message,
         choices,
         loop: true,
         default: def,
@@ -103,6 +143,7 @@ export function createPrompter({ logger }: { logger: LoggerAPI }): PrompterAPI {
     },
 
     async confirm(message, def = true) {
+      if (!interactive) return def;
       const answer = await confirm({ message, default: def });
       logger.debug(`Answer ${answer}`);
       return answer;

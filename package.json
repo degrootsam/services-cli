@@ -23,12 +23,14 @@
     "lint": "trunk check --show-existing",
     "lint:fix": "trunk check --fix --show-existing",
     "fmt": "trunk fmt",
-    "release": "node scripts/create-release-tag.js"
+    "release": "node scripts/create-release-tag.js",
+    "gen:function-schema": "bun run scripts/fetch-functions-schema.ts"
   },
   "bin": {
     "bbs": "./dist/index.js"
   },
   "devDependencies": {
+    "@apidevtools/json-schema-ref-parser": "^16.0.0",
     "@graphql-codegen/typescript": "^6.1.0",
     "@types/babel__traverse": "^7.28.0",
     "@types/bun": "^1.3.14",
@@ -61,6 +63,7 @@
     "form-data": "^4.0.6",
     "fs-extra": "^11.4.0",
     "graphql": "^16.14.2",
+    "json-schema-to-typescript": "^15.0.4",
     "jtd": "^0.1.1",
     "keytar": "^7.9.0",
     "nanospinner": "^1.2.2",
