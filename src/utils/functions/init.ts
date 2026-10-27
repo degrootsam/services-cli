@@ -1,4 +1,3 @@
-import path from "path";
 import { AppDeps } from "../index.js";
 import { ProjectTypeKey } from "../types.js";
 import { createWASMFunction } from "./create.js";
@@ -30,10 +29,8 @@ export async function initFunctionsProject({
 
   if (type !== "wasm") {
     deps.spinner.start("Installing dependencies...");
-    await deps.director.runCommand("bun", ["install"], {
-      stdio: "ignore",
-      cwd: path.resolve(name),
-    });
+    // changeDir already moved into the project
+    await deps.director.runCommand("bun", ["install"], { stdio: "ignore" });
     deps.spinner.success("Dependencies installed");
   } else {
     const funcName = await deps.prompter.input(

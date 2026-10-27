@@ -2,16 +2,19 @@ import { getFunctionFilePath, parseName } from "./index.js";
 import { createCodeParser } from "../code-parser/index.js";
 import { AppDeps, ProjectTypeKey } from "../types.js";
 import { logValidatedFunctions } from "./log.js";
-import { Functions } from "./types.js";
+import { FunctionInfo, Functions } from "./types.js";
+import { getFunctionJSON } from "./get.js";
 
 export async function validateFunctions({
   deps,
   functions,
   type,
+  log = true,
 }: {
   deps: AppDeps;
   functions: Functions;
   type: ProjectTypeKey;
+  log?: boolean;
 }): Promise<Functions> {
   deps.spinner.start("Validating functions...");
   let validatedFunctions: Functions = {};
@@ -20,8 +23,12 @@ export async function validateFunctions({
   } else {
     validatedFunctions = await validateJSTSFunctions({ deps, functions, type });
   }
-  deps.spinner.success("Functions validated:");
-  logValidatedFunctions({ deps, functions });
+  if (log) {
+    deps.spinner.success("Functions validated:");
+    logValidatedFunctions({ deps, functions: validatedFunctions });
+  } else {
+    deps.spinner.stop();
+  }
   return validatedFunctions;
 }
 
@@ -36,8 +43,14 @@ export async function validateWASMFunctions({
   let validatedFunctions: Functions = {};
 
   for (const currentFunctionName of functionNames) {
-    const currentFunction = functions[currentFunctionName];
-    console.log({ currentFunction });
+    const currentFunction: FunctionInfo = functions[currentFunctionName];
+    const functionJSON = await getFunctionJSON({
+      deps,
+      function: currentFunction,
+    });
+    if (functionJSON) {
+      validatedFunctions[currentFunctionName] = currentFunction;
+    }
   }
 
   return validatedFunctions;

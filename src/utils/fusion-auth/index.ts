@@ -39,6 +39,7 @@ export default class FusionAuth {
       token: JSON.stringify(fusionAuthToken),
       deps,
     });
+    this.token = fusionAuthToken;
     return fusionAuthToken;
   }
 
@@ -69,13 +70,21 @@ export default class FusionAuth {
       if (token) {
         try {
           this.token = JSON.parse(token);
-        } catch (error) {}
+        } catch (error) {
+          deps.logger.debug("Unable to parse stored FusionAuth token", error);
+        }
       }
     }
     return this.token;
   }
 
   async getToken({ deps }: { deps: AppDeps }): Promise<StoredFusionAuthToken> {
+    const envToken = deps.config.tokens.fusionAuth;
+    if (envToken) {
+      deps.logger.debug("Using the FusionAuth token from BBS_TOKEN");
+      return { token: envToken, expiresAt: Number.MAX_SAFE_INTEGER };
+    }
+
     deps.logger.debug("Getting stored token for FusionAuth...");
     let token = await this.getStoredToken({ deps });
 
@@ -90,7 +99,7 @@ export default class FusionAuth {
       token = await this.login({ deps });
     }
 
-    return this.token!;
+    return token;
   }
 
   async login({ deps }: { deps: AppDeps }): Promise<StoredFusionAuthToken> {
@@ -125,7 +134,7 @@ export default class FusionAuth {
         const { twoFactorId } = (await response.json()) as {
           twoFactorId: string;
         };
-        return await this.handle2FA({ deps, twoFactorId });
+        return await this.handle2FA({ deps, twoFactorId, fusionAuthURL });
       default:
         throw new Error(
           `Unhandled response status from Fusion Auth: ${response.status} - ${response.statusText}`,
@@ -135,13 +144,15 @@ export default class FusionAuth {
 
   async handle2FA({
     twoFactorId,
+    fusionAuthURL,
     deps,
   }: {
     twoFactorId: string;
+    fusionAuthURL: string;
     deps: AppDeps;
   }): Promise<StoredFusionAuthToken> {
     const code = await deps.prompter.input("Please enter your 2FA code", true);
-    const request = new RequestHandler(deps.config.fusionAuthURL);
+    const request = new RequestHandler(fusionAuthURL);
 
     const response = await request.post({
       endpoint: "/api/two-factor/login",
@@ -149,11 +160,15 @@ export default class FusionAuth {
         code,
         twoFactorId,
       }),
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8",
+      },
       deps,
     });
 
     if (response.status !== 200) {
-      return await this.handle2FA({ twoFactorId, deps });
+      deps.logger.error("Invalid 2FA code! Please try again");
+      return await this.handle2FA({ twoFactorId, fusionAuthURL, deps });
     }
 
     const result = (await response.json()) as {

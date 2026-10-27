@@ -5,6 +5,7 @@ import { isErrorWithMessage } from "./errors.js";
 import { createLogger } from "./logger/index.js";
 import { createPrompter } from "./prompter/index.js";
 import { createState } from "./state/index.js";
+import { isInteractive } from "./environment.js";
 import type { AppDeps } from "./types.js";
 
 const opts = process.argv;
@@ -13,7 +14,10 @@ const forceArg = opts.find((v) => v === "-f" || v === "--force");
 const logger = createLogger({
   verbose: !!(verboseArg && verboseArg.length > 0),
 });
-const prompter = createPrompter({ logger });
+const prompter = createPrompter({
+  logger,
+  interactive: isInteractive({ argv: opts, env: process.env }),
+});
 const director = createDirector({ logger });
 const spinner = createSpinner();
 const state = await createState({ deps: { director, logger } });
@@ -31,7 +35,8 @@ export function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
   return async (...args: any[]) => {
     try {
       await fn(...args);
-      state.saveState();
+      await state.saveState();
+      process.exit(0);
     } catch (error) {
       logger.debug(error);
       if (isErrorWithMessage(error)) {
@@ -49,28 +54,11 @@ export function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
         }
         logger.error(error);
       }
+      process.exit(1);
     }
-    process.exit(1);
   };
 }
 
-export function deepMerge(
-  target: Record<string, any>,
-  source: Record<string, any>,
-): Record<string, any> {
-  for (const key of Object.keys(source)) {
-    if (
-      source[key] &&
-      typeof source[key] === "object" &&
-      !Array.isArray(source[key])
-    ) {
-      target[key] = deepMerge(target[key] ?? {}, source[key]);
-    } else {
-      target[key] = source[key];
-    }
-  }
-  return target;
-}
-
+export { deepMerge } from "./deep-merge.js";
 export { isErrorWithCode, isErrorWithMessage } from "./errors.js";
 export type { AppDeps, SpinnerAPI } from "./types.js";

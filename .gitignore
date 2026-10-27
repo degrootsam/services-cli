@@ -4,3 +4,6 @@ dist
 
 #Sub modules
 codegen-templates
+
+# Local specs and plans
+docs/superpowers

@@ -18,7 +18,7 @@ export async function createFunction({
   if (projectType === "wasm") {
     await createWASMFunction({ name, deps });
   } else {
-    createJsTsFunction({ name, deps });
+    await createJsTsFunction({ name, deps });
   }
 }
 
