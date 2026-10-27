@@ -71,6 +71,10 @@ export function createGraphQLAPI({ deps }: { deps: AppDeps }): GqlAPI {
 
   const api: GqlAPI = {
     async getAccessTokens() {
+      if (config.tokens.graphql) {
+        logger.debug("Using the GraphQL token from BBS_GRAPHQL_TOKEN");
+        return { jwtToken: config.tokens.graphql };
+      }
       return (
         (await api.getTokensFromKeychain()) ?? (await api.refreshAccessToken())
       );

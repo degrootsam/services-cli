@@ -20,7 +20,11 @@ const runCLI = async () => {
   program
     .name("Betty Blocks Services CLI (Proof of Concept)")
     .version(getCLIVersion(deps))
-    .option("-v, --verbose", "Enable verbose logging");
+    .option("-v, --verbose", "Enable verbose logging")
+    .option(
+      "--no-input",
+      "Never prompt; fail when a value is missing (also on when CI is set)",
+    );
 
   program
     .command("login")

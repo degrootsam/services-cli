@@ -26,7 +26,7 @@ const makeDeps = () =>
       input: mock(async () => "123456"),
       getURL: mock(async () => "https://prompted.example.com"),
     },
-    config: { fusionAuthURL: "" },
+    config: { fusionAuthURL: "", tokens: {} },
   }) as any;
 
 const future = () => Date.now() + 60 * 60 * 1000;
@@ -58,5 +58,14 @@ describe("FusionAuth", () => {
       "https://prompted.example.com",
     ]);
     expect(posts[1].headers?.["Content-Type"]).toContain("application/json");
+  });
+
+  it("uses BBS_TOKEN without logging in", async () => {
+    const deps = makeDeps();
+    deps.config.tokens = { fusionAuth: "env-token" };
+    const token = await new FusionAuth().getToken({ deps });
+    expect(token.token).toBe("env-token");
+    expect(posts).toEqual([]);
+    expect(deps.prompter.getUsername).not.toHaveBeenCalled();
   });
 });

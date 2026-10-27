@@ -6,6 +6,11 @@ import type { DirectorAPI } from "../director/index.js";
 import type { PrompterAPI } from "../prompter/index.js";
 import type { StateAPI } from "../state/index.js";
 import { deepMerge } from "../deep-merge.js";
+import {
+  readEnvConfig,
+  readEnvTokens,
+  type EnvTokens,
+} from "../environment.js";
 
 const DEFAULT_CONFIG: Config = {
   buildOptions: undefined,
@@ -111,6 +116,7 @@ export type ConfigAPI = {
   blockstoreAPIURL: string;
   domain: string;
   skipCompile: boolean;
+  tokens: EnvTokens;
   getConfig: () => Config;
   updateConfig: (newConfig: DeepPartial<Config>) => void;
   loadUserConfig: () => Promise<void>;
@@ -124,13 +130,14 @@ export async function bootstrapConfig({
   opts,
   deps,
 }: {
-  opts: { force?: boolean };
+  opts: { force?: boolean; env?: Record<string, string | undefined> };
   deps: ConfigDeps;
 }): Promise<ConfigAPI> {
   const LEGACY_CONFIG_PATH = path.resolve(process.cwd(), "config.json");
   const USER_CONFIG_PATH = path.resolve(process.cwd(), "bbs.config.ts");
   const _isTs = (await deps.director.getTsConfig()) !== null;
   const _force = opts.force ?? false;
+  const _env = opts.env ?? process.env;
   let _data: Config = await loadConfig();
 
   async function loadConfig(): Promise<Config> {
@@ -239,6 +246,9 @@ export async function bootstrapConfig({
     get skipCompile() {
       return _data.options.skipCompile ?? false;
     },
+    get tokens() {
+      return readEnvTokens(_env);
+    },
 
     getConfig() {
       return _data;
@@ -254,6 +264,7 @@ export async function bootstrapConfig({
       if (userConfig) {
         api.updateConfig(userConfig as DeepPartial<Config>);
       }
+      api.updateConfig(readEnvConfig(_env));
     },
 
     async getAppUUID() {

@@ -5,6 +5,7 @@ import { isErrorWithMessage } from "./errors.js";
 import { createLogger } from "./logger/index.js";
 import { createPrompter } from "./prompter/index.js";
 import { createState } from "./state/index.js";
+import { isInteractive } from "./environment.js";
 import type { AppDeps } from "./types.js";
 
 const opts = process.argv;
@@ -13,7 +14,10 @@ const forceArg = opts.find((v) => v === "-f" || v === "--force");
 const logger = createLogger({
   verbose: !!(verboseArg && verboseArg.length > 0),
 });
-const prompter = createPrompter({ logger });
+const prompter = createPrompter({
+  logger,
+  interactive: isInteractive({ argv: opts, env: process.env }),
+});
 const director = createDirector({ logger });
 const spinner = createSpinner();
 const state = await createState({ deps: { director, logger } });

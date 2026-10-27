@@ -79,6 +79,12 @@ export default class FusionAuth {
   }
 
   async getToken({ deps }: { deps: AppDeps }): Promise<StoredFusionAuthToken> {
+    const envToken = deps.config.tokens.fusionAuth;
+    if (envToken) {
+      deps.logger.debug("Using the FusionAuth token from BBS_TOKEN");
+      return { token: envToken, expiresAt: Number.MAX_SAFE_INTEGER };
+    }
+
     deps.logger.debug("Getting stored token for FusionAuth...");
     let token = await this.getStoredToken({ deps });
 

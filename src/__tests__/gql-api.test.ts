@@ -17,7 +17,10 @@ const makeDeps = (password: string) =>
       getPassword: mock(async () => password),
       getAuthProfileUUID: mock(async () => "profile"),
     },
-    config: { getApiURL: mock(async () => "https://config.example.com") },
+    config: {
+      tokens: {},
+      getApiURL: mock(async () => "https://config.example.com"),
+    },
   }) as any;
 
 describe("GraphQL login query", () => {

@@ -7,7 +7,10 @@ import { createGraphQLAPI } from "../utils/gql-api/index.js";
 const deps = {
   logger: autoMock({ debug() {}, error() {}, info() {}, warn() {} }),
   prompter: {},
-  config: { getApiURL: mock(async () => "https://app.example.com/api") },
+  config: {
+    tokens: {},
+    getApiURL: mock(async () => "https://app.example.com/api"),
+  },
 } as any;
 
 // A JWT whose exp claim is one hour from now
@@ -90,6 +93,15 @@ describe("GraphQL token refresh", () => {
     respondWith({});
     const tokens = await createGraphQLAPI({ deps }).getAccessTokens();
     expect(tokens?.jwtToken).toBe("old-jwt");
+    expect(queries).toEqual([]);
+  });
+
+  it("uses BBS_GRAPHQL_TOKEN without the Keychain or the API", async () => {
+    respondWith({});
+    const api = createGraphQLAPI({
+      deps: { ...deps, config: { ...deps.config, tokens: { graphql: "env" } } },
+    });
+    expect((await api.getAccessTokens())?.jwtToken).toBe("env");
     expect(queries).toEqual([]);
   });
 });

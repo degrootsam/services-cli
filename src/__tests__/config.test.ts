@@ -192,3 +192,24 @@ describe("bootstrapConfig", () => {
     });
   });
 });
+
+describe("bootstrapConfig environment variables", () => {
+  it("lets BBS_ variables override the config and exposes tokens", async () => {
+    const config = await bootstrapConfig({
+      opts: {
+        force: false,
+        env: {
+          BBS_APP_UUID: "env-uuid",
+          BBS_ENV: "acceptance",
+          BBS_TOKEN: "t",
+        },
+      },
+      deps: makeDeps(),
+    });
+    config.updateConfig({ app: { uuid: "file-uuid" } });
+    await config.loadUserConfig();
+    expect(config.app.uuid).toBe("env-uuid");
+    expect(config.env).toBe("acceptance");
+    expect(config.tokens).toEqual({ fusionAuth: "t" });
+  });
+});
