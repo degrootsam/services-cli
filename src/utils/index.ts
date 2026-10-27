@@ -31,7 +31,8 @@ export function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
   return async (...args: any[]) => {
     try {
       await fn(...args);
-      state.saveState();
+      await state.saveState();
+      process.exit(0);
     } catch (error) {
       logger.debug(error);
       if (isErrorWithMessage(error)) {
@@ -49,8 +50,8 @@ export function withErrorHandling(fn: (...args: any[]) => Promise<void>) {
         }
         logger.error(error);
       }
+      process.exit(1);
     }
-    process.exit(1);
   };
 }
 
