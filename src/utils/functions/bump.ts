@@ -37,7 +37,7 @@ export async function bumpFunction({ deps }: { deps: AppDeps }): Promise<void> {
   const newVersion = await deps.prompter.select(
     [newMinorVersionOption, newMajorVersionOption],
     "Please choose a new version",
-    newMinorVersion.toString(),
+    newMinorVersionOption.value,
   );
 
   const sourceDir = path.resolve(
@@ -59,6 +59,9 @@ export async function bumpFunction({ deps }: { deps: AppDeps }): Promise<void> {
   );
 
   if (createTests) {
-    await generateTest({ deps, func: selectedFunction });
+    await generateTest({
+      deps,
+      func: { ...selectedFunction, latestVersion: newVersion },
+    });
   }
 }
