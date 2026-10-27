@@ -4,6 +4,7 @@ import fs from "fs-extra";
 import os from "os";
 import path from "path";
 import { isErrorWithMessage } from "../errors.js";
+import { parseJsonc } from "./jsonc.js";
 import type { LoggerAPI } from "../logger/index.js";
 import { ProjectTypeKey } from "../types.js";
 
@@ -181,12 +182,9 @@ export function createDirector({
 
     async getTsConfig(): Promise<Record<string, any> | null> {
       try {
-        let fileContent = await this.readFile("tsconfig.json", true);
+        const fileContent = await this.readFile("tsconfig.json", true);
         if (!fileContent) return null;
-        const commentRegex =
-          /((\/\*\*)(\/\*)[\S\s]*?(\*\/))|((\/\/)[\S\s]*?(?=[\n\r]))/g;
-        fileContent = fileContent.replaceAll(commentRegex, "");
-        return JSON.parse(fileContent);
+        return parseJsonc(fileContent);
       } catch (error) {
         logger.error("Unable to parse tsconfig.json");
         throw new Error(error as any);
