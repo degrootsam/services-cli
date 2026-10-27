@@ -1,6 +1,6 @@
 import path from "path";
 import { AppDeps, ProjectTypeKey } from "../types.js";
-import { Functions } from "./types.js";
+import { FunctionInfo, Functions } from "./types.js";
 
 const functionRegexp = /^([A-Za-z0-9_-]+)\/(\d+\.\d+)\/([^\/]+)\.(ts|js)$/;
 
@@ -71,6 +71,41 @@ export async function getFunctions({
   return sortedFunctions;
 }
 
+export async function getFunctionJSON({
+  deps,
+  function: fn,
+}: {
+  deps: AppDeps;
+  function: FunctionInfo;
+}) {
+  deps.logger.debug("Fetching function.json...");
+
+  const { latestVersion, path: functionPath } = fn;
+  const functionJSONPath = path.resolve(
+    functionPath,
+    latestVersion,
+    "function.json",
+  );
+
+  deps.logger.debug(`function.json path: ${functionJSONPath}`);
+
+  const functionJSONContent = await deps.director.readFile(
+    functionJSONPath,
+    true,
+  );
+
+  deps.logger.debug(`functions.json content: ${functionJSONContent}`);
+
+  try {
+    return JSON.parse(functionJSONContent);
+  } catch (error) {
+    deps.logger.debug(error);
+    throw new Error(
+      `Failed to parse ${functionJSONPath}. Toggle verbose logging with --verbose for more information`,
+    );
+  }
+}
+
 export async function getFunctionsJSON({
   deps,
   functions,
@@ -80,30 +115,18 @@ export async function getFunctionsJSON({
 }): Promise<any[]> {
   return Promise.all(
     Object.keys(functions).map(async (functionName) => {
-      const currentFunction = functions[functionName];
-      const { latestVersion, path: functionPath } = currentFunction;
-      const functionJSONPath = path.resolve(
-        functionPath,
-        latestVersion,
-        "function.json",
-      );
-      const functionJSONContent =
-        (await deps.director.readFile(functionJSONPath)) ?? "";
-      try {
-        const parsedContent = JSON.parse(functionJSONContent);
-        return {
-          ...parsedContent,
-          options: JSON.stringify(parsedContent.options),
-          paths: "{}",
-          name: functionName,
-          version: latestVersion,
-        };
-      } catch (error) {
-        deps.logger.debug(error);
-        throw new Error(
-          `Unable parse functions JSON for function ${functionName}. Toggle verbose logging with --verbose for more information`,
-        );
-      }
+      const { latestVersion } = functions[functionName];
+      const functionJSON = await getFunctionJSON({
+        deps,
+        function: functions[functionName],
+      });
+      return {
+        ...functionJSON,
+        options: JSON.stringify(functionJSON.options),
+        paths: "{}",
+        name: functionName,
+        version: latestVersion,
+      };
     }),
   );
 }

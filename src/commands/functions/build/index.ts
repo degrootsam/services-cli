@@ -13,13 +13,14 @@ const buildFunctionsCmd = new Command("build")
   .action(
     withErrorHandling(async (options) => {
       const appDir = path.resolve(deps.config.buildDir, "app");
+      const projectType = await deps.director.getProjectType();
 
-      const functions = await getFunctions({ deps });
+      const functions = await getFunctions({ deps, type: projectType });
 
       const validatedFunctions = await validateFunctions({
         deps,
         functions,
-        type: deps.config.isTypescript ? "ts" : "js",
+        type: projectType,
       });
 
       generateFunctionsBarrelFile({

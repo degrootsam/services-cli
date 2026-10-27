@@ -15,12 +15,13 @@ const publishFunction = new Command("publish")
   .action(
     withErrorHandling(async () => {
       const appDir = path.resolve(deps.config.buildDir, "app");
+      const projectType = await deps.director.getProjectType();
 
-      const functions = await getFunctions({ deps });
+      const functions = await getFunctions({ deps, type: projectType });
       const validatedFunctions = await validateFunctions({
         deps,
         functions,
-        type: deps.config.isTypescript ? "ts" : "js",
+        type: projectType,
       });
       const validFunctions = getValidFunctions({
         functions: validatedFunctions,
@@ -36,6 +37,7 @@ const publishFunction = new Command("publish")
       await buildFunctions({
         deps,
         debug: true,
+        type: projectType,
       });
 
       const outputZipPath = path.resolve(deps.config.buildDir, "app.zip");

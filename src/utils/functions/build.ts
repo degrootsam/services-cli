@@ -1,19 +1,21 @@
 import { Glob } from "bun";
 import * as fs from "fs";
 import path from "path";
-import { AppDeps } from "../types.js";
+import { AppDeps, ProjectTypeKey } from "../types.js";
 import { getFunctions } from "./get.js";
 
 export async function buildFunctions({
   deps,
   outdir = ".tmp",
   debug = false,
+  type,
 }: {
   deps: AppDeps;
   outdir?: string;
   debug?: boolean;
+  type?: ProjectTypeKey;
 }): Promise<string> {
-  const projectType = await deps.director.getProjectType();
+  const projectType = type ?? (await deps.director.getProjectType());
 
   deps.logger.debug(
     `Building functions with mode ${projectType} in destination ${outdir}`,
