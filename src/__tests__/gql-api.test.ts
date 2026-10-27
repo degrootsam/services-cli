@@ -2,11 +2,6 @@ import { describe, it, expect, mock, afterEach } from "bun:test";
 import { parse } from "graphql";
 import { autoMock } from "../__mocks__/utils.js";
 
-mock.module("../utils/keychain/index.js", () => ({
-  getToken: mock(async () => null),
-  saveToken: mock(async () => {}),
-}));
-
 const { createGraphQLAPI } = await import("../utils/gql-api/index.js");
 
 const realFetch = globalThis.fetch;

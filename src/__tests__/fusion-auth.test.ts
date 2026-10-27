@@ -1,24 +1,6 @@
 import { describe, it, expect, mock, beforeEach } from "bun:test";
 import { autoMock } from "../__mocks__/utils.js";
-
-const stored: Record<string, string> = {};
-mock.module("../utils/keychain/index.js", () => ({
-  getToken: mock(
-    async ({ account_name }: { account_name: string }) =>
-      stored[account_name] ?? null,
-  ),
-  saveToken: mock(
-    async ({
-      account_name,
-      token,
-    }: {
-      account_name: string;
-      token: string;
-    }) => {
-      stored[account_name] = token;
-    },
-  ),
-}));
+import { keytarStore } from "../__mocks__/keytar/index.js";
 
 const posts: { baseUrl: string; endpoint: string; headers?: any }[] = [];
 let responses: { status: number; body: any }[] = [];
@@ -51,7 +33,7 @@ const future = () => Date.now() + 60 * 60 * 1000;
 
 describe("FusionAuth", () => {
   beforeEach(() => {
-    for (const key of Object.keys(stored)) delete stored[key];
+    keytarStore.clear();
     posts.length = 0;
     responses = [];
   });
