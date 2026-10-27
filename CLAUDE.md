@@ -15,7 +15,7 @@ A TypeScript command-line tool (`bbs`) for building, validating and publishing B
 
 Use Bun, not npm or Vitest: `bunfig.toml` preloads `src/__tests__/setup.ts`, which replaces every `@inquirer/prompts` function with a mock. A test that reaches a real prompt hangs.
 
-Commands that log in (`bbs login`, `functions publish`, `functions gen types`) talk to a live Betty Blocks environment and write to the macOS Keychain. Do not run them yourself; ask the owner to, or test the logic through mocked `deps`.
+Commands that log in (`bbs login`, `functions publish`, `functions gen types`) talk to a live Betty Blocks environment and write to the macOS Keychain. Do not run them yourself; ask the owner to, or test the logic through mocked `deps`. `bbs functions publish --dry-run --no-input` is safe: it validates, builds and zips without logging in.
 
 ## Work order
 
@@ -46,6 +46,7 @@ Follow these steps, in order, for any change of size. Skip one only when the cha
 
 - ES modules with `moduleResolution: Node16`: relative imports need the `.js` extension, even from `.ts` files.
 - `src/utils/index.ts` reads `-v` / `-f` straight from `process.argv` and uses top-level `await` to build `deps`, so importing it runs config bootstrapping. Tests should build their own mocked `deps`, not import it.
+- Tests: `keytar` is replaced by an in-memory store in the preload (`src/__mocks__/keytar`), so tests never touch the Keychain. `mock.module` is process-wide and patches live bindings: copy the real exports before mocking (`const real = { ...realModule }`) and put them back in `afterAll`, or other test files get the mock.
 - Cancelling a prompt throws `User force closed the prompt with 0 null`; `withErrorHandling` swallows that message on purpose.
 - `bbs.config.ts` always wins over the legacy `config.json`, which is read but never written. `.bbs/state.json` is CLI-owned bookkeeping.
 - `codegen-templates/` is a submodule and git-ignored here: changes to the templates go to that repository.
